@@ -16,6 +16,7 @@ def test_event_fields_mapped_from_real_structure():
     e = events["u1"]
     assert e.provider == "anthropic"
     assert e.model == "claude-opus-4-8"
+    assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_read_tokens == 8020
     assert e.cache_creation_tokens == 7052
