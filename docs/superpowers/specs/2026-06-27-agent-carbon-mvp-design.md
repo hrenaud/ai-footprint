@@ -9,6 +9,14 @@ Le cœur est **vendor-neutral**. Tout ce qui est spécifique à un outil (Claude
 
 La philosophie d'incertitude est explicite : l'incertitude principale (facteur ~8, piloté par la région datacenter d'Anthropic non publiée) est **irréductible**. Un bon outil ne la masque pas, il l'**affiche en fourchette** (min/max). On ne produit jamais un chiffre unique de fausse précision.
 
+### Principes transverses (inspirés de l'état de l'art)
+
+Après revue de **CodeCarbon** (offline tracker + `country_iso_code`, mono-critère CO₂, orienté live) et **thirsty-llm** (offline-first, fourchettes, logging minimal — mais modèle d'impact _dérivé du prix_, exactement ce que l'on rejette en passant par EcoLogits), trois principes sont retenus :
+
+1. **Confidentialité par conception** : on ne stocke **que** `{model, tokens, timestamp, project, identifiants}` — **jamais** de contenu de prompt ou de réponse.
+2. **Méthodologie versionnée par record** : chaque impact stocke la version d'EcoLogits, la version de notre engine et la zone élec utilisée. C'est la réponse directe au **trou #6** de claude-carbon (lignes legacy figées) : on peut recalculer et comparer sans figer du biais.
+3. **Source de vérité unique pour nos constantes** : un fichier de config porte _nos_ paramètres (zone défaut `USA`, facteur Wh/token local en placeholder), pas dispersés dans le code. Les constantes d'impact, elles, restent dans EcoLogits.
+
 ## Décisions tranchées (brainstorming)
 
 | #   | Décision               | Choix retenu                                                                                                                                                       |
@@ -78,9 +86,10 @@ InferenceEvent
 
 ## Modèle de données (notre schéma SQLite)
 
-- **`events`** : une ligne par message d'inférence normalisé (conservée même après la purge JSONL ~30 j). Clé naturelle = `(session_id, msg_id)`.
-- **`impacts`** : résultat EcoLogits par event — 5 critères × 2 phases × (min/max/mean) + warnings + zone élec + version EcoLogits utilisée.
+- **`events`** : une ligne par message d'inférence normalisé (conservée même après la purge JSONL ~30 j). Clé naturelle = `(session_id, msg_id)`. **Confidentialité** : uniquement `{model, tokens, timestamp, project, ids}` — aucun contenu de prompt/réponse.
+- **`impacts`** : résultat EcoLogits par event — 5 critères × 2 phases × (min/max/mean) + warnings + zone élec + **`methodology_version`** (version EcoLogits + version de notre engine), horodatés. Permet de recalculer/comparer sans figer de biais (anti-trou #6).
 - Séparation `events`/`impacts` volontaire : on peut **recalculer** les impacts (autre zone, nouvelle version EcoLogits) **sans re-parser** les JSONL.
+- **`config`** : nos constantes (zone défaut `USA`, facteur Wh/token local en placeholder) dans un fichier source-de-vérité unique, pas dispersées dans le code.
 
 ## Flux d'ingestion (idempotent)
 
@@ -109,4 +118,4 @@ InferenceEvent
 
 ## Hors MVP (assumé, posé en coutures)
 
-Inférence locale (câblage + facteur Wh/token Apple Silicon), terminal utilisateur, backfill `carbon.db`, mode live, export fichier (md/json) — tous **posés en placeholders**, **aucun implémenté** dans le MVP.
+Inférence locale (câblage + facteur Wh/token Apple Silicon), terminal utilisateur, backfill `carbon.db`, mode live, export fichier (md/json), **« équivalents parlants »** dans le rapport (km voiture, etc. — type CodeCarbon, mis de côté pour éviter la fausse précision sur une fourchette) — tous **posés en placeholders**, **aucun implémenté** dans le MVP.
