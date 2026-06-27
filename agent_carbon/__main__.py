@@ -1,0 +1,61 @@
+import argparse
+import os
+
+from agent_carbon.collectors.claude_code import ClaudeCodeCollector
+from agent_carbon.config import Config
+from agent_carbon.impact.engine import EcoLogitsEngine
+from agent_carbon.impact.resolver import ModelResolver
+from agent_carbon.report.cli import render_report
+from agent_carbon.statusline.line import render_statusline
+from agent_carbon.store.db import SQLiteStore
+
+_DEFAULT_SOURCE = os.path.expanduser("~/.claude/projects")
+_DEFAULT_DB = os.path.expanduser("~/.agent-carbon/carbon.db")
+
+
+def _store(db_path: str) -> SQLiteStore:
+    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    return SQLiteStore(db_path)
+
+
+def _engine(config: Config) -> EcoLogitsEngine:
+    return EcoLogitsEngine(ModelResolver(config.model_aliases))
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="agent-carbon")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_ing = sub.add_parser("ingest", help="parser les transcripts et calculer l'impact")
+    p_ing.add_argument("--source", default=_DEFAULT_SOURCE)
+    p_ing.add_argument("--db", default=_DEFAULT_DB)
+
+    p_rep = sub.add_parser("report", help="afficher le rapport multi-critères")
+    p_rep.add_argument("--db", default=_DEFAULT_DB)
+    p_rep.add_argument("--by", choices=["model", "project", "total"], default="model")
+    p_rep.add_argument("--since", default=None)
+
+    p_st = sub.add_parser("statusline", help="ligne compacte pour la statusline")
+    p_st.add_argument("--db", default=_DEFAULT_DB)
+
+    args = parser.parse_args(argv)
+    config = Config()
+
+    if args.cmd == "ingest":
+        store = _store(args.db)
+        events = ClaudeCodeCollector(args.source).collect()
+        n = store.ingest(events, _engine(config), config)
+        print(f"{n} events ingérés")
+        return 0
+
+    if args.cmd == "report":
+        store = _store(args.db)
+        print(render_report(store.rows_for_report(args.since), group_by=args.by))
+        return 0
+
+    if args.cmd == "statusline":
+        store = _store(args.db)
+        print(render_statusline(store.rows_for_report(None)))
+        return 0
+
+    return 1
