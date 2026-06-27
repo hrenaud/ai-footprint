@@ -57,9 +57,8 @@ agent-carbon statusline
 ## Limites assumées
 
 - **Impact piloté par les tokens de sortie** — seuls les tokens générés contribuent au calcul d'impact (input_tokens et cache ne sont pas pris en compte).
-- **Région datacenter d'Anthropic inconnue** — d'où les fourchettes min–max ; par défaut, on considère le mix électrique du Pays-Bas.
+- **Région datacenter d'Anthropic inconnue** — d'où les fourchettes min–max ; par défaut, on considère le mix électrique USA (configurable).
 - **Inférence locale et énergie du poste de travail hors MVP** — seule l'inférence cloud est traitée.
-- **Eau via release PyPI futures** — la donnée eau n'est pas fournie par EcoLogits 0.11.0 mais sera disponible dans les versions futures.
 
 ## Documentation technique
 

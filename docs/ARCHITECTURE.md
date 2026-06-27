@@ -51,7 +51,7 @@ CLI Report / Statusline
 2. **gwp** — Global Warming Potential (kg CO₂ eq)
 3. **adpe** — Abiotic Depletion Potential for Elements (kg Sb eq)
 4. **pe** — Primary Energy (MJ)
-5. **wcf** — Water Consumption Footprint (m³)
+5. **wcf** — Water Consumption Footprint (L)
 
 **Phases** :
 
@@ -103,7 +103,7 @@ CREATE TABLE impacts (
   session_id TEXT,
   msg_id TEXT,
   model_resolved TEXT,     -- après ModelResolver
-  zone TEXT,               -- électricité mix (ex. "NL")
+  zone TEXT,               -- électricité mix (ex. "USA")
   methodology_version TEXT,
   energy_min REAL, energy_max REAL,
   gwp_min REAL, gwp_max REAL,
@@ -192,7 +192,7 @@ Fichier `agent_carbon/config.py` + `~/.agent-carbon/config.yaml` (futur) :
 ```python
 # Défauts
 throughput_tok_s = 50             # tokens/s pour estimer la latence
-electricity_mix_zone = "NL"       # zone élec (pays des datacenters)
+electricity_mix_zone = "USA"      # zone élec (pays des datacenters)
 model_aliases = {...}            # table d'alias modèles
 ```
 
@@ -220,7 +220,6 @@ model_aliases = {...}            # table d'alias modèles
 - `import_legacy()` : backfill depuis `carbon.db` ancien.
 - `compute_live()` : mode live (instrumentation SDK temps réel).
 - Énergie du poste de travail : hors périmètre.
-- Eau (wcf) : à recevoir via release PyPI future.
 - Export fichier (CSV, JSON) : futur.
 
 **Après MVP** :
