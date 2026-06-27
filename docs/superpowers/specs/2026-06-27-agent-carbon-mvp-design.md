@@ -89,6 +89,7 @@ InferenceEvent
 - **`events`** : une ligne par message d'inférence normalisé (conservée même après la purge JSONL ~30 j). Clé naturelle = `(session_id, msg_id)`. **Confidentialité** : uniquement `{model, tokens, timestamp, project, ids}` — aucun contenu de prompt/réponse.
 - **`impacts`** : résultat EcoLogits par event — 5 critères × 2 phases × (min/max/mean) + warnings + zone élec + **`methodology_version`** (version EcoLogits + version de notre engine), horodatés. Permet de recalculer/comparer sans figer de biais (anti-trou #6).
 - Séparation `events`/`impacts` volontaire : on peut **recalculer** les impacts (autre zone, nouvelle version EcoLogits) **sans re-parser** les JSONL.
+- **`sessions`** : un agrégat par `session_id` avec sa **durée** = `ts(dernier message) − ts(premier message)`. Métadonnée captée dès le MVP (calcul exact, gratuit depuis les timestamps), **sans** conversion énergétique. Utile pour croiser impact/temps et l'intensité d'usage.
 - **`config`** : nos constantes (zone défaut `USA`, facteur Wh/token local en placeholder) dans un fichier source-de-vérité unique, pas dispersées dans le code.
 
 ## Flux d'ingestion (idempotent)
@@ -118,4 +119,4 @@ InferenceEvent
 
 ## Hors MVP (assumé, posé en coutures)
 
-Inférence locale (câblage + facteur Wh/token Apple Silicon), terminal utilisateur, backfill `carbon.db`, mode live, export fichier (md/json), **« équivalents parlants »** dans le rapport (km voiture, etc. — type CodeCarbon, mis de côté pour éviter la fausse précision sur une fourchette) — tous **posés en placeholders**, **aucun implémenté** dans le MVP.
+Inférence locale (câblage + facteur Wh/token Apple Silicon), **énergie du poste de travail** (durée de session × puissance × grille — placeholder séparé, **jamais agrégé au total d'impact**, étiqueté de ses caveats : la durée wall-clock est surtout du temps mort, et la conso du poste n'est pas marginale à l'usage IA ; ordre de grandeur ~0,3–2 % du cloud), terminal utilisateur, backfill `carbon.db`, mode live, export fichier (md/json), **« équivalents parlants »** dans le rapport (km voiture, etc. — type CodeCarbon, mis de côté pour éviter la fausse précision sur une fourchette) — tous **posés en placeholders**, **aucun implémenté** dans le MVP.
