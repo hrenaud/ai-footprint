@@ -135,6 +135,13 @@ Le registre `main` couvrant déjà les modèles actuels, ce module devient un **
 - **Rapport CLI** : tableau multi-critères (gwp/adpe/pe/énergie/eau) avec fourchettes **min–max**, dimensions **par modèle**, **par projet**, et **total global** ; filtre temporel `--since`. La zone élec et l'incertitude sont rappelées explicitement.
 - **Statusline** : ligne compacte (adaptateur de sortie spécifique Claude Code) lisant l'agrégat déjà calculé en DB. Pas de hook live requis dans le MVP.
 
+## Livrables documentaires (MVP)
+
+Deux documents font partie du périmètre MVP, écrits/mis à jour au fil de l'implémentation :
+
+- **`README.md`** (racine) — présentation du projet : le pourquoi (compteur d'impact vendor-neutral, multi-critères, qui délègue le calcul à EcoLogits), ce que ça fait, installation (Python ≥ 3.10, pin EcoLogits), usage (`report`, statusline), et une section **« Sources d'inspiration »** créditant : `claude-carbon` (audit d'origine et UX de reporting), **EcoLogits** (`mlco2/ecologits`, moteur d'impact), **CodeCarbon** (offline tracker + `country_iso_code`) et **thirsty-llm** (offline-first, fourchettes, logging minimal — dont on rejette en revanche le modèle prix-proxy).
+- **Document technique** (`docs/ARCHITECTURE.md` ou équivalent) — fonctionnement du produit : pipeline `JSONL → EcoLogits offline → DB → CLI/statusline`, l'API offline EcoLogits utilisée et ses sorties (5 critères × phases × fourchettes), schéma de données `events`/`impacts`/`sessions`, gestion de l'incertitude (fourchettes, zone élec, latence estimée), méthodologie versionnée, et les **limites assumées** (impact piloté par les tokens de sortie, région datacenter inconnue, périmètre hors MVP).
+
 ## Stratégie de test (TDD — tests écrits avant implémentation)
 
 1. **Spike fondateur — ✅ réalisé en brainstorming, à verrouiller en test de non-régression** : `llm_impacts("anthropic", "claude-opus-4-8", output_token_count, request_latency, "USA")` sous EcoLogits `main` (offline) renvoie bien `errors: None` + les **5 critères** (energy/gwp/adpe/pe/wcf) en `RangeValue(min/max)`, usage + embodied. Test gardé pour détecter toute régression du pin EcoLogits.
