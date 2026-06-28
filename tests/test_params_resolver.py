@@ -25,3 +25,15 @@ def test_cache_tier_resolves_declared_model():
 def test_unknown_model_returns_none():
     r = ModelParamsResolver(Config())
     assert r.resolve("ollama", "modele-inexistant-xyz") is None
+
+
+def test_registry_range_value_resolved_as_mean():
+    """Teste que les paramètres RangeValue du registre sont résolus par moyenne."""
+    r = ModelParamsResolver(Config())
+    # mistralai/devstral-medium-latest a architecture.parameters = RangeValue(70, 120)
+    res = r.resolve("mistralai", "devstral-medium-latest")
+    assert isinstance(res, ParamsResult)
+    assert res.source == "registry"
+    assert res.active == 95.0  # (70 + 120) / 2
+    assert res.total == 95.0
+    assert res.arch == "dense"

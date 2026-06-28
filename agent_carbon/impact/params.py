@@ -35,7 +35,11 @@ class ModelParamsResolver:
                 if isinstance(p, ParametersMoE):
                     return ParamsResult(active=float(p.active), total=float(p.total),
                                         arch="moe", source="registry")
-                # Gérer RangeValue (min/max) en prenant la moyenne
+                # Gérer RangeValue (min/max) en prenant la moyenne.
+                # EcoLogits expose parfois une plage de paramètres quand l'architecture
+                # n'est pas précisément spécifiée. On prend la valeur centrale comme
+                # estimation typique ; l'incertitude dominante vient du PUE et du mix,
+                # pas de la fourchette des paramètres.
                 if isinstance(p, RangeValue):
                     val = (p.min + p.max) / 2.0
                 else:
