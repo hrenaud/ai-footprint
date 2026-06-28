@@ -15,16 +15,12 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 
 # Rafraîchit la DB (silencieux), puis affiche le rapport.
 "$AC" ingest >/dev/null 2>&1 || true
-"$AC" report --by model
+"$AC" report
 ```
 
-2. Par défaut, le rapport est **groupé par modèle** et affiche une **valeur centrale** (`~`). Adapter selon la demande :
-   - par projet → `"$AC" report --by project`
-   - total global → `"$AC" report --by total`
-   - sur une période → ajouter `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`)
+2. Le rapport a deux sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
 
-3. Avec `--by model`, le rapport inclut une section **« Intensité par modèle »** (tokens/h et émissions/h par heure de travail effectif) qui compare l'efficacité des modèles — la présenter aussi.
-
-4. Présenter le graphe **sans le déformer** (bloc de code monospace pour garder l'alignement), puis rappeler en une phrase :
-   - la valeur centrale est marquée `~` (approximative) ; la section « Impact total » donne la **plage min–max** à côté (incertitude irréductible sur la région datacenter) ;
+3. Présenter la sortie **sans la déformer** (bloc de code monospace pour garder l'alignement des barres), puis rappeler en une phrase :
+   - la valeur centrale est marquée `~` (approximative) ; la plage min–max est à côté (incertitude irréductible sur la région datacenter) ;
+   - l'intensité montre qu'à débit comparable, les modèles n'émettent pas autant (ex. Opus ≫ Haiku par heure) ;
    - les modèles **locaux ou tiers non modélisés** sont comptés mais sans impact estimé (cf. ligne « non couverts »).

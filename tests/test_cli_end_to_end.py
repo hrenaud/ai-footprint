@@ -11,10 +11,10 @@ def test_ingest_then_report(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "3 events" in out  # sample.jsonl (2) + active.jsonl (1)
 
-    rc = main(["report", "--db", db, "--by", "model"])
+    rc = main(["report", "--db", db])
     assert rc == 0
     out = capsys.readouterr().out
-    assert "opus-4-8" in out  # nom raccourci dans le tableau
+    assert "opus-4-8" in out  # présent dans la section Intensité
     assert "GWP" in out
 
 
