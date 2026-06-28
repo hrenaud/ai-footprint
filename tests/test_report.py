@@ -1,4 +1,4 @@
-from agent_carbon.report.cli import render_intensity, render_report
+from agent_carbon.report.cli import render_intensity, render_projects, render_report
 
 
 ROWS = [
@@ -59,3 +59,37 @@ def test_render_intensity_shows_tokens_bar_and_emissions():
 
 def test_render_intensity_empty():
     assert render_intensity([]) == ""
+
+
+def _proj_rows(specs):
+    """specs: liste de (projet, gwp_min, gwp_max) → rows minimaux pour le rapport."""
+    return [{"project": p, "gwp_min": lo, "gwp_max": hi} for p, lo, hi in specs]
+
+
+def test_render_projects_ranks_most_impactful_first():
+    rows = _proj_rows([("projA", 1.0, 2.0), ("projB", 5.0, 7.0), ("projC", 0.1, 0.2)])
+    out = render_projects(rows)
+    assert "Projets les plus impactants" in out
+    assert "█" in out
+    # trié par GWP décroissant : projB (6) > projA (1.5) > projC (0.15)
+    assert out.index("projB") < out.index("projA") < out.index("projC")
+
+
+def test_render_projects_top_n_groups_remainder():
+    rows = _proj_rows([(f"p{i}", float(i), float(i)) for i in range(1, 9)])  # 8 projets
+    out = render_projects(rows)
+    # top 5 par défaut, les 3 plus petits regroupés
+    assert "autres (3 projets)" in out
+    assert "p1" not in out  # les plus petits sont dans « autres »
+
+
+def test_render_projects_show_all_lists_every_project():
+    rows = _proj_rows([(f"p{i}", float(i), float(i)) for i in range(1, 9)])
+    out = render_projects(rows, show_all=True)
+    assert "autres" not in out
+    for i in range(1, 9):
+        assert f"p{i}" in out
+
+
+def test_render_projects_empty():
+    assert render_projects([]) == ""
