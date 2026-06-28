@@ -16,6 +16,10 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 - **Script `scripts/statusline.sh`** : statusLine via script versionné (résilient) plutôt qu'une commande inline.
 - **Sortie d'ingestion** : résumé de couverture clair (`mesurés` / `non couverts`) ; les warnings bruts d'EcoLogits sont silencés (information conservée par record) pour ne pas faire craindre un plantage.
 
+### Modifié
+
+- **Statusline** : ajout de l'**eau** (💧 L) à côté de l'énergie et du GWP.
+
 ### Notes
 
 - L'incertitude (région datacenter d'Anthropic inconnue) est affichée en fourchette, jamais masquée.
