@@ -54,13 +54,27 @@ def test_group_by_project_aggregates():
     assert out.count("projA") == 1
 
 
-def test_table_columns_are_aligned_on_separators():
+def test_rows_sorted_descending_by_gwp():
     out = render_report(ROWS, group_by="model")
-    lines = out.splitlines()
-    header = next(line for line in lines if "groupe" in line and "|" in line)
-    data = next(line for line in lines if "sonnet-4-6" in line)
-    # tabulate aligne les colonnes : le 1er séparateur tombe à la même position
-    assert header.index("|") == data.index("|")
+    # opus (gwp 1–2, mid 1.5) doit précéder sonnet (0.5–1, mid 0.75)
+    assert out.index("opus-4-8") < out.index("sonnet-4-6")
+
+
+def test_bar_and_percent_rendered():
+    out = render_report(ROWS, group_by="model")
+    assert "█" in out and "%" in out
+
+
+def test_long_tail_collapsed_into_autres():
+    rows = [
+        {"model": f"claude-m{i:02d}", "project": f"p{i:02d}",
+         "gwp_min": 0.1 * (i + 1), "gwp_max": 0.2 * (i + 1),
+         "energy_min": 0.1, "energy_max": 0.2, "adpe_min": 1e-6, "adpe_max": 2e-6,
+         "pe_min": 0.1, "pe_max": 0.2, "wcf_min": 0.1, "wcf_max": 0.2}
+        for i in range(12)
+    ]
+    out = render_report(rows, group_by="project")
+    assert "autres" in out
 
 
 def test_icon_summary_section_present():
