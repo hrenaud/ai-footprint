@@ -85,7 +85,7 @@ Le câblage passe par le script versionné **`scripts/statusline.sh [DB]`** (ré
 Prévisualiser sans rien changer à sa config :
 
 ```bash
-~/.agent-carbon/src/scripts/statusline.sh   # ⚡ 18.7–33.2 kWh · 🌍 7.88–13.5 kgCO2e
+~/.agent-carbon/src/scripts/statusline.sh   # ⚡ 18.9–33.5 kWh · 🌍 7.93–13.5 kgCO2e · 💧 61.3–134 L
 ```
 
 ## Sources d'inspiration
