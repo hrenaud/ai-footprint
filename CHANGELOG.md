@@ -20,11 +20,7 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 
 - **Statusline** : ajout de l'**eau** (💧 L) à côté de l'énergie et du GWP.
 - **Statusline** : affiche désormais l'impact de la **session en cours** (lit `session_id` / `transcript_path` sur stdin, ingère le transcript courant, filtre par session) ; fallback total global en lancement manuel.
-- **Rapport CLI** : tableau aligné via **`tabulate`** (colonnes numériques à droite) ; **échelle d'unité automatique** pour la lisibilité (ex. `4e-05 kgSbeq` → `40 mgSbeq`) ; **largeur réduite** pour ne plus déborder du terminal (noms de modèles raccourcis — `claude-haiku-4-5-20251001` → `haiku-4-5` — et valeurs négligeables affichées `≈0`) ; section **« Impact total (tous modèles) »** avec les 5 critères et leurs icônes.
-
-### Dépendances
-
-- Ajout de **`tabulate>=0.9`** (pur Python) pour le formatage du tableau.
+- **Rapport CLI** : refonte en **graphe à barres** trié par GWP (critère phare) avec part en % — on saisit les proportions d'un coup ; longue traîne regroupée en « autres (N) » ; noms de modèles raccourcis ; **échelle d'unité automatique** (ex. `4e-05 kgSbeq` → `40 mgSbeq`) ; résumé multi-critères (5 icônes) sous le graphe. Sans dépendance (rendu fait main, largeurs fixes).
 
 ### Notes
 

@@ -1,14 +1,11 @@
 import re
 
-from tabulate import tabulate
-
 from agent_carbon.impact.engine import CRITERIA
 
 _DATE_SUFFIX = re.compile(r"-\d{8}$")
 
-# Échelle d'unité par critère, du plus grand au plus petit (facteur, unité).
-# On choisit l'unité pour que les valeurs tombent dans une plage lisible
-# (évite « 4e-05 kgSbeq » → « 40 mgSbeq »).
+# Échelle d'unité par critère (facteur, unité), du plus grand au plus petit,
+# pour que les valeurs tombent dans une plage lisible (« 4e-05 kgSbeq » → « 40 mgSbeq »).
 _UNIT_LADDERS = {
     "energy": [(1, "kWh"), (1e3, "Wh"), (1e6, "mWh")],
     "gwp": [(1, "kgCO2eq"), (1e3, "gCO2eq"), (1e6, "mgCO2eq")],
@@ -19,6 +16,10 @@ _UNIT_LADDERS = {
 _ICON = {"energy": "⚡", "gwp": "🌍", "wcf": "💧", "adpe": "⛏", "pe": "🔥"}
 _NAME = {"energy": "Énergie", "gwp": "GWP", "wcf": "Eau", "adpe": "ADPe", "pe": "PE"}
 _SUMMARY_ORDER = ("energy", "gwp", "wcf", "adpe", "pe")
+_GROUP_NOUN = {"model": "modèle", "project": "projet"}
+
+_BAR_WIDTH = 20
+_TOP_N = 8
 
 
 def _key(row: dict, group_by: str) -> str:
@@ -27,8 +28,12 @@ def _key(row: dict, group_by: str) -> str:
     return row.get(group_by, "?")
 
 
+def _short_model(name: str) -> str:
+    """claude-haiku-4-5-20251001 → haiku-4-5 (largeur du graphe)."""
+    return _DATE_SUFFIX.sub("", name.removeprefix("claude-"))
+
+
 def _scale(hi: float, criterion: str) -> tuple[float, str]:
-    """Unité d'affichage : 1re du barème où `hi` (borne haute) atteint 1."""
     chosen = _UNIT_LADDERS[criterion][0]
     for factor, unit in _UNIT_LADDERS[criterion]:
         chosen = (factor, unit)
@@ -37,18 +42,56 @@ def _scale(hi: float, criterion: str) -> tuple[float, str]:
     return chosen
 
 
-def _short_model(name: str) -> str:
-    """Raccourcit un nom de modèle pour la largeur du tableau :
-    claude-haiku-4-5-20251001 → haiku-4-5."""
-    return _DATE_SUFFIX.sub("", name.removeprefix("claude-"))
-
-
 def _fmt(lo: float, hi: float, factor: float) -> str:
-    # Valeur négligeable (modèle quasi inutilisé) : on évite un long « 0.000x »
-    # qui élargit toute la colonne, on affiche « ≈0 ».
-    if hi * factor < 0.005:
+    if hi * factor < 0.005:  # négligeable → évite un long « 0.000x » illisible
         return "≈0"
     return f"{lo * factor:.3g}–{hi * factor:.3g}"
+
+
+def _mid(pair: list[float]) -> float:
+    return (pair[0] + pair[1]) / 2
+
+
+def _bar_chart(groups: dict, totals: dict, group_by: str, unit: tuple[float, str]) -> list[str]:
+    """Graphe à barres trié par GWP (critère phare) : part de chaque groupe."""
+    factor, unit_label = unit
+    total_mid = _mid(totals["gwp"]) or 1.0
+    noun = _GROUP_NOUN.get(group_by, "groupe")
+
+    ranked = sorted(groups.items(), key=lambda kv: _mid(kv[1]["gwp"]), reverse=True)
+
+    # (nom affiché, fourchette gwp) ; longue traîne regroupée en « autres ».
+    data: list[tuple[str, list[float]]] = []
+    if len(ranked) > _TOP_N + 1:
+        for name, vals in ranked[:_TOP_N]:
+            data.append((_disp(name, group_by), vals["gwp"]))
+        tail = ranked[_TOP_N:]
+        tmin = sum(v["gwp"][0] for _, v in tail)
+        tmax = sum(v["gwp"][1] for _, v in tail)
+        data.append((f"autres ({len(tail)} {noun}s)", [tmin, tmax]))
+    else:
+        for name, vals in ranked:
+            data.append((_disp(name, group_by), vals["gwp"]))
+
+    ranges = [_fmt(g[0], g[1], factor) for _, g in data]
+    name_w = max((len(n) for n, _ in data), default=len("TOTAL"))
+    range_w = max((len(r) for r in ranges), default=0)
+
+    out = [f"Impact par {noun} — trié par GWP ({unit_label}) · fourchette min–max", ""]
+    for (name, gwp), rng in zip(data, ranges):
+        share = _mid(gwp) / total_mid
+        filled = min(_BAR_WIDTH, round(share * _BAR_WIDTH))
+        bar = "█" * filled + " " * (_BAR_WIDTH - filled)
+        out.append(f"  {name.ljust(name_w)}  {rng.rjust(range_w)}  {bar}  {round(share * 100):>3d}%")
+
+    out.append("  " + "─" * (name_w + range_w + _BAR_WIDTH + 10))
+    total_rng = _fmt(totals["gwp"][0], totals["gwp"][1], factor)
+    out.append(f"  {'TOTAL'.ljust(name_w)}  {total_rng.rjust(range_w)}")
+    return out
+
+
+def _disp(name: str, group_by: str) -> str:
+    return _short_model(name) if group_by == "model" else name
 
 
 def render_report(rows: list[dict], group_by: str) -> str:
@@ -65,36 +108,26 @@ def render_report(rows: list[dict], group_by: str) -> str:
             totals[c][0] += vals[c][0]
             totals[c][1] += vals[c][1]
 
-    # Unité par critère, choisie sur le total → cohérente sur toute la colonne.
     units = {c: _scale(totals[c][1] or 1.0, c) for c in CRITERIA}
 
-    # --- Section 1 : tableau aligné (tabulate, colonnes numériques à droite) ---
-    headers = ["groupe"] + [f"{_NAME[c]} ({units[c][1]})" for c in CRITERIA]
-    body = [
-        [_short_model(name) if group_by == "model" else name]
-        + [_fmt(vals[c][0], vals[c][1], units[c][0]) for c in CRITERIA]
-        for name, vals in groups.items()
-    ]
-    if group_by != "total":
-        body.append(["TOTAL"] + [_fmt(totals[c][0], totals[c][1], units[c][0]) for c in CRITERIA])
+    lines: list[str] = []
+    if group_by != "total" and groups:
+        lines += _bar_chart(groups, totals, group_by, units["gwp"])
+        lines.append("")
 
-    table = tabulate(
-        body, headers=headers, tablefmt="presto",
-        colalign=["left"] + ["right"] * len(CRITERIA),
-    )
-
-    # --- Section 2 : agrégat des impacts avec icônes ---
+    # Résumé multi-critères (discret) — les 5 critères du total, chacun avec son icône.
     label_w = max(len(_NAME[c]) for c in _SUMMARY_ORDER)
-    summary = ["Impact total (tous modèles) :"]
+    lines.append("Impact total :")
     for c in _SUMMARY_ORDER:
         factor, unit = units[c]
-        summary.append(
+        lines.append(
             f"  {_ICON[c]} {_NAME[c].ljust(label_w)} : "
             f"{_fmt(totals[c][0], totals[c][1], factor)} {unit}"
         )
 
-    footer = (
+    lines.append("")
+    lines.append(
         "Fourchettes min–max (incertitude irréductible : région datacenter inconnue). "
         "Zone élec configurable (défaut USA). Impact basé sur les tokens de sortie."
     )
-    return "\n".join([table, "", *summary, "", footer])
+    return "\n".join(lines)

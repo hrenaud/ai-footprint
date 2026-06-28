@@ -5,7 +5,6 @@ description = "Compteur d'impact environnemental multi-critères pour outils d'I
 requires-python = ">=3.10,<4"
 dependencies = [
   "ecologits @ git+https://github.com/mlco2/ecologits.git@0.11.0",
-  "tabulate>=0.9",
 ]
 
 [project.optional-dependencies]
