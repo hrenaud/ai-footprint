@@ -30,3 +30,21 @@ def test_group_by_project_aggregates():
     assert "projA" in out
     # un seul groupe projet
     assert out.count("projA") == 1
+
+
+def test_table_columns_are_aligned_on_separators():
+    out = render_report(ROWS, group_by="model")
+    lines = out.splitlines()
+    header = next(line for line in lines if line.startswith("groupe"))
+    data = next(line for line in lines if "claude-sonnet-4-6" in line)
+    # le premier séparateur de colonne tombe à la même position (colonnes paddées)
+    assert header.index("|") == data.index("|")
+
+
+def test_icon_summary_section_present():
+    out = render_report(ROWS, group_by="model")
+    # une 2e section avec les icônes des 5 critères
+    for icon in ("⚡", "🌍", "💧", "⛏", "🔥"):
+        assert icon in out
+    # et les totaux agrégés (énergie min 0.1+0.05 = 0.15)
+    assert "0.15" in out
