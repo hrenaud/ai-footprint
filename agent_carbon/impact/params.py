@@ -49,6 +49,8 @@ class ModelParamsResolver:
         return None
 
     def _from_cache(self, provider: str, model: str) -> ParamsResult | None:
+        """Tier 2 : params déclarés par l'utilisateur ou résolus précédemment via HF,
+        mémorisés dans la config (clé « provider/model »)."""
         entry = self.config.model_params.get(f"{provider}/{model}")
         if entry is None:
             return None
@@ -57,6 +59,9 @@ class ModelParamsResolver:
             arch=entry.get("arch", "dense"), source=entry.get("source", "user"))
 
     def _from_huggingface(self, provider: str, model: str) -> ParamsResult | None:
+        """Tier 3 : récupère le nb de params depuis le Hub (metadata safetensors),
+        puis met le résultat en cache. Import paresseux et offline-safe : lib absente,
+        réseau, 404… → None (jamais d'exception, pour ne pas casser l'ingestion batch)."""
         try:
             import huggingface_hub
         except ImportError:
@@ -64,6 +69,8 @@ class ModelParamsResolver:
         if huggingface_hub is None:
             return None
         try:
+            # timeout court (10s) : un Hub lent ne doit pas ralentir un batch ;
+            # en cas d'échec on retombe proprement sur le tier 4 (file d'attente).
             info = huggingface_hub.model_info(model, timeout=10)
             # Garde explicite : safetensors peut être None si le repo n'a pas de fichiers .safetensors
             if info.safetensors is None:
