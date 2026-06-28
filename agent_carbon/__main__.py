@@ -61,7 +61,6 @@ def main(argv: list[str] | None = None) -> int:
 
     p_rep = sub.add_parser("report", help="afficher le rapport multi-critères")
     p_rep.add_argument("--db", default=_DEFAULT_DB)
-    p_rep.add_argument("--by", choices=["model", "project", "total"], default="model")
     p_rep.add_argument("--since", default=None)
 
     p_st = sub.add_parser("statusline", help="ligne compacte pour la statusline")
@@ -79,11 +78,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "report":
         store = _store(args.db)
-        out = render_report(store.rows_for_report(args.since), group_by=args.by)
-        if args.by == "model":
-            intensity = render_intensity(store.intensity_by_model())
-            if intensity:
-                out += "\n\n" + intensity
+        out = render_report(store.rows_for_report(args.since))
+        intensity = render_intensity(store.intensity_by_model())
+        if intensity:
+            out += "\n\n" + intensity
         print(out)
         return 0
 
