@@ -18,6 +18,11 @@ class ClaudeCodeCollector(Collector):
         self.root = os.path.expanduser(root)
 
     def collect(self) -> Iterator[InferenceEvent]:
+        # `root` peut être un répertoire (tous les transcripts) ou un fichier
+        # unique (transcript de la session courante, pour la statusline).
+        if os.path.isfile(self.root):
+            yield from self._parse_file(self.root)
+            return
         pattern = os.path.join(self.root, "**", "*.jsonl")
         for path in glob.glob(pattern, recursive=True):
             yield from self._parse_file(path)

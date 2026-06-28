@@ -76,7 +76,9 @@ Le projet fournit le skill **`/agent-carbon-report`** (dans `skills/`). L'instal
 
 ## Statusline dans Claude Code
 
-Le câblage passe par le script versionné **`scripts/statusline.sh [DB]`** (résout le binaire, lit la base, résilient — ligne vide plutôt qu'une erreur). L'installeur l'inscrit dans `~/.claude/settings.json` :
+Dans Claude Code, la statusline affiche l'impact de la **session en cours** : Claude Code transmet la session (`session_id`, `transcript_path`) sur stdin ; la commande ingère le transcript courant (idempotent) et filtre sur cette session. En lancement manuel (sans stdin), elle retombe sur le **total global** (pratique pour prévisualiser).
+
+Le câblage passe par le script versionné **`scripts/statusline.sh [DB]`** (résout le binaire, lit la base, transmet stdin, résilient — ligne vide plutôt qu'une erreur). L'installeur l'inscrit dans `~/.claude/settings.json` :
 
 - s'il n'y a pas de statusline → il ajoute la nôtre ;
 - si la statusline est déjà à nous → il met à jour le chemin ;
