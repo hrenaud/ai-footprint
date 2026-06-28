@@ -142,6 +142,6 @@ fi
 
 printf '\n'
 ok "Terminé."
-say "Rapport   : agent-carbon report --by model"
+say "Rapport   : agent-carbon report"
 say "Statusline: redémarrez Claude Code pour voir l'impact en bas de l'écran."
 printf '\n'
