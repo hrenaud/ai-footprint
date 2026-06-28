@@ -65,6 +65,9 @@ class ModelParamsResolver:
             return None
         try:
             info = huggingface_hub.model_info(model, timeout=10)
+            # Garde explicite : safetensors peut être None si le repo n'a pas de fichiers .safetensors
+            if info.safetensors is None:
+                return None
             total = float(info.safetensors.total)
         except Exception:
             # 404, offline, repo privé, pas de safetensors… → on échoue proprement
