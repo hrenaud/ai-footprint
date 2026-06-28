@@ -19,7 +19,11 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 ### Modifié
 
 - **Statusline** : ajout de l'**eau** (💧 L) à côté de l'énergie et du GWP.
-- **Rapport CLI** : colonnes du tableau **alignées** (padding) ; ajout d'une section **« Impact total (tous modèles) »** avec les 5 critères et leurs icônes.
+- **Rapport CLI** : tableau aligné via **`tabulate`** (colonnes numériques à droite) ; **échelle d'unité automatique** pour la lisibilité (ex. `4e-05 kgSbeq` → `40 mgSbeq`) ; section **« Impact total (tous modèles) »** avec les 5 critères et leurs icônes.
+
+### Dépendances
+
+- Ajout de **`tabulate>=0.9`** (pur Python) pour le formatage du tableau.
 
 ### Notes
 
