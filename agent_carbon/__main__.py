@@ -1,5 +1,7 @@
 import argparse
+import json
 import os
+import sys
 
 from agent_carbon.collectors.claude_code import ClaudeCodeCollector
 from agent_carbon.config import Config
@@ -20,6 +22,23 @@ def _store(db_path: str) -> SQLiteStore:
 
 def _engine(config: Config) -> EcoLogitsEngine:
     return EcoLogitsEngine(ModelResolver(config.model_aliases))
+
+
+def _read_stdin_json() -> dict | None:
+    """Claude Code passe un JSON de session sur stdin (session_id,
+    transcript_path…). Renvoie None en lancement manuel (terminal)."""
+    if sys.stdin.isatty():
+        return None
+    try:
+        raw = sys.stdin.read()
+    except (OSError, ValueError):
+        return None
+    if not raw.strip():
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return None
 
 
 def _ingest_summary(new_count: int, cov: dict) -> str:
@@ -65,7 +84,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "statusline":
         store = _store(args.db)
-        print(render_statusline(store.rows_for_report(None)))
+        # Claude Code fournit la session courante sur stdin.
+        data = _read_stdin_json()
+        session_id = data.get("session_id") if data else None
+        transcript = data.get("transcript_path") if data else None
+        # Ingestion à la volée du transcript courant (idempotent) → impact à
+        # jour même en cours de session, sans attendre le hook Stop.
+        if transcript and os.path.exists(transcript):
+            store.ingest(ClaudeCodeCollector(transcript).collect(), _engine(config), config)
+        print(render_statusline(store.rows_for_report(session_id=session_id)))
         return 0
 
     return 1

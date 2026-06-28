@@ -24,6 +24,13 @@ def test_event_fields_mapped_from_real_structure():
     assert e.session_id == "sess-A"
 
 
+def test_collect_from_single_file():
+    # le collecteur accepte un fichier unique (transcript de la session courante)
+    f = FIXTURES / "sample.jsonl"
+    events = list(ClaudeCodeCollector(str(f)).collect())
+    assert len(events) == 2  # les 2 messages assistant du fichier
+
+
 def test_stub_collector_raises():
     with pytest.raises(NotImplementedError):
         list(CodexCollector().collect())

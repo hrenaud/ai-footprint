@@ -96,7 +96,8 @@ class SQLiteStore:
             (started, ended, e.session_id),
         )
 
-    def rows_for_report(self, since: str | None) -> list[dict]:
+    def rows_for_report(self, since: str | None = None,
+                        session_id: str | None = None) -> list[dict]:
         sql = (
             "SELECT e.model, e.project, e.timestamp, "
             "i.energy_min, i.energy_max, i.gwp_min, i.gwp_max, "
@@ -105,11 +106,14 @@ class SQLiteStore:
             "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
             "WHERE i.error IS NULL"
         )
-        params: tuple = ()
+        params: list = []
         if since:
             sql += " AND e.timestamp >= ?"
-            params = (since,)
-        return [dict(r) for r in self.conn.execute(sql, params).fetchall()]
+            params.append(since)
+        if session_id:
+            sql += " AND e.session_id = ?"
+            params.append(session_id)
+        return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
 
     def coverage(self) -> dict:
         """Couverture de mesure : total, mesurés (impact estimé), non couverts

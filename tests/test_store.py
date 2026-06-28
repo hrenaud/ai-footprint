@@ -34,6 +34,21 @@ def test_session_duration_computed(tmp_path):
     assert store.total_duration_seconds() == 600.0  # 10 min entre u1 et u2
 
 
+def test_rows_for_report_filters_by_session(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T11:00:00.000Z", "projB", "sess-B", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert len(store.rows_for_report()) == 2
+    only_a = store.rows_for_report(session_id="sess-A")
+    assert len(only_a) == 1
+    assert only_a[0]["project"] == "projA"
+
+
 def test_impact_columns_persisted(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     store.ingest(_events(), _engine(), Config())
