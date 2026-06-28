@@ -17,6 +17,7 @@ _ICON = {"energy": "⚡", "gwp": "🌍", "wcf": "💧", "adpe": "⛏", "pe": "�
 _NAME = {"energy": "Énergie", "gwp": "GWP", "wcf": "Eau", "adpe": "ADPe", "pe": "PE"}
 _SUMMARY_ORDER = ("energy", "gwp", "wcf", "adpe", "pe")
 _BAR_WIDTH = 20
+_TOP_N = 5
 
 
 def _short_model(name: str) -> str:
@@ -81,6 +82,49 @@ def render_report(rows: list[dict]) -> str:
         "Impact basé sur les tokens de sortie."
     )
     return "\n".join(lines)
+
+
+def render_projects(rows: list[dict], show_all: bool = False) -> str:
+    """Projets classés du plus au moins impactant (GWP, valeur centrale).
+    Par défaut limité au top, le reste regroupé en « autres » ; ``show_all``
+    affiche la liste complète."""
+    if not rows:
+        return ""
+    groups: dict[str, list[float]] = {}
+    for row in rows:
+        g = groups.setdefault(row.get("project") or "?", [0.0, 0.0])
+        g[0] += row["gwp_min"]
+        g[1] += row["gwp_max"]
+
+    total = [sum(v[0] for v in groups.values()), sum(v[1] for v in groups.values())]
+    factor, unit = _scale(total[1] or 1.0, "gwp")
+    total_mid = (total[0] + total[1]) / 2 or 1.0
+
+    ranked = sorted(groups.items(), key=lambda kv: kv[1][0] + kv[1][1], reverse=True)
+
+    # (nom affiché, fourchette gwp) ; longue traîne regroupée en « autres ».
+    data: list[tuple[str, list[float]]] = []
+    if not show_all and len(ranked) > _TOP_N + 1:
+        data = [(name, v) for name, v in ranked[:_TOP_N]]
+        tail = ranked[_TOP_N:]
+        data.append((f"autres ({len(tail)} projets)",
+                     [sum(v[0] for _, v in tail), sum(v[1] for _, v in tail)]))
+    else:
+        data = list(ranked)
+
+    values = [_central(v[0], v[1], factor) for _, v in data]
+    name_w = max(len(n) for n, _ in data)
+    val_w = max(len(v) for v in values)
+
+    out = [f"Projets les plus impactants — trié par GWP ({unit}) · valeur centrale (~)", ""]
+    for (name, gwp), val in zip(data, values):
+        share = ((gwp[0] + gwp[1]) / 2) / total_mid
+        filled = min(_BAR_WIDTH, round(share * _BAR_WIDTH))
+        bar = "█" * filled + " " * (_BAR_WIDTH - filled)
+        out.append(f"  {name.ljust(name_w)}  {val.rjust(val_w)}  {bar}  {round(share * 100):>3d}%")
+    out.append("  " + "─" * (name_w + val_w + _BAR_WIDTH + 10))
+    out.append(f"  {'TOTAL'.ljust(name_w)}  {_central(total[0], total[1], factor).rjust(val_w)}")
+    return "\n".join(out)
 
 
 def render_intensity(rows: list[dict]) -> str:

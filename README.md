@@ -33,10 +33,10 @@ Variables optionnelles : `AGENT_CARBON_DIR`, `AGENT_CARBON_DB`, `AGENT_CARBON_RE
 # Parser les transcripts et remplir la base de données
 agent-carbon ingest [--source ~/.claude/projects] [--db ~/.agent-carbon/carbon.db]
 
-# Afficher le rapport : impact total multi-critères (valeur centrale ~ + plage min–max)
-# puis « Intensité par modèle » (tokens/h et émissions/h par heure de travail effectif —
-# compare l'efficacité des modèles).
-agent-carbon report [--db ~/.agent-carbon/carbon.db] [--since ISO8601]
+# Afficher le rapport : impact total multi-critères (valeur centrale ~ + plage min–max),
+# « Projets les plus impactants » (classés par GWP) puis « Intensité par modèle »
+# (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles).
+agent-carbon report [--db ~/.agent-carbon/carbon.db] [--since ISO8601] [--all-projects]
 
 # Afficher une ligne compacte pour la statusline
 agent-carbon statusline [--db ~/.agent-carbon/carbon.db]
@@ -53,6 +53,9 @@ agent-carbon report
 
 # Rapport depuis hier
 agent-carbon report --since 2026-06-26T00:00:00Z
+
+# Lister tous les projets (sinon top 5 + « autres »)
+agent-carbon report --all-projects
 
 # Statusline (sortie minimale)
 agent-carbon statusline

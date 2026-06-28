@@ -7,7 +7,7 @@ from agent_carbon.collectors.claude_code import ClaudeCodeCollector
 from agent_carbon.config import Config
 from agent_carbon.impact.engine import EcoLogitsEngine
 from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.report.cli import render_intensity, render_report
+from agent_carbon.report.cli import render_intensity, render_projects, render_report
 from agent_carbon.statusline.line import render_statusline
 from agent_carbon.store.db import SQLiteStore
 
@@ -62,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     p_rep = sub.add_parser("report", help="afficher le rapport multi-critères")
     p_rep.add_argument("--db", default=_DEFAULT_DB)
     p_rep.add_argument("--since", default=None)
+    p_rep.add_argument("--all-projects", action="store_true",
+                       help="lister tous les projets (sinon top 5 + « autres »)")
 
     p_st = sub.add_parser("statusline", help="ligne compacte pour la statusline")
     p_st.add_argument("--db", default=_DEFAULT_DB)
@@ -78,7 +80,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "report":
         store = _store(args.db)
-        out = render_report(store.rows_for_report(args.since))
+        rows = store.rows_for_report(args.since)
+        out = render_report(rows)
+        projects = render_projects(rows, show_all=args.all_projects)
+        if projects:
+            out += "\n\n" + projects
         intensity = render_intensity(store.intensity_by_model())
         if intensity:
             out += "\n\n" + intensity

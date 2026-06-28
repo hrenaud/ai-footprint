@@ -18,9 +18,10 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 "$AC" report
 ```
 
-2. Le rapport a deux sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
+2. Le rapport a trois sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max), **Projets les plus impactants** (classés par GWP — top 5 par défaut, `--all-projects` pour la liste complète) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
 
 3. Présenter la sortie **sans la déformer** (bloc de code monospace pour garder l'alignement des barres), puis rappeler en une phrase :
    - la valeur centrale est marquée `~` (approximative) ; la plage min–max est à côté (incertitude irréductible sur la région datacenter) ;
+   - les projets sont classés du plus au moins impactant (GWP) ; au-delà de la liste affichée, les autres projets sont regroupés (`--all-projects` pour tout voir) ;
    - l'intensité montre qu'à débit comparable, les modèles n'émettent pas autant (ex. Opus ≫ Haiku par heure) ;
    - les modèles **locaux ou tiers non modélisés** sont comptés mais sans impact estimé (cf. ligne « non couverts »).
