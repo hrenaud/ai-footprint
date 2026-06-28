@@ -57,4 +57,23 @@ class ModelParamsResolver:
             arch=entry.get("arch", "dense"), source=entry.get("source", "user"))
 
     def _from_huggingface(self, provider: str, model: str) -> ParamsResult | None:
-        return None  # implémenté en Task 4
+        try:
+            import huggingface_hub
+        except ImportError:
+            return None
+        if huggingface_hub is None:
+            return None
+        try:
+            info = huggingface_hub.model_info(model, timeout=10)
+            total = float(info.safetensors.total)
+        except Exception:
+            # 404, offline, repo privé, pas de safetensors… → on échoue proprement
+            return None
+        if total <= 0:
+            return None
+        res = ParamsResult(active=total, total=total, arch="dense",
+                           source="huggingface", warnings=["moe-assumed-dense"])
+        self.config.model_params[f"{provider}/{model}"] = {
+            "active": res.active, "total": res.total,
+            "arch": res.arch, "source": res.source}
+        return res
