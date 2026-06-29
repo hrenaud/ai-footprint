@@ -249,6 +249,29 @@ class SQLiteStore:
         return [{"model": r["model"], "tokens": r["toks"] or 0, "events": r["n"]}
                 for r in self.conn.execute(sql, tuple(params))]
 
+    def recompute_errors(self, engine: EcoLogitsEngine, config: Config) -> dict:
+        """Recalcule l'impact de tous les events en erreur (utile après ajout de
+        params). Retourne {before, after} = nombre de non couverts avant/après."""
+        before = self.coverage()["uncovered"]
+        rows = self.conn.execute(
+            "SELECT e.* FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL"
+        ).fetchall()
+        for r in rows:
+            e = InferenceEvent(
+                provider=r["provider"], model=r["model"],
+                input_tokens=r["input_tokens"], output_tokens=r["output_tokens"],
+                cache_creation_tokens=r["cache_creation_tokens"],
+                cache_read_tokens=r["cache_read_tokens"],
+                timestamp=r["timestamp"], project=r["project"],
+                session_id=r["session_id"], msg_id=r["msg_id"],
+                active_seconds=r["active_seconds"], client=r["client"])
+            self._store_impact(e, engine.compute(e, config))
+        self.conn.commit()
+        after = self.coverage()["uncovered"]
+        return {"before": before, "after": after}
+
     def coverage(self) -> dict:
         """Couverture de mesure : total, mesurés (impact estimé), non couverts
         (modèle non modélisé par EcoLogits → event conservé, impact non estimé)."""

@@ -155,3 +155,24 @@ def test_impact_columns_persisted(tmp_path):
     row = store.rows_for_report(None)[0]
     assert row["gwp_min"] > 0 and row["gwp_max"] >= row["gwp_min"]
     assert row["wcf_max"] > 0
+
+
+def test_recompute_errors_resolves_after_params_added(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    # « x:y » : le « : » fait échouer HF sans réseau → event en erreur
+    events = [
+        InferenceEvent("ollama", "x:y", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+        InferenceEvent("anthropic", "<synthetic>", 0, 0, 0, 0,
+                       "2026-06-27T10:01:00.000Z", "p", "s", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert store.coverage()["uncovered"] == 2
+    cfg = Config(electricity_mix_zone="FRA",
+                 model_params={"ollama/x:y": {
+                     "active": 7.0, "total": 7.0, "arch": "dense",
+                     "source": "resolve", "hf_repo": "Org/Repo"}})
+    delta = store.recompute_errors(_engine(), cfg)
+    assert delta == {"before": 2, "after": 1}   # x:y résolu, <synthetic> reste
+    covered = [r for r in store.rows_for_report() if r["model"] == "x:y"]
+    assert covered and covered[0]["gwp_min"] > 0
