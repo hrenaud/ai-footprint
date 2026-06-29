@@ -223,5 +223,5 @@ def render_uncovered(rows: list[dict]) -> str:
         out.append(f"  {r['model'].ljust(name_w)}  {t.rjust(tok_w)}")
     out.append("")
     out.append("  Paramètres inconnus d'EcoLogits → impact non estimable en l'état.")
-    out.append("  → lance `agent-carbon-resolve` pour tenter de les résoudre via Hugging Face.")
+    out.append("  → lance le skill `/agent-carbon-resolve` pour tenter de les résoudre via Hugging Face.")
     return "\n".join(out)

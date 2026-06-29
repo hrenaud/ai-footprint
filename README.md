@@ -42,6 +42,11 @@ agent-carbon report [--db ~/.agent-carbon/carbon.db] [--since ISO8601] [--all-pr
 
 # Afficher une ligne compacte pour la statusline
 agent-carbon statusline [--db ~/.agent-carbon/carbon.db]
+
+# Résoudre les modèles non couverts (mapping nom→repo HF + recompute)
+agent-carbon resolve --list [--json]
+agent-carbon resolve --set "provider/model=org/repo" # params HF + recompute auto
+agent-carbon resolve --forget "provider/model" # annule un mapping
 ```
 
 ### Exemples

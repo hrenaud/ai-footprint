@@ -24,6 +24,7 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 - Sous-commande `agent-carbon models` pour renseigner les modèles non résolus.
 - Skill `agent-carbon-config` pour régler mix et PUE/WUE.
 - **Dimension `client`** : l'outil à l'origine de chaque event (`claude-code`, `opencode`…) est désormais stocké. Nouvelle colonne `events.client` (renseignée par le collector, rétro-remplie à la ré-ingestion), exposée dans `rows_for_report`. Prépare la ventilation de l'impact par client agentique.
+- **`agent-carbon resolve` + skill `/agent-carbon-resolve`** : résolution des modèles non couverts. La CLI mappe un nom de modèle vers un repo Hugging Face (`--set "provider/model=repo"`), en récupère les paramètres (safetensors), recalcule les impacts en base (`--recompute`, automatique après un set) et sait annuler un mapping (`--forget`). Le skill orchestre : le LLM propose le repo HF, la CLI vérifie et recalcule, puis affiche un récap corrigeable. Provenance (`source: "resolve"`, `hf_repo`) persistée dans `config.model_params`.
 
 ### Modifié
 

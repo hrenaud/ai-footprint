@@ -131,7 +131,7 @@ def test_render_uncovered_lists_tokens_and_suggests_resolve():
     out = render_uncovered(rows)
     assert "non couvert" in out.lower()
     assert "~3k" in out                       # tokens générés affichés (3480 → ~3k)
-    assert "agent-carbon-resolve" in out      # invite à lancer la résolution
+    assert "/agent-carbon-resolve" in out      # invite à lancer le skill
     # trié par tokens générés décroissant
     assert out.index("nemotron") < out.index("glm")
 
