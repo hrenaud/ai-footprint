@@ -51,9 +51,11 @@ sont plus « écartés ». La commande `agent-carbon resolve` (et le skill
 `/agent-carbon-resolve`) mappe leur nom brut vers un repo Hugging Face, récupère les
 params (safetensors) et recalcule. Validation terrain : `openai/gpt-oss-120b:free`
 → `openai/gpt-oss-120b` (120,4 Md) et `z-ai/glm-4.5-air:free` → `zai-org/GLM-4.5-Air`
-(110,5 Md) résolus ; **non couverts 82 → 76** (6 events). Restent `<synthetic>` (70,
-exclus du rapport) + `nvidia/nemotron-…:free` et `poolside/laguna-…:free`
-(pas de repo HF public évident — laissés non couverts honnêtement).
+(110,5 Md) résolus. `nvidia/nemotron-3-super-120b-a12b:free` résolu ensuite **en MoE**
+(`nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16`, actif 12 / total 123,6 Md), via
+entrée manuelle (cf. Suite 3). **Non couverts 82 → 73**. Restent `<synthetic>` (70,
+exclus du rapport) + `poolside/laguna-m.1:free` (propriétaire, pas de repo HF —
+laissé non couvert honnêtement).
 
 ## Suite 2 — Gérer le couple actif/total MoE dans `agent-carbon models`
 
@@ -67,6 +69,37 @@ Aujourd'hui le vrai couple n'est atteignable qu'en éditant `model_params` à la
 active≠total (`compute_llm_impacts` + `ParamsResult`). Penser au tier HF : il
 suppose dense (`moe-assumed-dense`) — une déclaration MoE manuelle doit pouvoir
 écraser/préciser l'entrée de cache.
+
+## Suite 3 — MoE dans `agent-carbon resolve --set` (même limite que `models`)
+
+**Limite** : `resolve --set "provider/model=repo"` passe par `fetch_hf_params`, qui
+**suppose dense** (`active=total`, `moe-assumed-dense`). Pour un MoE, le mapper ainsi
+**surestime fortement** l'énergie (EcoLogits calcule sur les params **actifs**). Cas
+terrain : `nemotron-3-super-120b-a12b` (123,6 Md total / 12 Md actifs) — un `--set`
+dense aurait donné ~10× trop. Il a fallu écrire l'entrée à la main
+(`{active:12, total:123.6, arch:"moe"}`) puis `resolve --recompute`.
+
+**À faire** : permettre à `resolve` d'exprimer un couple MoE, p. ex. un flag
+`--active <Md>` accompagnant `--set` (total = safetensors HF, actif = saisi), ou un
+`--set-moe "provider/model=repo:actif"`. Stocker `arch="moe"`. Même moteur que la
+Suite 2 (`compute_llm_impacts` gère déjà active≠total). Lié à la Suite 2 (`models`).
+
+## Suite 4 — Étape « recherche web » dans la cascade de résolution (à vérifier)
+
+**Idée** : la cascade actuelle de `ModelParamsResolver.resolve` est
+**1) registre EcoLogits → 2) cache config → 3) Hugging Face → file d'attente**. Or
+pour les modèles routés sous un nom non-HF (catalogues NVIDIA NIM `build.nvidia.com`,
+ids `:free` exotiques), le repo HF réel n'est pas déductible mécaniquement. Une
+**recherche web** le retrouve (fait à la main pour nemotron : web → repo HF BF16 +
+archi MoE + couple actif/total).
+
+**Cascade cible (à valider)** : 1) EcoLogits → 2) Hugging Face → 3) **WebSearch**
+(trouver le repo HF canonique + l'archi/params depuis la fiche modèle) → 4) **input
+utilisateur**. Cette étape 3 relève du skill `/agent-carbon-resolve` (le LLM fait la
+recherche et propose le repo + couple MoE), pas du code CLI pur — la CLI reste le
+vérificateur déterministe (HF) et le persisteur. À cadrer : où vit l'étape web
+(skill vs helper), comment restituer l'archi MoE (cf. Suite 3), garde-fou « ne pas
+inventer » conservé (params toujours issus de HF, jamais du texte web).
 
 ## Rappels d'unité (piège)
 
