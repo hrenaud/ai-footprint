@@ -51,6 +51,24 @@ def test_intensity_by_model(tmp_path):
     assert d["gwp"] > 0
 
 
+def test_intensity_by_model_filters_by_since(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "u1", active_seconds=3600.0),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
+                       "2026-06-28T10:00:00.000Z", "p", "s", "u2", active_seconds=3600.0),
+    ]
+    store.ingest(events, _engine(), Config())
+    # sans filtre : les 2 events agrégés (2 h, 1200 tokens)
+    assert store.intensity_by_model()[0]["tokens"] == 1200
+    # avec since : seul le 2e event compte
+    data = store.intensity_by_model(since="2026-06-28T00:00:00.000Z")
+    assert len(data) == 1
+    assert data[0]["tokens"] == 600
+    assert abs(data[0]["hours"] - 1.0) < 0.01
+
+
 def test_intensity_excludes_events_without_active_time(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [

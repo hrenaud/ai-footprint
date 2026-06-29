@@ -4,6 +4,10 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 
 ## [Non publié]
 
+### Corrigé
+
+- **`report --since` ne filtrait pas la section « Intensité par modèle »** : `intensity_by_model()` agrégeait tout l'historique quelle que soit la plage demandée. La méthode accepte désormais `since` et la commande `report` le propage — toutes les sections respectent `--since` de façon cohérente.
+
 ### Ajouté
 
 - **MVP** : compteur d'impact multi-critères (énergie, GWP, eau, ADPe, PE) avec fourchettes min–max, pour les sessions Claude Code.

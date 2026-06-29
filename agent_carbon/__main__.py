@@ -160,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
         uncovered = render_uncovered(store.uncovered_by_model(args.since))
         if uncovered:
             out += "\n\n" + uncovered
-        intensity = render_intensity(store.intensity_by_model())
+        intensity = render_intensity(store.intensity_by_model(args.since))
         if intensity:
             out += "\n\n" + intensity
         print(out)

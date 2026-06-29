@@ -165,10 +165,11 @@ class SQLiteStore:
             params.append(session_id)
         return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
 
-    def intensity_by_model(self) -> list[dict]:
+    def intensity_by_model(self, since: str | None = None) -> list[dict]:
         """Par modèle, sur les seuls messages à temps actif mesuré (>0) et
         impact estimé : heures actives, tokens de sortie, et valeur centrale
-        des 5 critères. Permet de calculer tok/h et impact/h."""
+        des 5 critères. Permet de calculer tok/h et impact/h. ``since`` filtre
+        la plage (cohérent avec les autres sections du rapport)."""
         sql = (
             "SELECT e.model AS model, SUM(e.active_seconds) AS sec, "
             "SUM(e.output_tokens) AS toks, "
@@ -179,11 +180,15 @@ class SQLiteStore:
             "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
             "FROM events e JOIN impacts i "
             "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL AND e.active_seconds > 0 "
-            "GROUP BY e.model"
+            "WHERE i.error IS NULL AND e.active_seconds > 0"
         )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.model"
         out = []
-        for r in self.conn.execute(sql):
+        for r in self.conn.execute(sql, tuple(params)):
             hours = (r["sec"] or 0) / 3600.0
             if hours <= 0:
                 continue
