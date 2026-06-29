@@ -19,19 +19,11 @@ active≠total (`compute_llm_impacts` + `ParamsResult`). Penser au tier HF : il
 suppose dense (`moe-assumed-dense`) — une déclaration MoE manuelle doit pouvoir
 écraser/préciser l'entrée de cache.
 
-## Suite 3 — MoE dans `agent-carbon resolve --set` (même limite que `models`)
-
-**Limite** : `resolve --set "provider/model=repo"` passe par `fetch_hf_params`, qui
-**suppose dense** (`active=total`, `moe-assumed-dense`). Pour un MoE, le mapper ainsi
-**surestime fortement** l'énergie (EcoLogits calcule sur les params **actifs**). Cas
-terrain : `nemotron-3-super-120b-a12b` (123,6 Md total / 12 Md actifs) et
-`laguna-m.1` (225,8 / 23) — un `--set` dense aurait donné ~10× trop. Il a fallu
-écrire l'entrée à la main (`{active:…, total:…, arch:"moe"}`) puis `resolve --recompute`.
-
-**À faire** : permettre à `resolve` d'exprimer un couple MoE, p. ex. un flag
-`--active <Md>` accompagnant `--set` (total = safetensors HF, actif = saisi), ou un
-`--set-moe "provider/model=repo:actif"`. Stocker `arch="moe"`. Même moteur que la
-Suite 2 (`compute_llm_impacts` gère déjà active≠total). Lié à la Suite 2 (`models`).
+> **Suite 3 livrée** (couple MoE dans `resolve --set`) : `--set "P/M=repo:<actifs>"`
+> déclare un MoE — total = safetensors HF, actif = saisi, `arch="moe"`. Le `:` est
+> sans ambiguïté (un repo HF n'en contient pas). Garde-fous : actif `> 0` et `≤ total`.
+> Le skill `/agent-carbon-resolve` propose l'actif (souvent lisible dans le nom, ex.
+> `-a12b`). Reste la Suite 2 (`models` interactif, encore dense-only).
 
 ## Suite 4 — Étape « recherche web » dans la cascade de résolution (à vérifier)
 

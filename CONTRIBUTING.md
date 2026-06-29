@@ -144,8 +144,8 @@ Lancer : `.venv/bin/python -m pytest -q`.
 ## Backlog technique
 
 Voir [`docs/TODO-self-hosted-models.md`](docs/TODO-self-hosted-models.md) : couple MoE
-dans `models` et `resolve --set` (aujourd'hui dense-only), étape WebSearch dans la
-cascade de résolution.
+dans `models` (la commande interactive, encore dense-only) et étape WebSearch dans la
+cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère désormais les MoE.
 
 ## Hors périmètre actuel (coutures posées)
 

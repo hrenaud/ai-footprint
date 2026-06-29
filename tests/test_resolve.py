@@ -1,7 +1,7 @@
 import sys
 import types
 from agent_carbon.config import Config
-from agent_carbon.resolve.cli import parse_mapping, set_mappings, forget
+from agent_carbon.resolve.cli import parse_mapping, set_mappings, forget, _print_set
 
 
 def _fake_hf(total, monkeypatch):
@@ -12,8 +12,55 @@ def _fake_hf(total, monkeypatch):
 
 
 def test_parse_mapping_splits_on_first_equals():
+    # Le « : » de la clé (glm:free, à gauche du =) ne doit pas être confondu
+    # avec le séparateur d'actif MoE (côté repo, à droite du =).
     assert parse_mapping("anthropic/z-ai/glm:free=zai-org/GLM-4.5-Air") == (
-        "anthropic/z-ai/glm:free", "zai-org/GLM-4.5-Air")
+        "anthropic/z-ai/glm:free", "zai-org/GLM-4.5-Air", None)
+
+
+def test_parse_mapping_extracts_moe_active():
+    # parse_mapping reste un découpeur pur : l'actif est renvoyé brut (str),
+    # la conversion/validation float vit dans set_mappings.
+    assert parse_mapping("nvidia/nemotron=org/repo:12") == (
+        "nvidia/nemotron", "org/repo", "12")
+
+
+def test_set_mappings_moe_uses_active_with_hf_total(monkeypatch):
+    _fake_hf(123_600_000_000, monkeypatch)  # total HF = 123,6 Md
+    cfg = Config()
+    results = set_mappings(cfg, ["nvidia/nemotron=org/repo:12"])
+    assert results[0]["ok"] is True
+    entry = cfg.model_params["nvidia/nemotron"]
+    assert entry["active"] == 12.0
+    assert entry["total"] == 123.6
+    assert entry["arch"] == "moe"
+    assert entry["source"] == "resolve"
+
+
+def test_print_set_shows_moe_couple(monkeypatch, capsys):
+    _fake_hf(123_600_000_000, monkeypatch)
+    results = set_mappings(Config(), ["nvidia/nemotron=org/repo:12"])
+    _print_set(results, as_json=False)
+    out = capsys.readouterr().out
+    assert "MoE 12.0 actifs / 123.6 Md" in out
+
+
+def test_set_mappings_moe_rejects_bad_active(monkeypatch):
+    _fake_hf(123_600_000_000, monkeypatch)
+    cfg = Config()
+    results = set_mappings(cfg, ["nvidia/nemotron=org/repo:abc"])
+    assert results[0]["ok"] is False
+    assert results[0]["error"] == "active-format"
+    assert "nvidia/nemotron" not in cfg.model_params
+
+
+def test_set_mappings_moe_rejects_active_above_total(monkeypatch):
+    _fake_hf(120_000_000_000, monkeypatch)  # total = 120 Md
+    cfg = Config()
+    results = set_mappings(cfg, ["nvidia/nemotron=org/repo:200"])  # actif > total
+    assert results[0]["ok"] is False
+    assert results[0]["error"] == "active-gt-total"
+    assert "nvidia/nemotron" not in cfg.model_params
 
 
 def test_set_mappings_writes_params_with_provenance(monkeypatch):

@@ -7,30 +7,54 @@ from agent_carbon.impact.resolver import ModelResolver
 from agent_carbon.store.db import SQLiteStore
 
 
-def parse_mapping(spec: str) -> tuple[str, str]:
-    """ 'provider/model=hf_repo' → ('provider/model', 'hf_repo'). Coupe au 1er '='."""
+def parse_mapping(spec: str) -> tuple[str, str | None, float | None]:
+    """ 'provider/model=hf_repo[:actif]' → (clé, repo, actif|None). Coupe au 1er '='.
+    Un suffixe « :actif » côté repo déclare un MoE (params actifs en Md ; le total
+    vient de HF). Le « : » est sans ambiguïté : un repo HF n'en contient pas (la
+    révision se note « @ »), et le « : » d'une clé reste à gauche du « = »."""
     key, _, repo = spec.partition("=")
-    return key.strip(), repo.strip()
+    repo, sep, active_str = repo.strip().partition(":")
+    active = active_str if sep else None
+    return key.strip(), repo, active
 
 
 def set_mappings(config, specs: list[str]) -> list[dict]:
     """Pour chaque mapping, récupère les params sur HF et les persiste sous la clé
-    provider/model avec provenance. Échec géré par item, sans interrompre les autres."""
+    provider/model avec provenance. Un suffixe « :actif » déclare un MoE (total HF,
+    actif saisi). Échec géré par item, sans interrompre les autres."""
     results = []
     for spec in specs:
-        key, repo = parse_mapping(spec)
+        key, repo, active_str = parse_mapping(spec)
         if not key or not repo:
             results.append({"key": key, "repo": repo, "ok": False, "error": "format"})
             continue
+        active = None
+        if active_str is not None:
+            try:
+                active = float(active_str)
+            except ValueError:
+                results.append({"key": key, "repo": repo, "ok": False,
+                                "error": "active-format"})
+                continue
         params = fetch_hf_params(repo)
         if params is None:
             results.append({"key": key, "repo": repo, "ok": False,
                             "error": "hf-unresolved"})
             continue
+        # MoE déclaré : le total reste celui de HF (safetensors), l'actif est saisi.
+        if active is not None:
+            if active <= 0 or active > params.total:
+                results.append({"key": key, "repo": repo, "ok": False,
+                                "error": "active-gt-total"})
+                continue
+            entry_active, arch = active, "moe"
+        else:
+            entry_active, arch = params.active, params.arch
         config.model_params[key] = {
-            "active": params.active, "total": params.total, "arch": params.arch,
+            "active": entry_active, "total": params.total, "arch": arch,
             "source": "resolve", "hf_repo": repo}
-        results.append({"key": key, "repo": repo, "ok": True, "params": params.total})
+        results.append({"key": key, "repo": repo, "ok": True,
+                        "params": params.total, "active": entry_active, "arch": arch})
     return results
 
 
@@ -46,7 +70,11 @@ def _print_set(results: list[dict], as_json: bool) -> None:
         return
     for r in results:
         if r["ok"]:
-            print(f"✓ {r['key']} → {r['repo']} ({r['params']:.1f} Md)")
+            if r.get("arch") == "moe":
+                detail = f"MoE {r['active']:.1f} actifs / {r['params']:.1f} Md"
+            else:
+                detail = f"{r['params']:.1f} Md"
+            print(f"✓ {r['key']} → {r['repo']} ({detail})")
         else:
             print(f"✗ {r['key']} → {r['repo'] or '?'} : {r['error']}")
 
