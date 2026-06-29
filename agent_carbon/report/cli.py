@@ -127,12 +127,14 @@ def render_projects(rows: list[dict], show_all: bool = False) -> str:
     return "\n".join(out)
 
 
-# Colonnes du tableau d'intensité (ordre uniforme GWP → Eau → ADPe → Énergie → PE)
+# Colonnes des tableaux par modèle (ordre uniforme GWP → Eau → ADPe → Énergie → PE)
 # avec icône + libellé court en en-tête (icônes seulement là, pour ne pas casser
 # l'alignement des cellules : un émoji occupe 2 cellules visuelles mais 1 caractère).
 _INTENSITY_COLS = ("gwp", "wcf", "adpe", "energy", "pe")
 _COL_HEADER = {"gwp": "🌍 GWP/h", "wcf": "💧 Eau/h", "adpe": "⛏ ADPe/h",
                "energy": "⚡ Éner./h", "pe": "🔥 PE/h"}
+_TOTAL_HEADER = {"gwp": "🌍 GWP", "wcf": "💧 Eau", "adpe": "⛏ ADPe",
+                 "energy": "⚡ Éner.", "pe": "🔥 PE"}
 _NAME_CAP = 18
 
 
@@ -148,32 +150,58 @@ def _intensity_cell(value: float, criterion: str) -> str:
     return f"~{value * factor:.3g} {unit}"
 
 
+def _model_table(title: str, sec_header: str, headers: dict[str, str],
+                 rows: list[dict]) -> str:
+    """Tableau aligné « une ligne par modèle » : colonne modèle, une seconde
+    colonne libre (tok/h, tokens…) et les 5 critères. ``rows`` :
+    ``{name, second, sort, cells:{crit:str}}``, trié par ``sort`` décroissant."""
+    if not rows:
+        return ""
+    rows = sorted(rows, key=lambda d: d["sort"], reverse=True)
+    name_w = max(len("modèle"), max(len(d["name"]) for d in rows))
+    sec_w = max(len(sec_header), max(len(d["second"]) for d in rows))
+    col_w = {c: max(len(headers[c]), max(len(d["cells"][c]) for d in rows))
+             for c in _INTENSITY_COLS}
+
+    def _line(name: str, sec: str, cell) -> str:
+        cols = "  ".join(cell(c).ljust(col_w[c]) for c in _INTENSITY_COLS)
+        return f"  {name.ljust(name_w)}  {sec.rjust(sec_w)}  {cols}"
+
+    out = [title, "", _line("modèle", sec_header, lambda c: headers[c])]
+    for d in rows:
+        out.append(_line(d["name"], d["second"], lambda c, d=d: d["cells"][c]))
+    return "\n".join(out)
+
+
 def render_intensity(rows: list[dict]) -> str:
     """Intensité par modèle, par heure de travail effectif, en tableau aligné :
     une ligne par modèle (débit tokens/h + 5 critères d'émission /h)."""
-    if not rows:
+    table = [{
+        "name": _truncate(_short_model(r["model"])),
+        "second": _kilo(r["tokens"] / r["hours"]),
+        "sort": r["tokens"] / r["hours"],
+        "cells": {c: _intensity_cell(r[c] / r["hours"], c) for c in _INTENSITY_COLS},
+    } for r in rows]
+    return _model_table(
+        "Intensité par modèle — par heure de travail effectif (~ central)",
+        "tok/h", _COL_HEADER, table)
+
+
+def render_tokens_by_model(rows: list[dict]) -> str:
+    """Tokens totaux utilisés par modèle sur la plage + impact central des 5
+    critères, en tableau aligné (une ligne par modèle), trié par tokens."""
+    table = [{
+        "name": _truncate(_short_model(r["model"])),
+        "second": _kilo(r["tokens"]),
+        "sort": r["tokens"],
+        "cells": {c: _intensity_cell(r[c], c) for c in _INTENSITY_COLS},
+    } for r in rows]
+    out = _model_table(
+        "Tokens & impact par modèle — total sur la plage (~ central)",
+        "tokens", _TOTAL_HEADER, table)
+    if not out:
         return ""
-    data = []
-    for r in rows:
-        perh = {c: r[c] / r["hours"] for c in CRITERIA}
-        data.append({
-            "name": _truncate(_short_model(r["model"])),
-            "tph": _kilo(r["tokens"] / r["hours"]),
-            "sort": r["tokens"] / r["hours"],
-            "cells": {c: _intensity_cell(perh[c], c) for c in _INTENSITY_COLS},
-        })
-    data.sort(key=lambda d: d["sort"], reverse=True)
-    name_w = max(len("modèle"), max(len(d["name"]) for d in data))
-    tph_w = max(len("tok/h"), max(len(d["tph"]) for d in data))
-    col_w = {c: max(len(_COL_HEADER[c]), max(len(d["cells"][c]) for d in data))
-             for c in _INTENSITY_COLS}
-
-    def _row(name: str, tph: str, cell) -> str:
-        cols = "  ".join(cell(c).ljust(col_w[c]) for c in _INTENSITY_COLS)
-        return f"  {name.ljust(name_w)}  {tph.rjust(tph_w)}  {cols}"
-
-    out = ["Intensité par modèle — par heure de travail effectif (~ central)", ""]
-    out.append(_row("modèle", "tok/h", lambda c: _COL_HEADER[c]))
-    for d in data:
-        out.append(_row(d["name"], d["tph"], lambda c, d=d: d["cells"][c]))
-    return "\n".join(out)
+    return out + (
+        "\n\n  « tokens » = total utilisé (entrée + sortie + cache) ; "
+        "l'impact reste calculé sur les seuls tokens de sortie."
+    )

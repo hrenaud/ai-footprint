@@ -18,7 +18,7 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 "$AC" report
 ```
 
-2. Le rapport a trois sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max), **Projets les plus impactants** (classés par GWP — top 5 par défaut, `--all-projects` pour la liste complète) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
+2. Le rapport a quatre sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max), **Projets les plus impactants** (classés par GWP — top 5 par défaut, `--all-projects` pour la liste complète), **Tokens & impact par modèle** (tokens totaux utilisés sur la plage + impact des 5 critères par modèle) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
 
 3. Présenter la sortie **sans la déformer** (bloc de code monospace pour garder l'alignement des barres), puis rappeler en une phrase :
    - la valeur centrale est marquée `~` (approximative) ; la plage min–max est à côté (incertitude irréductible sur la région datacenter) ;

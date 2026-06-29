@@ -1,4 +1,9 @@
-from agent_carbon.report.cli import render_intensity, render_projects, render_report
+from agent_carbon.report.cli import (
+    render_intensity,
+    render_projects,
+    render_report,
+    render_tokens_by_model,
+)
 
 
 ROWS = [
@@ -84,6 +89,37 @@ def test_render_intensity_fixed_unit_per_cell_is_readable():
 
 def test_render_intensity_empty():
     assert render_intensity([]) == ""
+
+
+def test_render_tokens_by_model_one_line_per_model_with_impact():
+    rows = [
+        {"model": "claude-opus-4-8", "tokens": 566000,
+         "energy": 5.0, "gwp": 1.07, "adpe": 5e-6, "pe": 50.0, "wcf": 9.0},
+        {"model": "claude-haiku-4-5", "tokens": 276000,
+         "energy": 1.0, "gwp": 0.014, "adpe": 1e-6, "pe": 10.0, "wcf": 2.0},
+    ]
+    out = render_tokens_by_model(rows)
+    assert "tokens" in out                    # en-tête de la colonne tokens
+    assert "modèle" in out
+    for icon in ("🌍", "⚡", "💧", "⛏", "🔥"):
+        assert icon in out
+    # une ligne par modèle : nom + tokens totaux + impact GWP
+    opus_line = next(l for l in out.splitlines() if "opus-4-8" in l)
+    assert "~566k" in opus_line and "kgCO2eq" in opus_line
+    # trié par tokens décroissant : opus (566k) avant haiku (276k)
+    assert out.index("opus-4-8") < out.index("haiku-4-5")
+
+
+def test_render_tokens_by_model_notes_tokens_vs_impact_basis():
+    rows = [{"model": "claude-opus-4-8", "tokens": 566000,
+             "energy": 5.0, "gwp": 1.07, "adpe": 5e-6, "pe": 50.0, "wcf": 9.0}]
+    out = render_tokens_by_model(rows)
+    # le rapport doit préciser que « tokens » = tous types, impact = tokens de sortie
+    assert "entrée" in out and "sortie" in out and "cache" in out
+
+
+def test_render_tokens_by_model_empty():
+    assert render_tokens_by_model([]) == ""
 
 
 def _proj_rows(specs):

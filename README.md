@@ -34,7 +34,8 @@ Variables optionnelles : `AGENT_CARBON_DIR`, `AGENT_CARBON_DB`, `AGENT_CARBON_RE
 agent-carbon ingest [--source ~/.claude/projects] [--db ~/.agent-carbon/carbon.db]
 
 # Afficher le rapport : impact total multi-critères (valeur centrale ~ + plage min–max),
-# « Projets les plus impactants » (classés par GWP) puis « Intensité par modèle »
+# « Projets les plus impactants » (classés par GWP), « Tokens & impact par modèle »
+# (tokens totaux utilisés sur la plage + impact des 5 critères) puis « Intensité par modèle »
 # (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles).
 agent-carbon report [--db ~/.agent-carbon/carbon.db] [--since ISO8601] [--all-projects]
 

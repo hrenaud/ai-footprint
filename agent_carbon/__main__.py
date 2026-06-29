@@ -8,7 +8,12 @@ from agent_carbon.config import Config, DEFAULT_CONFIG_PATH
 from agent_carbon.config_detect import detect_zone, system_locale
 from agent_carbon.impact.engine import EcoLogitsEngine
 from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.report.cli import render_intensity, render_projects, render_report
+from agent_carbon.report.cli import (
+    render_intensity,
+    render_projects,
+    render_report,
+    render_tokens_by_model,
+)
 from agent_carbon.statusline.line import render_statusline
 from agent_carbon.store.db import SQLiteStore
 
@@ -137,6 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         projects = render_projects(rows, show_all=args.all_projects)
         if projects:
             out += "\n\n" + projects
+        tokens = render_tokens_by_model(store.tokens_by_model(args.since))
+        if tokens:
+            out += "\n\n" + tokens
         intensity = render_intensity(store.intensity_by_model())
         if intensity:
             out += "\n\n" + intensity
