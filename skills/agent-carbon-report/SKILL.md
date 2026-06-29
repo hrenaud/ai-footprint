@@ -14,11 +14,20 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 [ -x "$AC" ] || { echo "agent-carbon non installé. Installer : curl -fsSL https://raw.githubusercontent.com/hrenaud/agent-carbon/main/install.sh | bash"; exit 1; }
 
 # Rafraîchit la DB (silencieux), puis affiche le rapport.
+# IMPORTANT : transmets TELS QUELS les arguments fournis par l'utilisateur (après
+# /agent-carbon-report). Ne les remappe pas, n'en invente pas. Remplace [FLAGS]
+# ci-dessous par exactement ce que l'utilisateur a passé (ou rien).
 "$AC" ingest >/dev/null 2>&1 || true
-"$AC" report
+"$AC" report [FLAGS]
 ```
 
-2. Le rapport a cinq sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max), **Projets les plus impactants** (classés par GWP — top 5 par défaut, `--all-projects` pour la liste complète), **Tokens & impact par modèle** (tokens totaux utilisés sur la plage + impact des 5 critères par modèle), **Modèles non couverts** (tokens générés par les modèles dont l'impact n'est pas estimé, avec invite à lancer `agent-carbon-resolve`) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Filtre période possible : `--since <ISO8601>` (ex. `--since 2026-06-01T00:00:00Z`).
+**Flags de `report` (les seuls valides — ne pas en inventer ni en remapper) :**
+
+- `--since <ISO8601>` : limiter à une période (ex. `--since 2026-06-01T00:00:00Z`).
+- `--all-projects` : lister tous les projets (sinon top 5 + « autres »).
+- `--detail` (alias `--detailed`) : afficher les **fourchettes min–max** par modèle/projet au lieu de la valeur centrale `~`. **`--detail` ≠ `--all-projects`** : ne pas confondre.
+
+2. Le rapport a cinq sections : **Impact total** (5 critères, valeur centrale `~` + plage min–max), **Projets les plus impactants** (classés par GWP — top 5 par défaut, `--all-projects` pour la liste complète), **Tokens & impact par modèle** (tokens totaux utilisés sur la plage + impact des 5 critères par modèle), **Modèles non couverts** (tokens générés par les modèles dont l'impact n'est pas estimé, avec invite à lancer `agent-carbon-resolve`) et **Intensité par modèle** (tokens/h et émissions/h par heure de travail effectif — compare l'efficacité des modèles). Avec `--detail`, les tableaux par modèle/projet passent en min–max.
 
 3. Présenter la sortie **sans la déformer** (bloc de code monospace pour garder l'alignement des barres), puis rappeler en une phrase :
    - la valeur centrale est marquée `~` (approximative) ; la plage min–max est à côté (incertitude irréductible sur la région datacenter) ;
