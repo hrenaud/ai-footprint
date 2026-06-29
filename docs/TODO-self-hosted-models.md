@@ -13,7 +13,7 @@
 - File `pending_models` en DB + sous-commande `agent-carbon models` (interactive, hors batch).
 - Skill `agent-carbon-config`.
 - **Bug d'unité corrigé** : EcoLogits attend les params **en milliards** ; le tier HF convertit désormais `safetensors.total ÷ 1e9`, la saisie `models` demande des milliards. (Le tier registre était déjà correct.)
-- 64 tests verts.
+- Suite de tests verte (TDD).
 
 ## Validation terrain (vraies données, `~/.agent-carbon/carbon.db`)
 
@@ -49,13 +49,18 @@ Qwen3.6-35B-A3B confirmée ≈ **12,4 gCO₂eq/M tokens**. Params persistés dan
 **Suite (2026-06-29) — `agent-carbon-resolve`** : les modèles externes `:free` ne
 sont plus « écartés ». La commande `agent-carbon resolve` (et le skill
 `/agent-carbon-resolve`) mappe leur nom brut vers un repo Hugging Face, récupère les
-params (safetensors) et recalcule. Validation terrain : `openai/gpt-oss-120b:free`
-→ `openai/gpt-oss-120b` (120,4 Md) et `z-ai/glm-4.5-air:free` → `zai-org/GLM-4.5-Air`
-(110,5 Md) résolus. `nvidia/nemotron-3-super-120b-a12b:free` résolu ensuite **en MoE**
-(`nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16`, actif 12 / total 123,6 Md), via
-entrée manuelle (cf. Suite 3). **Non couverts 82 → 73**. Restent `<synthetic>` (70,
-exclus du rapport) + `poolside/laguna-m.1:free` (propriétaire, pas de repo HF —
-laissé non couvert honnêtement).
+params (safetensors) et recalcule. Validation terrain (les 4 modèles tiers résolus) :
+
+- `openai/gpt-oss-120b:free` → `openai/gpt-oss-120b` (120,4 Md, dense)
+- `z-ai/glm-4.5-air:free` → `zai-org/GLM-4.5-Air` (110,5 Md, dense)
+- `nvidia/nemotron-3-super-120b-a12b:free` → `nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16` (actif 12 / total 123,6 Md, **MoE**)
+- `poolside/laguna-m.1:free` → `poolside/Laguna-M.1` (actif 23 / total 225,8 Md, **MoE**)
+
+Les deux MoE ont nécessité une **entrée manuelle** (`resolve --set` suppose dense —
+cf. Suite 3). **Non couverts 82 → 70** : ne restent que les 70 `<synthetic>` (0 token,
+exclus du rapport). 100 % des vrais events à impact estimable sont couverts.
+(Note : `poolside/laguna` n'est PAS propriétaire-fermé — poolside a publié les poids
+sur HF ; l'hypothèse initiale « pas de repo HF » était fausse.)
 
 ## Suite 2 — Gérer le couple actif/total MoE dans `agent-carbon models`
 
