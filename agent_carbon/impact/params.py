@@ -26,6 +26,8 @@ def fetch_hf_params(repo: str) -> ParamsResult | None:
         info = huggingface_hub.model_info(repo, timeout=10)
         if info.safetensors is None:
             return None
+        # EcoLogits attend les params en milliards ; safetensors.total est un
+        # compte brut → ÷ 1e9.
         total = float(info.safetensors.total) / 1e9
     except Exception:
         return None
@@ -81,7 +83,9 @@ class ModelParamsResolver:
             arch=entry.get("arch", "dense"), source=entry.get("source", "user"))
 
     def _from_huggingface(self, provider: str, model: str) -> ParamsResult | None:
-        """Tier 3 : params depuis le Hub via fetch_hf_params, puis mise en cache."""
+        """Tier 3 : params depuis le Hub via fetch_hf_params, puis mise en cache.
+        arch toujours « dense » ici (fetch_hf_params suppose dense) ; l'affinage
+        MoE est différé (cf. « Suite 2 » de docs/TODO-self-hosted-models.md)."""
         res = fetch_hf_params(model)
         if res is None:
             return None
