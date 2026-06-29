@@ -23,6 +23,12 @@ from agent_carbon.store.db import SQLiteStore
 _DEFAULT_SOURCE = os.path.expanduser("~/.claude/projects")
 _DEFAULT_DB = os.path.expanduser("~/.agent-carbon/carbon.db")
 
+# Rappel affiché en pied de chaque rapport : options et aide.
+_REPORT_FOOTER = (
+    "ℹ️  Options : `agent-carbon report --help` "
+    "(--since <date> · --detail · --all-projects) · aide complète : skill `/agent-carbon-help`"
+)
+
 
 def _store(db_path: str) -> SQLiteStore:
     os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
@@ -168,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
         intensity = render_intensity(store.intensity_by_model(args.since), detailed=args.detail)
         if intensity:
             out += "\n\n" + intensity
+        out += "\n\n" + _REPORT_FOOTER
         print(out)
         return 0
 

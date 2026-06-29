@@ -16,6 +16,8 @@ def test_ingest_then_report(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "opus-4-8" in out  # présent dans la section Intensité
     assert "GWP" in out
+    assert "--help" in out             # pied de rapport : rappel des options
+    assert "/agent-carbon-help" in out  # renvoi au skill d'aide
 
 
 def test_report_detail_flag_shows_minmax(tmp_path, capsys):
