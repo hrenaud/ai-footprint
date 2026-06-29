@@ -61,6 +61,38 @@ def test_intensity_excludes_events_without_active_time(tmp_path):
     assert store.intensity_by_model() == []
 
 
+def test_tokens_by_model_sums_all_token_types(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    # input 100 + output 200 + cache_creation 50 + cache_read 30 = 380 par event
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 50, 30,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 50, 30,
+                       "2026-06-27T11:00:00.000Z", "p", "s", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    data = store.tokens_by_model()
+    assert len(data) == 1
+    d = data[0]
+    assert d["model"] == "claude-opus-4-8"
+    assert d["tokens"] == 760  # 380 × 2
+    assert d["gwp"] > 0
+
+
+def test_tokens_by_model_filters_by_since(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-28T10:00:00.000Z", "p", "s", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    data = store.tokens_by_model(since="2026-06-28T00:00:00.000Z")
+    assert len(data) == 1
+    assert data[0]["tokens"] == 300  # seul le 2e event (100+200)
+
+
 def test_rows_for_report_filters_by_session(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [

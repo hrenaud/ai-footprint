@@ -197,6 +197,40 @@ class SQLiteStore:
             })
         return out
 
+    def tokens_by_model(self, since: str | None = None) -> list[dict]:
+        """Par modèle, sur la plage (``since`` optionnel) : tokens totaux
+        utilisés (entrée + sortie + cache) et valeur centrale des 5 critères
+        d'impact. Seuls les messages à impact estimé (error IS NULL) comptent."""
+        sql = (
+            "SELECT e.model AS model, "
+            "SUM(e.input_tokens + e.output_tokens "
+            "+ e.cache_creation_tokens + e.cache_read_tokens) AS toks, "
+            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
+            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
+            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
+            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
+            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.model"
+        out = []
+        for r in self.conn.execute(sql, tuple(params)):
+            out.append({
+                "model": r["model"], "tokens": r["toks"] or 0,
+                "energy": (r["emin"] + r["emax"]) / 2,
+                "gwp": (r["gmin"] + r["gmax"]) / 2,
+                "adpe": (r["amin"] + r["amax"]) / 2,
+                "pe": (r["pmin"] + r["pmax"]) / 2,
+                "wcf": (r["wmin"] + r["wmax"]) / 2,
+            })
+        return out
+
     def coverage(self) -> dict:
         """Couverture de mesure : total, mesurés (impact estimé), non couverts
         (modèle non modélisé par EcoLogits → event conservé, impact non estimé)."""
