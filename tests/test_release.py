@@ -240,7 +240,7 @@ def _make_git_map(*, clean=True, branch="main", tags=None):
     return handler
 
 def test_run_bumps_patch_successfully(tmp_path, monkeypatch):
-    """Cycle complet : bump patch, tag créé, pas de push."""
+    """Cycle complet : bump patch, tag créé, push effectué."""
     # Monkeypatch BASE_DIR, PYPROJECT, INIT_FILE, CHANGELOG vers tmp_path
     import agent_carbon.release as rel
 
@@ -332,39 +332,8 @@ def test_run_blocks_on_existing_tag(tmp_path, monkeypatch):
             run("patch")
 
 
-def test_run_with_push_calls_git_push(tmp_path, monkeypatch):
-    import agent_carbon.release as rel
-
-    fake_base = tmp_path / "repo"
-    fake_base.mkdir()
-    (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
-    (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
-
-    monkeypatch.setattr(rel, "BASE_DIR", fake_base)
-    monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
-    monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
-
-    git_handler = _make_git_map(clean=True, tags=[])
-    calls = []
-
-    def tracking_handler(*args, **_):
-        calls.append(tuple(args))
-        return git_handler(*args, **_)
-
-    with patch("agent_carbon.release._git", side_effect=tracking_handler):
-        run("patch", push=True)
-
-    # Le dernier appel doit être le push
-    push_call = calls[-1]
-    assert push_call[:2] == ("push", "origin")
-    assert "main" in push_call
-    assert "--tags" in push_call
-
-
-def test_run_without_push_does_not_push(tmp_path, monkeypatch):
+def test_run_pushes_by_default(tmp_path, monkeypatch):
+    """Push par défaut : le release pousse main + tags sans flag."""
     import agent_carbon.release as rel
 
     fake_base = tmp_path / "repo"
@@ -388,6 +357,39 @@ def test_run_without_push_does_not_push(tmp_path, monkeypatch):
 
     with patch("agent_carbon.release._git", side_effect=tracking_handler):
         run("patch")
+
+    # Le dernier appel doit être le push
+    push_call = calls[-1]
+    assert push_call[:2] == ("push", "origin")
+    assert "main" in push_call
+    assert "--tags" in push_call
+
+
+def test_run_no_push_skips_push(tmp_path, monkeypatch):
+    """Avec push=False, pas de push dans les appels git."""
+    import agent_carbon.release as rel
+
+    fake_base = tmp_path / "repo"
+    fake_base.mkdir()
+    (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
+    (fake_base / "agent_carbon").mkdir()
+    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
+
+    monkeypatch.setattr(rel, "BASE_DIR", fake_base)
+    monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
+
+    git_handler = _make_git_map(clean=True, tags=[])
+    calls = []
+
+    def tracking_handler(*args, **_):
+        calls.append(tuple(args))
+        return git_handler(*args, **_)
+
+    with patch("agent_carbon.release._git", side_effect=tracking_handler):
+        run("patch", push=False)
 
     push_calls = [c for c in calls if c[0] == "push"]
     assert push_calls == []

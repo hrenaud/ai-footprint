@@ -152,7 +152,7 @@ cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère désormais les
 Un release bump la version sémantique, génère le CHANGELOG et crée le tag.
 
 ```bash
-agent-carbon release bump <patch|minor|major> [--push]
+agent-carbon release bump <patch|minor|major> [--no-push]
 ```
 
 - `patch` : corrections backward-compatible
@@ -162,12 +162,12 @@ agent-carbon release bump <patch|minor|major> [--push]
 Le process :
 
 1. Vérifie que l'arbre est propre, qu'on est sur `main`, et que le tag cible n'existe pas.
-2. Calcule la nouvelle version (ex. `0.1.0` → `0.1.1` en patch).
+2. Calcule la nouvelle version (ex. `0.1.0` → `0.2.0`).
 3. Génère le CHANGELOG entre le dernier tag `v*` et HEAD en exploitant les commits conventionnels (`feat:`, `fix:`, etc.).
 4. Bump `pyproject.toml` + `agent_carbon/__init__.py`.
 5. Prepend le nouveau bloc dans `CHANGELOG.md`.
 6. Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`.
-7. Option `--push` : `git push origin main --tags` (absent par défaut).
+7. **Push `origin main --tags` par défaut** (option `--no-push` pour skipper).
 
 Preuve : les tests `tests/test_release.py` (31 tests) couvrent le cycle complet.
 

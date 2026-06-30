@@ -187,12 +187,12 @@ def _update_init(version: str) -> None:
     INIT_FILE.write_text(INIT_RE.sub(f'__version__ = "{version}"', content))
 
 
-def run(part: str, *, push: bool = False) -> str:
+def run(part: str, *, push: bool = True) -> str:
     """Exécute le cycle de release complet.
 
     Args:
         part: patch, minor ou major.
-        push: si True, push main + tags après le commit.
+        push: si True (défaut), push main + tags après le commit. Passer False pour skipper.
 
     Returns:
         La nouvelle version (ex. "0.2.0").
@@ -220,12 +220,11 @@ def run(part: str, *, push: bool = False) -> str:
     _update_init(new)
     _prepend_changelog(block)
 
-    # 5. Commit + tag
+    # 5. Commit + tag + push (incondictionnel si push=True)
     tag = f"v{new}"
     _git("add", str(PYPROJECT), str(INIT_FILE), str(CHANGELOG))
     _git("commit", "-m", f"chore(release): {new}", "-m", tag)
     _git("tag", tag)
-
     if push:
         _git("push", "origin", "main", "--tags")
 

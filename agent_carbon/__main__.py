@@ -218,8 +218,8 @@ def main(argv: list[str] | None = None) -> int:
         "part", choices=("patch", "minor", "major"),
         help="partie à bump (patch, minor ou major)",
     )
-    p_bump.add_argument("--push", action="store_true",
-                        help="pusher main + tags après le release (optionnel)")
+    p_bump.add_argument("--no-push", action="store_true",
+                        help="ne pas pusher main + tags après le release (push par défaut)")
 
     args = parser.parse_args(argv)
     config = Config.load()
@@ -273,8 +273,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "release":
         try:
-            new = run_release(args.part, push=args.push)
-            print(f"Release {new} créé (tag `v{new}`). Push avec --push.")
+            new = run_release(args.part, push=not args.no_push)
+            if args.no_push:
+                print(f"Release {new} créé (tag `v{new}`) — push avec `git push origin main --tags`.")
+            else:
+                print(f"Release {new} créé et pushé (tag `v{new}`).")
             return 0
         except ReleaseError as e:
             print(f"Release bloqué : {e}", file=sys.stderr)
