@@ -6,7 +6,6 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 
 ## Documentation (à tenir à jour)
 
-
 | Fichier                                                                  | Public / rôle                                                     |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
 | [README.md](README.md)                                                   | utilisateurs (non développeurs)                                   |
@@ -15,7 +14,6 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 | [CHANGELOG.md](CHANGELOG.md)                                             | journal des évolutions                                            |
 | [docs/TODO-self-hosted-models.md](docs/TODO-self-hosted-models.md)       | backlog technique                                                 |
 | [docs/comparaison-donnees-outils.md](docs/comparaison-donnees-outils.md) | comparatifs des informations des outils                           |
-
 
 > **À chaque tâche terminée : mettre à jour la doc concernée ET le CHANGELOG.**
 
@@ -28,10 +26,12 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 
   partagent la base `~/.agent-carbon/carbon.db`. Après un changement de code ou de
 
-  skill mergé sur `main`, **resynchroniser le clone**
+  skill mergé sur `main`, **créer un tag de release** (`agent-carbon release bump
 
-  (`git -C ~/.agent-carbon/src pull --ff-only`) pour que le binaire et les skills
+  <patch|minor|major>`) puis **relancer le script d'install**
 
-  installés soient à jour.
+  (`curl -fsSL https://raw.githubusercontent.com/hrenaud/agent-carbon/main/install.sh | bash`)
+
+  pour que le binaire et les skills installés soient à jour.
+
 - **Paramètres EcoLogits en milliards** partout (piège récurrent — cf. METHODOLOGY).
-
