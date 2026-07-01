@@ -4,6 +4,13 @@
 
 ### Features
 
+- cascade résolution params enrichie (3 méthodes), display modèles non couverts, CLI hf dans install, doc comparaison outils, AGENTS.md
+- add Opencode/Crush plugin and install integration
+- add CrushCollector for Opencode/Crash JSON exports and SQLite backfill
+## [0.3.0] — 2026-07-01
+
+### Features
+
 - **Cascade de résolution des params enrichie** : `fetch_hf_params` / `fetch_moe_params_from_hf` tentent désormais 3 méthodes en cascade — metadata HF (`safetensors.total`), CLI `hf models info` (`used_storage`), puis index `model.safetensors.index.json` (taille brute) — avec estimation 4-bit (0.5 byte/param) pour les deux dernières. La CLI `hf` est recherchée dans PATH, le venv actif, puis les répertoires courants.
 - **`--set` MoE via `fetch_moe_params_from_hf`** : `resolve --set "provider/model=repo:<actif>"` utilise la cascade enrichie pour le total MoE (actif saisi, total estimé).
 - **Liste des modèles non couverts dans le résumé d'ingest** : `agent-carbon ingest` affiche désormais les modèles concernés avec le nombre d'events (exclusion des `<synthetic>` à 0 token).
