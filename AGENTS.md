@@ -35,3 +35,20 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
   pour que le binaire et les skills installés soient à jour.
 
 - **Paramètres EcoLogits en milliards** partout (piège récurrent — cf. METHODOLOGY).
+
+## Réaliser une release
+
+**Toujours passer par l'outil, jamais à la main** (il bump `pyproject.toml` **et**
+`agent_carbon/__init__.py`, génère le CHANGELOG depuis les commits conventionnels,
+crée le commit `chore(release): X.Y.Z` + tag `vX.Y.Z`, puis push `origin main --tags`) :
+
+```bash
+agent-carbon release bump <patch|minor|major>   # --no-push pour ne pas pousser
+```
+
+- `patch` : corrections backward-compatibles · `minor` : nouvelles features
+  backward-compatibles · `major` : changements incompatibles.
+- Prérequis : arbre propre, sur `main`, tag cible inexistant.
+- Après le push, **relancer le script d'install** (voir ci-dessus) pour aligner le
+  clone installé.
+- Détail complet du process : cf. CONTRIBUTING (§ Release).
