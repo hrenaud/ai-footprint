@@ -140,6 +140,70 @@ if [ "${AGENT_CARBON_NO_INGEST:-0}" != "1" ]; then
   "$AC_BIN" ingest --db "$DB_PATH" || warn "Ingestion initiale non aboutie — relancez 'agent-carbon ingest'."
 fi
 
+# 7. Câblage Opencode/Crush (plugin + backfill) -------------------------------
+if command -v opencode >/dev/null 2>&1 || command -v crush >/dev/null 2>&1; then
+  OPENCODE_BIN="$(command -v opencode 2>/dev/null || command -v crush 2>/dev/null)"
+  OPENCODE_PLUGIN_DIR="$HOME/.config/opencode/plugins"
+  OPENCODE_CFG="$HOME/.config/opencode/opencode.json"
+  OPENCODE_DB=""
+
+  # Détecter la BDD Opencode/CRUSH locale.
+  if [ -d "$HOME/.local/share/opencode" ]; then
+    OPENCODE_DB="$HOME/.local/share/opencode/opencode.db"
+  elif [ -d "$HOME/.local/share/crush" ]; then
+    OPENCODE_DB="$HOME/.local/share/crush/crush.db"
+  fi
+
+  # 7a. Créer le plugin agent-carbon-crush.js.
+  mkdir -p "$OPENCODE_PLUGIN_DIR"
+  PLUGIN_SRC="$INSTALL_DIR/skills/agent-carbon-crush/agent-carbon-crush.js"
+  PLUGIN_DST="$OPENCODE_PLUGIN_DIR/agent-carbon-crush.js"
+
+  if [ -f "$PLUGIN_SRC" ]; then
+    cp "$PLUGIN_SRC" "$PLUGIN_DST"
+    ok "Plugin Opencode installé ($PLUGIN_DST)"
+  else
+    warn "Plugin Opencode introuvable dans $PLUGIN_SRC — omission."
+  fi
+
+  # 7b. Enregistrer le plugin dans opencode.json (si le fichier existe).
+  if [ -f "$OPENCODE_CFG" ]; then
+    "$INSTALL_DIR/.venv/bin/python" - "$OPENCODE_CFG" "$PLUGIN_DST" <<'PY'
+import json, sys
+cfg_path, plugin_path = sys.argv[1], sys.argv[2]
+try:
+    with open(cfg_path, encoding="utf-8") as fh:
+        cfg = json.load(fh)
+except (FileNotFoundError, json.JSONDecodeError):
+    cfg = {}
+
+plugins = cfg.setdefault("plugin", [])
+if plugin_path not in plugins:
+    plugins.append(plugin_path)
+    print(f"  Plugin enregistré dans opencode.json: {plugin_path}")
+else:
+    print("  Plugin déjà enregistré dans opencode.json")
+
+with open(cfg_path, "w", encoding="utf-8") as fh:
+    json.dump(cfg, fh, indent=2, ensure_ascii=False)
+    fh.write("\n")
+PY
+  else
+    warn "opencode.json introuvable — le plugin ne sera pas chargé automatiquement."
+    warn "  Pour charger manuellement : ajoutez « \"$PLUGIN_DST\" » à « plugin » dans $OPENCODE_CFG."
+  fi
+
+  # 7c. Backfill initial si la BDD locale existe.
+  if [ -n "$OPENCODE_DB" ] && [ -f "$OPENCODE_DB" ]; then
+    say "Backfill Opencode/CRUSH en cours (lecture directe de $OPENCODE_DB) ..."
+    "$AC_BIN" ingest --db "$DB_PATH" --source-crush "$OPENCODE_DB" 2>/dev/null \
+      && ok "Backfill initial effectué." \
+      || warn "Backfill initial non abouti — relancez 'agent-carbon ingest --source-crush $OPENCODE_DB'."
+  fi
+else
+  say "Opencode/CRUSH non détecté — câblage ignoré."
+fi
+
 printf '\n'
 ok "Terminé."
 say "Rapport   : agent-carbon report"
