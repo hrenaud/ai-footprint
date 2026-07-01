@@ -29,13 +29,6 @@ def _safe_int(value: int | float | None) -> int:
     return int(value)
 
 
-def _coalesce(primary, fallback):
-    """Retourne `primary` s'il est présent (pas None), sinon `fallback`. Un 0
-    explicite côté message est conservé — contrairement à `or`, qui le remplacerait
-    par le total de session (sur-comptage)."""
-    return primary if primary is not None else fallback
-
-
 class CrushCollector(Collector):
     """Collecteur des exportations JSON d'Opencode/Crush.
 
@@ -204,13 +197,15 @@ class CrushCollector(Collector):
             provider = msg_model.get("providerID") or session_model.get("providerID", "")
             model = msg_model.get("modelID") or msg_model.get("id") or session_model.get("id", "")
 
-            # Tokens (priorité au message, fallback session)
+            # Tokens : par message uniquement. Pas de fallback sur les totaux de
+            # session (qui agrègent tous les messages) : l'appliquer à un message
+            # sans tokens propres lui attribue tout le total → sur-comptage massif.
             raw_tokens = data.get("tokens") or {}
             raw_cache = raw_tokens.get("cache") or {}
-            input_tokens = _safe_int(_coalesce(raw_tokens.get("input"), session["tokens_input"]))
-            output_tokens = _safe_int(_coalesce(raw_tokens.get("output"), session["tokens_output"]))
-            cache_read_tokens = _safe_int(_coalesce(raw_cache.get("read"), session["tokens_cache_read"]))
-            cache_creation_tokens = _safe_int(_coalesce(raw_cache.get("write"), session["tokens_cache_write"]))
+            input_tokens = _safe_int(raw_tokens.get("input"))
+            output_tokens = _safe_int(raw_tokens.get("output"))
+            cache_read_tokens = _safe_int(raw_cache.get("read"))
+            cache_creation_tokens = _safe_int(raw_cache.get("write"))
 
             # Timestamp
             msg_time = data.get("time") or {}

@@ -327,9 +327,10 @@ def test_backfill_ignores_user_messages():
     os.rmdir(tmp_dir)
 
 
-def test_backfill_zero_message_tokens_not_overwritten_by_session():
-    """Un token message explicitement à 0 doit être conservé, pas remplacé par
-    le total de session (sinon sur-comptage)."""
+def test_backfill_message_tokens_never_fall_back_to_session_totals():
+    """Les tokens d'un message ne sont JAMAIS remplacés par les totaux de session
+    (qui agrègent tous les messages) : un message à 0 token reste à 0, sinon il
+    hériterait de tout le total → sur-comptage massif (bug des events phantom)."""
     tmp_dir = Path(tempfile.mkdtemp())
     db_path = str(tmp_dir / "opencode.db")
 
