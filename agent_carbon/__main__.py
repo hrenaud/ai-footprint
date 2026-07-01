@@ -11,7 +11,6 @@ from agent_carbon.dates import parse_since
 from agent_carbon.impact.engine import EcoLogitsEngine
 from agent_carbon.impact.params import (
     ModelParamsResolver,
-    fetch_hf_params,
     fetch_moe_params_from_hf,
 )
 from agent_carbon.impact.resolver import ModelResolver
@@ -198,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     p_ing = sub.add_parser("ingest", help="parser les transcripts et calculer l'impact")
     p_ing.add_argument("--source", default=_DEFAULT_SOURCE)
     p_ing.add_argument("--source-crush", default=None,
-                       help="directory d'exports JSON Opencode/Crash, ou chemin vers opencode.db (backfill SQLite)")
+                       help="directory d'exports JSON Opencode/Crush, ou chemin vers opencode.db (backfill SQLite)")
     p_ing.add_argument("--db", default=_DEFAULT_DB)
 
     p_rep = sub.add_parser("report", help="afficher le rapport multi-critères")

@@ -102,30 +102,29 @@ def _fetch_hf_cli_info(repo: str) -> dict | None:
     return None
 
 
-def fetch_hf_params(repo: str) -> ParamsResult | None:
-    """repo HF → paramètres (safetensors.total ÷ 1e9, dense). Offline-safe :
-    lib absente, réseau, 404, identifiant invalide → None (jamais d'exception).
-    
-    Gère les cas où le metadata HF ne popule pas safetensors mais où les fichiers
-    existent (ex: modèles GGUF avec index safetensors, ou modèles récents)."""
+def _fetch_hf_total_params(repo: str) -> tuple[float, list[str]] | None:
+    """Cascade offline-safe repo HF → (total params en Md, warnings de provenance).
+    Trois méthodes en fallback : metadata safetensors → CLI `hf models info`
+    (used_storage, 4bit) → fichiers safetensors via index.json (4bit). Gère les
+    modèles dont le metadata ne popule pas safetensors mais dont les fichiers
+    existent (GGUF avec index, modèles récents). None si tout échoue (lib absente,
+    réseau, 404, identifiant invalide) — jamais d'exception."""
     try:
         import huggingface_hub
     except ImportError:
-        return None
-    if huggingface_hub is None:
-        return None
-    
+        huggingface_hub = None
+
     # Méthode 1 : metadata HF standard (safetensors.total)
-    try:
-        info = huggingface_hub.model_info(repo, timeout=10)
-        if info.safetensors is not None:
-            total = float(info.safetensors.total) / 1e9
-            if total > 0:
-                return ParamsResult(active=total, total=total, arch="dense",
-                                    source="huggingface", warnings=["moe-assumed-dense"])
-    except Exception:
-        pass
-    
+    if huggingface_hub is not None:
+        try:
+            info = huggingface_hub.model_info(repo, timeout=10)
+            if info.safetensors is not None:
+                total = float(info.safetensors.total) / 1e9
+                if total > 0:
+                    return total, []
+        except Exception:
+            pass
+
     # Méthode 2 : CLI `hf models info` (used_storage → params estimés 4bit)
     cli_info = _fetch_hf_cli_info(repo)
     if cli_info is not None:
@@ -133,63 +132,38 @@ def fetch_hf_params(repo: str) -> ParamsResult | None:
         if used_storage and used_storage > 0:
             total = _bytes_to_params_estimated(used_storage)
             if total > 0:
-                return ParamsResult(active=total, total=total, arch="dense",
-                                    source="huggingface", 
-                                    warnings=["moe-assumed-dense", "params-from-cli-used_storage"])
-    
+                return total, ["params-from-cli-used_storage"]
+
     # Méthode 3 : fichiers safetensors via index.json (fallback final)
     total_bytes = _fetch_safetensors_index_bytes(repo)
     if total_bytes is not None and total_bytes > 0:
         total = _bytes_to_params_estimated(total_bytes)
         if total > 0:
-            return ParamsResult(active=total, total=total, arch="dense",
-                                source="huggingface", 
-                                warnings=["moe-assumed-dense", "params-estimated-4bit"])
-    
+            return total, ["params-estimated-4bit"]
+
     return None
+
+
+def fetch_hf_params(repo: str) -> ParamsResult | None:
+    """repo HF → paramètres (total ÷ 1e9, supposé dense). Offline-safe : None si
+    la résolution échoue (cf. _fetch_hf_total_params)."""
+    resolved = _fetch_hf_total_params(repo)
+    if resolved is None:
+        return None
+    total, warnings = resolved
+    return ParamsResult(active=total, total=total, arch="dense",
+                        source="huggingface", warnings=["moe-assumed-dense", *warnings])
 
 
 def fetch_moe_params_from_hf(repo: str, active: float) -> ParamsResult | None:
-    """Même chose que fetch_hf_params mais pour un MoE : le total vient de HF,
-    l'actif est fourni par l'utilisateur. Si HF échoue, retourne None.
-    
-    Gère les cas où le metadata HF ne popule pas safetensors mais où les fichiers
-    existent (ex: modèles GGUF avec index safetensors, ou modèles récents)."""
-    try:
-        import importlib
-        huggingface_hub = importlib.import_module("huggingface_hub")
-    except (ImportError, ValueError):
+    """Comme fetch_hf_params mais pour un MoE : le total vient de HF, l'actif est
+    fourni par l'utilisateur. None si HF échoue."""
+    resolved = _fetch_hf_total_params(repo)
+    if resolved is None:
         return None
-    
-    # Méthode 1 : metadata HF standard (safetensors.total)
-    try:
-        info = huggingface_hub.model_info(repo, timeout=10)
-        if info.safetensors is not None:
-            total = float(info.safetensors.total) / 1e9
-            if total > 0:
-                return ParamsResult(active=active, total=total, arch="moe", source="huggingface")
-    except Exception:
-        pass
-    
-    # Méthode 2 : CLI `hf models info` (used_storage → params estimés 4bit)
-    cli_info = _fetch_hf_cli_info(repo)
-    if cli_info is not None:
-        used_storage = cli_info.get("used_storage", 0)
-        if used_storage and used_storage > 0:
-            total = _bytes_to_params_estimated(used_storage)
-            if total > 0:
-                return ParamsResult(active=active, total=total, arch="moe", source="huggingface",
-                                    warnings=["params-from-cli-used_storage"])
-    
-    # Méthode 3 : fichiers safetensors via index.json (fallback final)
-    total_bytes = _fetch_safetensors_index_bytes(repo)
-    if total_bytes is not None and total_bytes > 0:
-        total = _bytes_to_params_estimated(total_bytes)
-        if total > 0:
-            return ParamsResult(active=active, total=total, arch="moe", source="huggingface",
-                                warnings=["params-estimated-4bit"])
-    
-    return None
+    total, warnings = resolved
+    return ParamsResult(active=active, total=total, arch="moe",
+                        source="huggingface", warnings=warnings)
 
 
 class ModelParamsResolver:

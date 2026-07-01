@@ -22,6 +22,11 @@ CRITERIA = ("energy", "gwp", "adpe", "pe", "wcf")
 _EMBODIED_CRITERIA = ("gwp", "adpe", "pe")
 
 
+def _latency(event: InferenceEvent, config: Config) -> float:
+    """Latence estimée (s) depuis les tokens de sortie, plancher 0.5 s."""
+    return max(event.output_tokens / config.throughput_tok_s, 0.5)
+
+
 def _minmax(criterion) -> tuple[float, float]:
     v = criterion.value
     if hasattr(v, "min"):
@@ -68,7 +73,7 @@ class EcoLogitsEngine:
 
     def compute(self, event: InferenceEvent, config: Config) -> ImpactRecord:
         name, aliased = self.resolver.resolve(event.model)
-        latency = max(event.output_tokens / config.throughput_tok_s, 0.5)
+        latency = _latency(event, config)
         out = llm_impacts(
             provider=event.provider,
             model_name=name,
@@ -111,7 +116,7 @@ class EcoLogitsEngine:
                 warnings=[], error="model-params-unresolved",
             )
         mix = electricity_mixes.find_electricity_mix(zone=zone)
-        latency = max(event.output_tokens / config.throughput_tok_s, 0.5)
+        latency = _latency(event, config)
         impacts = compute_llm_impacts(
             model_active_parameter_count=params.active,
             model_total_parameter_count=params.total,
