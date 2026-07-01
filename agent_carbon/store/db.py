@@ -309,10 +309,21 @@ class SQLiteStore:
 
     def coverage(self) -> dict:
         """Couverture de mesure : total, mesurés (impact estimé), non couverts
-        (modèle non modélisé par EcoLogits → event conservé, impact non estimé)."""
-        total = self.conn.execute("SELECT COUNT(*) FROM impacts").fetchone()[0]
+        (modèle non modélisé par EcoLogits → event conservé, impact non estimé).
+
+        Les placeholders `<synthetic>` (0 token, aucune inférence réelle) sont
+        exclus des trois compteurs : les compter gonflerait le total et le nombre
+        de non couverts, en incohérence avec la liste des modèles concernés
+        (déjà filtrée dans `uncovered_by_model` / le résumé d'ingest)."""
+        total = self.conn.execute(
+            "SELECT COUNT(*) FROM impacts i JOIN events e "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE e.model != '<synthetic>'"
+        ).fetchone()[0]
         uncovered = self.conn.execute(
-            "SELECT COUNT(*) FROM impacts WHERE error IS NOT NULL"
+            "SELECT COUNT(*) FROM impacts i JOIN events e "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'"
         ).fetchone()[0]
         return {"total": total, "measured": total - uncovered, "uncovered": uncovered}
 

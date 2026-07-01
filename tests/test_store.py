@@ -147,6 +147,25 @@ def test_uncovered_by_model_excludes_synthetic_sums_output(tmp_path):
     assert data[0]["tokens"] == 200  # tokens générés (sortie)
 
 
+def test_coverage_excludes_synthetic(tmp_path):
+    """Les placeholders <synthetic> (0 token) ne comptent ni dans le total ni dans
+    les non couverts : le compte reste cohérent avec la liste des modèles concernés."""
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+        InferenceEvent("openrouter", "z-ai/glm-4.5-air:free", 100, 200, 0, 0,
+                       "2026-06-27T10:05:00.000Z", "p", "s", "u2"),
+        InferenceEvent("anthropic", "<synthetic>", 0, 0, 0, 0,
+                       "2026-06-27T10:10:00.000Z", "p", "s", "u3"),
+    ]
+    store.ingest(events, _engine(), Config())
+    cov = store.coverage()
+    assert cov["total"] == 2       # <synthetic> exclu
+    assert cov["measured"] == 1    # opus mesuré
+    assert cov["uncovered"] == 1   # glm non couvert ; <synthetic> non compté
+
+
 def test_rows_for_report_filters_by_session(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
@@ -204,13 +223,13 @@ def test_recompute_errors_resolves_after_params_added(tmp_path):
                        "2026-06-27T10:01:00.000Z", "p", "s", "u2"),
     ]
     store.ingest(events, _engine(), Config())
-    assert store.coverage()["uncovered"] == 2
+    assert store.coverage()["uncovered"] == 1  # <synthetic> non compté
     cfg = Config(electricity_mix_zone="FRA",
                  model_params={"ollama/x:y": {
                      "active": 7.0, "total": 7.0, "arch": "dense",
                      "source": "resolve", "hf_repo": "Org/Repo"}})
     delta = store.recompute_errors(_engine(), cfg)
-    assert delta["before"] == 2 and delta["after"] == 1   # x:y résolu, <synthetic> reste
+    assert delta["before"] == 1 and delta["after"] == 0   # x:y résolu, <synthetic> jamais compté
     assert delta.get("recomputed") == 1  # 1 event recalculé (x:y)
     covered = [r for r in store.rows_for_report() if r["model"] == "x:y"]
     assert covered and covered[0]["gwp_min"] > 0
