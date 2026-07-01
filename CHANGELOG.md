@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1] — 2026-07-02
+
+### Bug Fixes
+
+- robustesse config et backfill SQLite Crush
+
+### Refactoring
+
+- dédup cascade HF et nettoyages
 ## [0.3.0] — 2026-07-01
 
 ### Features
