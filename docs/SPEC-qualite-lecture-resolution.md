@@ -130,14 +130,28 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
   Aujourd'hui, la skill `/agent-carbon-resolve` s'appuie sur la connaissance du
   monde du LLM (étape « proposer un repo HF canonique ») mais sans étape
   WebSearch explicite ni cadrée.
-- **Cascade cible (à valider)** : 1) EcoLogits → 2) Hugging Face → 3) **WebSearch** (trouver le repo HF canonique + l'archi/params depuis la
-  fiche modèle) → 4) **input utilisateur**. L'étape 3 relève du skill
-  `/agent-carbon-resolve` (le LLM fait la recherche et propose le repo + couple
-  MoE), pas du code CLI pur — la CLI reste le vérificateur déterministe (HF) et
-  le persisteur.
-- **À cadrer** : où vit l'étape web (skill vs helper), comment restituer
-  l'archi MoE (réutiliser `--set repo:<actifs>`), garde-fou « ne pas inventer »
-  conservé (params toujours issus de HF, jamais du texte web).
+- **Cascade cible** : 1) EcoLogits → 2) Hugging Face → 3) **WebSearch**
+  (trouver le repo HF canonique + l'archi/params depuis la fiche modèle) → 4) **input utilisateur**.
+- **Cadrage (décidé 2026-07-02)** — implémentation = une édition de
+  `skills/agent-carbon-resolve/SKILL.md`, zéro code Python :
+  1. **L'étape web vit dans la skill**, pas dans la CLI. La CLI reste
+     déterministe et offline-safe (pas d'API de search, pas de scraping, pas de
+     réseau surprise dans le hook Stop). Choisir le repo canonique parmi des
+     candidats est un travail de jugement → LLM. Le WebSearch n'est qu'un
+     **secours** quand la connaissance du monde ne suffit pas (modèle trop
+     récent, id de routeur opaque) ; runtime sans tool web = comportement
+     actuel (modèle laissé non couvert).
+  2. **Restitution MoE : réutiliser `--set "P/M=repo:<actifs>"` tel quel**,
+     zéro changement CLI (validation `active ≤ total` et revert `--forget`
+     existants). Le récap de la skill doit **citer la source** (URL de la
+     fiche modèle d'où viennent le repo et l'actif).
+  3. **Garde-fou « ne pas inventer » : déjà structurel.** Le web ne fournit
+     que le _nom du repo_ et l'_actif MoE_ ; les deux sont vérifiés par la CLI
+     (repo inventé → `hf-unresolved`, actif aberrant → `active-gt-total`), le
+     total vient toujours de HF. Interdit explicite dans la skill : ne jamais
+     reprendre un _nombre de paramètres_ d'un article/blog — si la fiche HF
+     n'existe pas, le modèle reste non couvert. La confirmation utilisateur
+     (étape 2b) reste le dernier filtre.
 
 ## Rappels d'unité (piège)
 

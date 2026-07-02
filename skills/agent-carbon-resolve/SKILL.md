@@ -20,6 +20,8 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 
    **Cas MoE** (Mixture-of-Experts) : si le modèle est un MoE (ex. `nemotron-3-super-120b-a12b`, `laguna-m.1`, séries Qwen3 `*-A3B`), le total HF (safetensors) **surestimerait ~10×** l'énergie, qu'EcoLogits calcule sur les params **actifs**. Ajouter `:<actifs>` (params actifs en milliards) au repo : le total reste HF, l'actif est ta valeur. L'indice est souvent dans le nom (`…120b-a12b` → ~12 Md actifs). Si l'actif n'est pas connu de façon fiable, traiter en dense (sans suffixe) et le signaler dans le récap.
 
+2bis. **Secours : recherche web** — si aucun repo canonique n'est déductible de l'identifiant (modèle trop récent, id de routeur opaque type catalogue NVIDIA NIM) **et** que le runtime dispose d'un tool de recherche web : chercher la fiche du modèle (page Hugging Face, annonce de l'éditeur) pour retrouver le repo HF réel et, le cas échéant, l'actif MoE. Le web ne fournit que **le nom du repo** et **l'actif MoE** — ne jamais reprendre un _nombre de paramètres_ lu dans un article/blog : le total sera vérifié sur HF par la CLI. Si la fiche HF n'existe pas, le modèle **reste non couvert**. Sans tool web, laisser de côté (comportement normal).
+
 2b. **Faire confirmer les mappings** avant d'écrire quoi que ce soit (ne pas appliquer d'office ; voir « Comment poser les questions » ci-dessous). Question header « Mappings », choix multiple : une option par modèle résolu, libellée `modèle → repo` (préciser « MoE, N Md actifs » le cas échéant), toutes pré-retenues. L'utilisateur retire ce qu'il refuse ; une saisie libre laisse corriger un repo à la main. N'appliquer à l'étape 3 **que** les mappings retenus. (S'il ne reste aucun modèle résolvable à proposer, informer et s'arrêter sans poser la question.)
 
 3. **Appliquer les mappings retenus et recalculer** en une invocation (un seul recompute) :
@@ -34,7 +36,7 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 
 `--set "P/M=repo"` récupère les params sur HF (dense, échec géré par item) ; `--set "P/M=repo:<actifs>"` déclare un MoE (total HF, actif saisi, `arch=moe`) ; le recompute est automatique quand la config change ; `--list --json` final montre ce qui reste non couvert.
 
-4. **Présenter un récap** : pour chaque modèle — repo retenu, params (Md), succès/échec. Lister les modèles laissés de côté (propriétaires/introuvables) et ceux dont le `--set` a échoué. Indiquer le delta de couverture (sortie « Recompute : X → Y »).
+4. **Présenter un récap** : pour chaque modèle — repo retenu, params (Md), succès/échec, et **la source si le mapping vient d'une recherche web** (URL de la fiche modèle d'où viennent le repo et l'actif). Lister les modèles laissés de côté (propriétaires/introuvables) et ceux dont le `--set` a échoué. Indiquer le delta de couverture (sortie « Recompute : X → Y »).
 
 5. **Rappeler le revert** : un mapping douteux se retire avec
    `"$AC" resolve --forget "<provider>/<model>"` (retire l'entrée et recalcule).
@@ -43,6 +45,7 @@ AC="$(command -v agent-carbon || echo "$HOME/.agent-carbon/src/.venv/bin/agent-c
 
 - Le **total vient toujours de HF** (vérifiable) ; tu ne fournis que le nom du repo, jamais une taille inventée. Seul l'**actif d'un MoE** relève de ta connaissance (généralement lisible dans le nom, ex. `-a12b`) : en cas de doute, rester dense plutôt qu'inventer un actif.
 - Un modèle sans repo HF réel reste non couvert — c'est honnête, ne pas forcer.
+- **Recherche web (étape 2bis)** : elle ne sert qu'à trouver le _nom du repo_ (et l'_actif MoE_) — jamais un nombre de paramètres pris dans un article/blog. Repo inventé → la CLI répond `hf-unresolved` ; actif aberrant → `active-gt-total`. Citer la source dans le récap.
 - Les placeholders `<synthetic>` n'apparaissent jamais ici (déjà exclus des non couverts).
 
 ## Comment poser les questions (indépendant de l'outil)
