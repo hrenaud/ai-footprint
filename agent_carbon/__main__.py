@@ -195,6 +195,10 @@ def _ingest_summary(new_count: int, cov: dict, store=None) -> str:
                 line += "\n  modèles concernés :"
                 for r in real_models:
                     line += f"\n    - {r['model']} ({r['cnt']} events)"
+        line += (
+            "\n  → lance le skill `/agent-carbon-resolve` pour tenter de les "
+            "résoudre via Hugging Face."
+        )
     return line
 
 

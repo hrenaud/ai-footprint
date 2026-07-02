@@ -47,3 +47,13 @@ def test_ingest_summary_no_uncovered_clause_when_full_coverage():
     msg = _ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
     assert "2 events ingérés" in msg
     assert "non couverts" not in msg
+
+
+def test_ingest_summary_suggests_resolve_skill_when_uncovered():
+    msg = _ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
+    assert "/agent-carbon-resolve" in msg
+
+
+def test_ingest_summary_no_resolve_hint_when_full_coverage():
+    msg = _ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
+    assert "/agent-carbon-resolve" not in msg
