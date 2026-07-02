@@ -277,3 +277,31 @@ def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
         "1,2,1,2,1,2,1,2,1,2,'{}','[]',NULL)")
     store.conn.commit()
     assert store.estimated_param_models() == ["est-model"]
+
+
+def test_ingest_normalizes_timestamp_to_utc_canonical(tmp_path):
+    """N2 : un timestamp « Z » est stocké en ISO UTC canonique (+00:00)."""
+    from agent_carbon.store.db import SQLiteStore, _canonical_ts
+    assert _canonical_ts("2026-07-02T10:00:00Z") == "2026-07-02T10:00:00+00:00"
+    assert _canonical_ts("2026-07-02T12:00:00+02:00") == "2026-07-02T10:00:00+00:00"
+    assert _canonical_ts("pas-une-date") == "pas-une-date"  # laissé tel quel
+
+
+def test_open_migrates_legacy_z_timestamps(tmp_path):
+    """N2 : à l'ouverture, les vieux timestamps « …Z » sont convertis en +00:00."""
+    import sqlite3
+    from agent_carbon.store.db import SQLiteStore
+    db = str(tmp_path / "t.db")
+    s = SQLiteStore(db)
+    s.conn.execute(
+        "INSERT INTO events VALUES ('s1','m1','p','mod',1,2,0,0,"
+        "'2026-07-02T10:00:00Z','proj',0,'')")
+    s.conn.execute(
+        "INSERT INTO sessions VALUES ('s1','proj','2026-07-02T10:00:00Z','2026-07-02T11:00:00Z')")
+    s.conn.commit()
+    s.conn.close()
+    s2 = SQLiteStore(db)  # la migration tourne à l'ouverture
+    ts = s2.conn.execute("SELECT timestamp FROM events").fetchone()[0]
+    assert ts == "2026-07-02T10:00:00+00:00"
+    row = s2.conn.execute("SELECT started_at, ended_at FROM sessions").fetchone()
+    assert row[0].endswith("+00:00") and row[1].endswith("+00:00")

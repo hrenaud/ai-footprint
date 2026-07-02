@@ -1,7 +1,8 @@
+import dataclasses
 import json
 import sqlite3
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 
 from agent_carbon.config import Config
 from agent_carbon.impact.engine import CRITERIA, EcoLogitsEngine
@@ -50,6 +51,17 @@ def _parse_ts(ts: str) -> datetime | None:
         return None
 
 
+def _canonical_ts(ts: str) -> str:
+    """ISO UTC canonique (+00:00) : un seul format en DB → comparaisons
+    lexicales sûres (N2). Entrée non parsable renvoyée telle quelle."""
+    dt = _parse_ts(ts)
+    if dt is None:
+        return ts
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
+
+
 class SQLiteStore:
     def __init__(self, path: str):
         self.conn = sqlite3.connect(path)
@@ -65,6 +77,16 @@ class SQLiteStore:
             except sqlite3.OperationalError:
                 pass  # colonne déjà présente
         self.conn.commit()
+        # Migration N2 : timestamps hérités « …Z » → format canonique « +00:00 »
+        # (idempotent : ne touche que les lignes au vieux format).
+        self.conn.execute(
+            "UPDATE events SET timestamp = replace(timestamp,'Z','+00:00') "
+            "WHERE timestamp LIKE '%Z'")
+        self.conn.execute(
+            "UPDATE sessions SET started_at = replace(started_at,'Z','+00:00'), "
+            "ended_at = replace(ended_at,'Z','+00:00') "
+            "WHERE started_at LIKE '%Z' OR ended_at LIKE '%Z'")
+        self.conn.commit()
 
     def import_legacy(self, carbon_db_path: str):
         raise NotImplementedError("backfill carbon.db pas encore implémenté")
@@ -73,6 +95,7 @@ class SQLiteStore:
                engine: EcoLogitsEngine, config: Config) -> int:
         new_count = 0
         for e in events:
+            e = dataclasses.replace(e, timestamp=_canonical_ts(e.timestamp))
             cur = self.conn.execute(
                 "INSERT OR IGNORE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (e.session_id, e.msg_id, e.provider, e.model,
@@ -140,7 +163,6 @@ class SQLiteStore:
             "ON CONFLICT(provider, model) DO UPDATE SET occurrences = occurrences + 1",
             (provider, model, ts),
         )
-        self.conn.commit()
 
     def list_pending(self) -> list[dict]:
         return [dict(r) for r in self.conn.execute(
