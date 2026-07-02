@@ -12,6 +12,8 @@ from agent_carbon.impact.engine import EcoLogitsEngine
 from agent_carbon.impact.params import (
     ModelParamsResolver,
     fetch_moe_params_from_hf,
+    _param_from_json,
+    _param_to_json,
 )
 from agent_carbon.impact.resolver import ModelResolver
 from agent_carbon.report.cli import (
@@ -116,7 +118,8 @@ def _cmd_models(args) -> int:
             cache_entry = config.model_params.get(key)
             cache_total = None
             if cache_entry is not None:
-                cache_total = float(cache_entry.get("total", active))
+                cached = _param_from_json(cache_entry.get("total", active))
+                cache_total = cached.max if hasattr(cached, "max") else float(cached)
             # 2) Chercher dans registry via ModelParamsResolver
             resolver = ModelParamsResolver(config)
             res = resolver.resolve(row["provider"], row["model"])
@@ -124,25 +127,22 @@ def _cmd_models(args) -> int:
             hf_res = fetch_moe_params_from_hf(row["model"], active)
             if hf_res is not None:
                 # HF trouvé → stocker comme MoE avec hf_repo
-                total = float(hf_res.total)
                 config.model_params[key] = {
-                    "active": active, "total": total,
+                    "active": _param_to_json(active), "total": _param_to_json(hf_res.total),
                     "arch": "moe", "source": "user",
                     "hf_repo": row["model"]}
             elif cache_total is not None:
                 # Cache trouvé → utiliser son total, garder l'archi MoE du user
-                total = cache_total
                 # Ne pas écraser l'archi du cache si c'est dense
                 # Laisser l'entry existante inchangée, juste stocker active si manquant
                 if key not in config.model_params:
                     config.model_params[key] = {
-                        "active": active, "total": total,
+                        "active": _param_to_json(active), "total": _param_to_json(cache_total),
                         "arch": "moe", "source": "user"}
             else:
                 # 4) Fallback : ni cache ni HF → total = active, stocker pour résolution future
-                total = active
                 config.model_params[key] = {
-                    "active": active, "total": total,
+                    "active": _param_to_json(active), "total": _param_to_json(active),
                     "arch": "moe", "source": "user"}
             accepted.append((row["provider"], row["model"]))
     # Save config durably BEFORE clearing any pending models

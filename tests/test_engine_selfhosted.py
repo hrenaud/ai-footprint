@@ -42,3 +42,24 @@ def test_unresolved_model_reports_error():
     eng = EcoLogitsEngine(ModelResolver({}))
     rec = eng.compute(_event("ollama", "modele-totalement-inconnu-xyz"), cfg)
     assert rec.error == "model-params-unresolved"
+
+
+def test_selfhosted_range_params_produce_wider_bounds():
+    """M2b : des params en fourchette traversent compute_llm_impacts (min < max)."""
+    from agent_carbon.models import InferenceEvent
+    cfg = Config(
+        electricity_mix_zone="WOR",
+        model_params={"ollama/range-model": {
+            "active": {"min": 7.0, "max": 28.0},
+            "total": {"min": 7.0, "max": 28.0},
+            "arch": "dense", "source": "huggingface"}})
+    engine = EcoLogitsEngine(ModelResolver({}))
+    e = InferenceEvent(provider="ollama", model="range-model",
+                       input_tokens=10, output_tokens=100,
+                       cache_creation_tokens=0, cache_read_tokens=0,
+                       timestamp="2026-07-02T00:00:00+00:00", project="p",
+                       session_id="s", msg_id="m", active_seconds=1.0)
+    rec = engine.compute(e, cfg)
+    assert rec.error is None
+    gwp_min, gwp_max = rec.totals["gwp"]
+    assert 0 < gwp_min < gwp_max  # la fourchette de params élargit les bornes

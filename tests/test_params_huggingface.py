@@ -220,3 +220,42 @@ def test_used_storage_uses_detected_dtype(monkeypatch):
     assert res is not None
     assert res.total == pytest.approx(7.0)  # 14e9 octets / 2 o/param / 1e9 = 7 Md
     assert "params-bytes-per-param:2.0" in res.warnings
+
+
+def test_unknown_dtype_yields_param_range(monkeypatch):
+    """M2b : dtype indétectable → fourchette 0.5–2 octets/param, pas une valeur unique."""
+    from ecologits.utils.range_value import RangeValue
+    import agent_carbon.impact.params as params_mod
+    mod = types.ModuleType("huggingface_hub")
+    mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
+                        lambda repo: {"used_storage": 14_000_000_000})
+    monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
+    res = fetch_hf_params("org/model-sans-dtype")
+    assert res is not None
+    assert isinstance(res.total, RangeValue)
+    assert res.total.min == pytest.approx(7.0)    # 14e9 / 2.0 / 1e9
+    assert res.total.max == pytest.approx(28.0)   # 14e9 / 0.5 / 1e9
+    assert "params-range-unknown-dtype" in res.warnings
+
+
+def test_param_range_roundtrips_through_cache(monkeypatch):
+    """M2b : la fourchette survit à l'aller-retour cache config (JSON)."""
+    from ecologits.utils.range_value import RangeValue
+    import agent_carbon.impact.params as params_mod
+    mod = types.ModuleType("huggingface_hub")
+    mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
+                        lambda repo: {"used_storage": 14_000_000_000})
+    monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
+    cfg = Config()
+    r = ModelParamsResolver(cfg)
+    r.resolve("ollama", "org/model-sans-dtype")           # remplit le cache
+    # Le cache config doit rester du JSON pur (dict min/max, pas d'objet pydantic)
+    entry = cfg.model_params["ollama/org/model-sans-dtype"]
+    assert entry["total"] == {"min": pytest.approx(7.0), "max": pytest.approx(28.0)}
+    res2 = ModelParamsResolver(cfg).resolve("ollama", "org/model-sans-dtype")
+    assert isinstance(res2.total, RangeValue)
+    assert res2.total.max == pytest.approx(28.0)

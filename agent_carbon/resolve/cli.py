@@ -1,10 +1,20 @@
 import json
 
+from ecologits.utils.range_value import RangeValue
+
 from agent_carbon.config import Config
 from agent_carbon.impact.engine import EcoLogitsEngine
-from agent_carbon.impact.params import fetch_hf_params, fetch_moe_params_from_hf
+from agent_carbon.impact.params import (
+    fetch_hf_params, fetch_moe_params_from_hf, _param_to_json)
 from agent_carbon.impact.resolver import ModelResolver
 from agent_carbon.store.db import SQLiteStore
+
+
+def fmt_params_md(v) -> str:
+    """Formatte un compte de params (Md) — valeur ou fourchette."""
+    if isinstance(v, RangeValue):
+        return f"{v.min:.1f}–{v.max:.1f}"
+    return f"{v:.1f}"
 
 
 def parse_mapping(spec: str) -> tuple[str, str | None, float | None]:
@@ -43,7 +53,9 @@ def set_mappings(config, specs: list[str]) -> list[dict]:
                 results.append({"key": key, "repo": repo, "ok": False,
                                 "error": "hf-unresolved"})
                 continue
-            if active <= 0 or active > params.total:
+            # Validation MoE : active doit être > 0 et ≤ total (prendre max si fourchette)
+            total_max = params.total.max if isinstance(params.total, RangeValue) else params.total
+            if active <= 0 or active > total_max:
                 results.append({"key": key, "repo": repo, "ok": False,
                                 "error": "active-gt-total"})
                 continue
@@ -56,10 +68,11 @@ def set_mappings(config, specs: list[str]) -> list[dict]:
                 continue
             entry_active, arch = params.active, params.arch
         config.model_params[key] = {
-            "active": entry_active, "total": params.total, "arch": arch,
-            "source": "resolve", "hf_repo": repo}
+            "active": _param_to_json(entry_active), "total": _param_to_json(params.total),
+            "arch": arch, "source": "resolve", "hf_repo": repo}
         results.append({"key": key, "repo": repo, "ok": True,
-                        "params": params.total, "active": entry_active, "arch": arch})
+                        "params": fmt_params_md(params.total),
+                        "active": fmt_params_md(entry_active), "arch": arch})
     return results
 
 
@@ -76,9 +89,9 @@ def _print_set(results: list[dict], as_json: bool) -> None:
     for r in results:
         if r["ok"]:
             if r.get("arch") == "moe":
-                detail = f"MoE {r['active']:.1f} actifs / {r['params']:.1f} Md"
+                detail = f"MoE {r['active']} actifs / {r['params']} Md"
             else:
-                detail = f"{r['params']:.1f} Md"
+                detail = f"{r['params']} Md"
             print(f"✓ {r['key']} → {r['repo']} ({detail})")
         else:
             print(f"✗ {r['key']} → {r['repo'] or '?'} : {r['error']}")

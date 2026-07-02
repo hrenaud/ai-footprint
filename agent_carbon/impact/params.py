@@ -40,11 +40,25 @@ def _detect_bytes_per_param(repo: str) -> float | None:
 
 @dataclass
 class ParamsResult:
-    active: float
-    total: float
+    active: float | RangeValue
+    total: float | RangeValue
     arch: str            # "dense" | "moe"
     source: str          # "registry" | "user" | "huggingface"
     warnings: list[str] = field(default_factory=list)
+
+
+def _param_to_json(v: float | RangeValue) -> float | dict:
+    """Sérialise un compte de params pour le cache config (JSON pur)."""
+    if isinstance(v, RangeValue):
+        return {"min": float(v.min), "max": float(v.max)}
+    return float(v)
+
+
+def _param_from_json(v) -> float | RangeValue:
+    """Désérialise un compte de params du cache config."""
+    if isinstance(v, dict):
+        return RangeValue(min=v["min"], max=v["max"])
+    return float(v)
 
 
 def _fetch_safetensors_index_bytes(repo: str) -> int | None:
@@ -133,13 +147,14 @@ def _fetch_hf_cli_info(repo: str) -> dict | None:
     return None
 
 
-def _fetch_hf_total_params(repo: str) -> tuple[float, list[str]] | None:
+def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | None:
     """Cascade offline-safe repo HF → (total params en Md, warnings de provenance).
     Trois méthodes en fallback : metadata safetensors → CLI `hf models info`
     (used_storage, 4bit) → fichiers safetensors via index.json (4bit). Gère les
     modèles dont le metadata ne popule pas safetensors mais dont les fichiers
-    existent (GGUF avec index, modèles récents). None si tout échoue (lib absente,
-    réseau, 404, identifiant invalide) — jamais d'exception."""
+    existent (GGUF avec index, modèles récents). Quand le dtype est inconnu (bpp
+    None), retourne une fourchette (min=bytes/2, max=bytes/0.5). None si tout
+    échoue (lib absente, réseau, 404, identifiant invalide) — jamais d'exception."""
     try:
         import huggingface_hub
     except ImportError:
@@ -158,23 +173,28 @@ def _fetch_hf_total_params(repo: str) -> tuple[float, list[str]] | None:
 
     bpp = _detect_bytes_per_param(repo)
 
-    # Méthode 2 : CLI `hf models info` (used_storage → params estimés via dtype)
+    def _estimated(total_bytes: int) -> tuple[float | RangeValue, list[str]]:
+        """Params estimés depuis des octets : valeur si dtype connu, fourchette sinon."""
+        if bpp is not None:
+            return (_bytes_to_params_estimated(total_bytes, bpp),
+                    [f"params-bytes-per-param:{bpp}"])
+        return (RangeValue(min=_bytes_to_params_estimated(total_bytes, 2.0),
+                           max=_bytes_to_params_estimated(total_bytes, 0.5)),
+                ["params-range-unknown-dtype"])
+
+    # Méthode 2 : CLI `hf models info` (used_storage → params estimés)
     cli_info = _fetch_hf_cli_info(repo)
     if cli_info is not None:
         used_storage = cli_info.get("used_storage", 0)
-        if used_storage and used_storage > 0 and bpp is not None:
-            total = _bytes_to_params_estimated(used_storage, bpp)
-            if total > 0:
-                return total, ["params-from-cli-used_storage",
-                               f"params-bytes-per-param:{bpp}"]
+        if used_storage and used_storage > 0:
+            total, extra = _estimated(used_storage)
+            return total, ["params-from-cli-used_storage", *extra]
 
     # Méthode 3 : fichiers safetensors via index.json (fallback final)
     total_bytes = _fetch_safetensors_index_bytes(repo)
-    if total_bytes is not None and total_bytes > 0 and bpp is not None:
-        total = _bytes_to_params_estimated(total_bytes, bpp)
-        if total > 0:
-            return total, ["params-estimated-from-files",
-                           f"params-bytes-per-param:{bpp}"]
+    if total_bytes is not None and total_bytes > 0:
+        total, extra = _estimated(total_bytes)
+        return total, ["params-estimated-from-files", *extra]
 
     return None
 
@@ -250,7 +270,8 @@ class ModelParamsResolver:
         if entry is None:
             return None
         return ParamsResult(
-            active=float(entry["active"]), total=float(entry["total"]),
+            active=_param_from_json(entry["active"]),
+            total=_param_from_json(entry["total"]),
             arch=entry.get("arch", "dense"), source=entry.get("source", "user"))
 
     def _negative_fresh(self, key: str) -> bool:
@@ -280,6 +301,6 @@ class ModelParamsResolver:
             return None
         self.config.hf_unresolved.pop(key, None)
         self.config.model_params[key] = {
-            "active": res.active, "total": res.total,
+            "active": _param_to_json(res.active), "total": _param_to_json(res.total),
             "arch": res.arch, "source": res.source}
         return res
