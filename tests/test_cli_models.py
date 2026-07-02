@@ -215,7 +215,9 @@ def test_models_moe_with_hf(tmp_path, monkeypatch):
     _fake_hf(35_000_000_000, monkeypatch)  # HF retourne total=35e9
 
     s = SQLiteStore(db)
-    s.add_pending("ollama", "qwen3:35b-a3b", "2026-06-29T10:00:00Z")
+    # Utiliser un repo HF valide au lieu du modèle local, afin que la validation
+    # du format de repo ne le rejette pas
+    s.add_pending("ollama", "Qwen/Qwen3.6-35B-A3B", "2026-06-29T10:00:00Z")
 
     # type="moe", active="3.5e9" (notation scientifique)
     inputs = iter(["moe", "3.5e9"])
@@ -228,7 +230,7 @@ def test_models_moe_with_hf(tmp_path, monkeypatch):
 
     assert rc == 0
     reloaded = Config.load(config_path)
-    entry = reloaded.model_params["ollama/qwen3:35b-a3b"]
+    entry = reloaded.model_params["ollama/Qwen/Qwen3.6-35B-A3B"]
     assert entry["arch"] == "moe"
     # active en unité brute (saisi par l'utilisateur)
     assert entry["active"] == 3.5e9

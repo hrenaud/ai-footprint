@@ -259,3 +259,43 @@ def test_param_range_roundtrips_through_cache(monkeypatch):
     res2 = ModelParamsResolver(cfg).resolve("ollama", "org/model-sans-dtype")
     assert isinstance(res2.total, RangeValue)
     assert res2.total.max == pytest.approx(28.0)
+
+
+def test_invalid_repo_format_short_circuits_without_network(monkeypatch):
+    """Mineur : un identifiant non « org/name » ne déclenche aucune requête."""
+    import agent_carbon.impact.params as params_mod
+    called = []
+    mod = types.ModuleType("huggingface_hub")
+    mod.model_info = lambda repo_id, **kw: called.append(repo_id)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
+                        lambda repo: called.append(repo))
+    monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes",
+                        lambda repo: called.append(repo))
+    assert fetch_hf_params("<synthetic>") is None
+    assert fetch_hf_params("juste-un-nom") is None
+    assert fetch_hf_params("org/../etc") is None
+    assert called == []  # aucune méthode réseau appelée
+
+
+def test_index_with_too_many_files_aborts(monkeypatch):
+    """N4 : index.json avec plus de _MAX_INDEX_FILES shards → abandon propre."""
+    import io
+    import json as _json
+    import urllib.request
+    from agent_carbon.impact.params import _fetch_safetensors_index_bytes
+    index = {"weight_map": {f"w{i}": f"shard-{i}.safetensors" for i in range(31)}}
+    head_calls = []
+
+    def fake_urlopen(req, timeout=0):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        if url.endswith("index.json"):
+            return io.BytesIO(_json.dumps(index).encode())
+        head_calls.append(url)
+        resp = io.BytesIO(b"")
+        resp.headers = {"Content-Length": "1000"}
+        return resp
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    assert _fetch_safetensors_index_bytes("org/gros-modele") is None
+    assert head_calls == []  # aucun HEAD lancé au-delà du plafond

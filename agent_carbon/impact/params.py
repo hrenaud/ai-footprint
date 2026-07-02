@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
@@ -12,6 +13,13 @@ HF_NEGATIVE_TTL_DAYS = 7
 
 # Noms de modèles MoE : motif « a<N>b » isolé (ex. -A3B, …120b-a12b).
 _MOE_NAME_RE = re.compile(r"(?:^|[^a-z0-9])a\d+b(?:[^a-z0-9]|$)", re.IGNORECASE)
+
+# N4 : plafonds de la méthode 3 (index.json + HEAD séquentiels).
+_MAX_INDEX_FILES = 30
+_INDEX_BUDGET_SECONDS = 60.0
+
+# Identifiant de repo HF valide : « org/name » (lettres, chiffres, . _ -).
+_REPO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+$")
 
 
 def _looks_moe(repo: str) -> bool:
@@ -70,15 +78,21 @@ def _fetch_safetensors_index_bytes(repo: str) -> int | None:
         req = urllib.request.Request(index_url, headers={"Accept": "application/json"})
         resp = urllib.request.urlopen(req, timeout=15)
         index_data = json.loads(resp.read())
-        
+
         # Extraire les noms de fichiers uniques du weight_map
         weight_map = index_data.get("weight_map", {})
         files = sorted(set(weight_map.values()))
-        
+
+        if len(files) > _MAX_INDEX_FILES:
+            return None  # trop de shards : budget réseau déraisonnable, on abandonne
+
         # Calculer la taille totale via HEAD requests
         base_url = f"https://huggingface.co/{repo}/resolve/main/"
         total_bytes = 0
+        start = time.monotonic()
         for f in files:
+            if time.monotonic() - start > _INDEX_BUDGET_SECONDS:
+                return None  # budget temps global dépassé
             try:
                 file_url = base_url + f
                 req = urllib.request.Request(file_url, method="HEAD")
@@ -87,7 +101,7 @@ def _fetch_safetensors_index_bytes(repo: str) -> int | None:
                 total_bytes += size
             except Exception:
                 continue
-        
+
         return total_bytes if total_bytes > 0 else None
     except Exception:
         return None
@@ -155,6 +169,11 @@ def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | 
     existent (GGUF avec index, modèles récents). Quand le dtype est inconnu (bpp
     None), retourne une fourchette (min=bytes/2, max=bytes/0.5). None si tout
     échoue (lib absente, réseau, 404, identifiant invalide) — jamais d'exception."""
+    if not _REPO_RE.match(repo):
+        # Identifiant impossible sur le Hub (placeholder, nom local, path
+        # traversal) : aucune requête réseau.
+        return None
+
     try:
         import huggingface_hub
     except ImportError:
