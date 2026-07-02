@@ -116,8 +116,10 @@ def _bytes_to_params_estimated(total_bytes: int, bytes_per_param: float) -> floa
 def _fetch_hf_cli_info(repo: str) -> dict | None:
     """Récupère les infos d'un repo HF via le CLI `hf models info`.
     Retourne le dict d'info ou None en cas d'échec.
-    
-    Cherche le binaire dans : PATH, ou venv actif (./venv/bin/hf)."""
+
+    Heuristique de localisation du binaire (fail-safe : introuvable → None,
+    la cascade continue) : 1) PATH, 2) venv actif (déduit de sys.executable),
+    3) `.venv/bin/hf` du cwd puis de ~/.agent-carbon/src (clone installé)."""
     try:
         import subprocess
         import shutil

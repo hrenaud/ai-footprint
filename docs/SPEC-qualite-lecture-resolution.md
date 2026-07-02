@@ -5,6 +5,8 @@
 > Chaque point liste le constat, le fichier concerné et le correctif attendu.
 > Les tests existants (163) passent ; les correctifs se font en TDD.
 
+> Statut : correctifs livrés le 2026-07-02 (voir CHANGELOG).
+
 ## Architecture auditée
 
 ```
@@ -34,7 +36,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 
 ## 🔴 Majeur
 
-### M1 — Pas de cache négatif dans la cascade HF
+### ✅ M1 — Pas de cache négatif dans la cascade HF
 
 - **Constat** : un échec de résolution HF n'est pas mémorisé
   (`impact/engine.py:109`, `impact/params.py:214-224`). Chaque nouvel event
@@ -46,7 +48,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
   d'ingest (dict dans `ModelParamsResolver`), idéalement persisté en config
   avec TTL pour retenter périodiquement.
 
-### M2 — Hypothèse « 4-bit » universelle (méthodes 2 et 3)
+### ✅ M2 — Hypothèse « 4-bit » universelle (méthodes 2 et 3)
 
 - **Constat** : `_bytes_to_params_estimated` (`impact/params.py:49-54`) divise
   les octets par 0.5 (4-bit). Pour un repo FP16/BF16 (2 octets/param) le
@@ -59,7 +61,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
   produire une fourchette (0.5–2 octets/param) plutôt qu'une valeur unique, et
   faire remonter le warning dans le rapport.
 
-### M3 — Warning `moe-assumed-dense` ajouté inconditionnellement
+### ✅ M3 — Warning `moe-assumed-dense` ajouté inconditionnellement
 
 - **Constat** : `fetch_hf_params` (`impact/params.py:155`) ajoute
   `moe-assumed-dense` même pour un modèle réellement dense → pollue la
@@ -69,7 +71,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 
 ## 🟠 Moyen
 
-### N1 — Collision silencieuse d'events sans identifiants
+### ✅ N1 — Collision silencieuse d'events sans identifiants
 
 - **Constat** : PK `(session_id, msg_id)` + `INSERT OR IGNORE`
   (`store/db.py:18,77`). Côté Crush, `session_id`/`msg_id` peuvent être vides
@@ -78,7 +80,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 - **Correctif attendu** : skipper (avec compteur) ou générer un id synthétique
   déterministe (hash timestamp+model+tokens).
 
-### N2 — Timestamps comparés en chaînes, formats mixtes
+### ✅ N2 — Timestamps comparés en chaînes, formats mixtes
 
 - **Constat** : `_touch_session` (`store/db.py:129-130`) et les filtres
   `since` comparent lexicalement des ISO hétérogènes (`...Z` chez Claude Code,
@@ -87,7 +89,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 - **Correctif attendu** : normaliser le timestamp en ISO UTC canonique à
   l'ingestion (un seul format en DB).
 
-### N3 — `--recompute` seul ne tente jamais de nouvelle résolution
+### ✅ N3 — `--recompute` seul ne tente jamais de nouvelle résolution
 
 - **Constat** : `recompute_errors` (`store/db.py:287-290`) filtre sur les
   modèles déjà mappés en config ; sans mapping, rien n'est recalculé. Documenté
@@ -95,7 +97,7 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 - **Correctif attendu** : l'expliciter dans l'aide CLI (`resolve --recompute`),
   et/ou offrir un `--retry-hf` qui retente la cascade HF sur les non couverts.
 
-### N4 — Méthode 3 non bornée (HEAD séquentiels)
+### ✅ N4 — Méthode 3 non bornée (HEAD séquentiels)
 
 - **Constat** : `_fetch_safetensors_index_bytes` (`impact/params.py:34-42`)
   fait un HEAD par shard sans plafond : 50 shards = jusqu'à 50 requêtes × 10 s
@@ -105,15 +107,15 @@ Exports JSON / SQLite (Opencode) ─┤→ InferenceEvent → SQLiteStore.ingest
 
 ## 🟡 Mineur
 
-- `collectors/crush.py:104` : `info.get("session_id") or info.get("ID")` —
+- ✅ `collectors/crush.py:104` : `info.get("session_id") or info.get("ID")` —
   casse de clé incohérente (`ID` vs `id`), l'une des deux branches est
   probablement morte. Vérifier contre un export réel et nettoyer.
-- `add_pending` commit à chaque event (`store/db.py:143`) au milieu d'un
-  ingest qui commit déjà globalement — micro-perf, regrouper.
-- Recherche du binaire `hf` par heuristique cwd/`~/.agent-carbon/src`
+- ❌ `add_pending` commit à chaque event (`store/db.py:143`) au milieu d'un
+  ingest qui commit déjà globalement — abandonné (le commit immédiat est requis pour la visibilité inter-connexions et la migration N2).
+- ✅ Recherche du binaire `hf` par heuristique cwd/`~/.agent-carbon/src`
   (`impact/params.py:83-89`) — fragile mais fail-safe. Documenter ou
   configurer le chemin.
-- Nom de modèle interpolé tel quel dans l'URL HF (`impact/params.py:22`) —
+- ✅ Nom de modèle interpolé tel quel dans l'URL HF (`impact/params.py:22`) —
   risque faible (404), mais valider le format `org/name` avant requête.
 
 ## 🔵 Évolution — étape « recherche web » dans la cascade de résolution

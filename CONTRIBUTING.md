@@ -139,7 +139,12 @@ Lancer : `.venv/bin/python -m pytest -q`.
   L'installeur le déploie par symlink dans `~/.claude/skills/`.
 - **Résolution de modèles** : la cascade vit dans `impact/params.py` ; la CLI
   `resolve` (déterministe : HF + recompute) dans `resolve/cli.py` ; le mapping
-  nom→repo (jugement) dans le skill `/agent-carbon-resolve`.
+  nom→repo (jugement) dans le skill `/agent-carbon-resolve`. Les échecs HF sont
+  mémorisés (cache négatif en mémoire + persisté dans `config.json`, TTL 7 jours) ;
+  `resolve --retry-hf` purge ce cache et retente la cascade sur les non couverts.
+  Les params estimés depuis la taille des fichiers portent des warnings de
+  provenance (`params-bytes-per-param:<n>`, `params-range-unknown-dtype`) et sont
+  signalés dans le rapport.
 
 ## Backlog technique
 

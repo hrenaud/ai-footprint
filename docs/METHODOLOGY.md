@@ -126,6 +126,17 @@ Chaque impact stocke sa `methodology_version`
 (`engine=…;ecologits=…`). On peut ainsi recalculer après une mise à jour d'EcoLogits
 et comparer les résultats anciens/nouveaux.
 
+## Estimation des paramètres des modèles auto-hébergés
+
+Quand un modèle n'est ni dans le registre EcoLogits ni doté de metadata
+safetensors, ses paramètres sont **estimés depuis la taille des fichiers** du
+repo Hugging Face. Le dtype (octets/param) est déduit du nom du repo
+(`-4bit` → 0.5, `-int8` → 1, `-fp16`/`-bf16` → 2, `-fp32` → 4) ; s'il est
+indétectable, on produit une **fourchette** (0.5–2 octets/param, soit un
+rapport 1:4 sur les params) plutôt qu'une valeur unique. Ces estimations
+portent un warning de provenance en base et les modèles concernés sont
+signalés dans le rapport (« Params estimés depuis la taille des fichiers »).
+
 ## Limites assumées
 
 - Impact piloté par les **tokens de sortie** (entrée/cache non comptés).
