@@ -37,6 +37,16 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 
   pour que le binaire et les skills installés soient à jour.
 
+- **`~/.agent-carbon/src` est read-only pour l'agent.** Ce clone n'est jamais une
+  cible de travail : ni commande git (`commit`, `push`, `reset`, `pull`, `fetch`,
+  `tag -d`…), ni édition de fichier, ni exécution de `release bump` dessus. Tout le
+  travail git (commit, push, `release bump`, tag) se fait **ici, dans le repo dev**
+  — avec le binaire du venv **local** (`.venv/bin/agent-carbon`, jamais
+  `agent-carbon` global, qui pointe vers ce clone et y commiterait/taggerait à sa
+  place). La seule opération autorisée sur ce clone est sa **réinstallation
+  complète** via `install.sh` (voir ci-dessus), une fois le repo dev poussé et
+  taggé — jamais une correction manuelle, même pour "réparer" un état incohérent.
+
 - **Paramètres EcoLogits en milliards** partout (piège récurrent — cf. METHODOLOGY).
 
 ## Réaliser une release
@@ -46,9 +56,13 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 crée le commit `chore(release): X.Y.Z` + tag `vX.Y.Z`, puis push `origin main --tags`) :
 
 ```bash
-agent-carbon release bump <patch|minor|major>   # --no-push pour ne pas pousser
+.venv/bin/agent-carbon release bump <patch|minor|major>   # --no-push pour ne pas pousser
 ```
 
+- **Toujours le binaire du venv local** (`.venv/bin/agent-carbon`), jamais la
+  commande globale `agent-carbon` — celle-ci pointe vers le clone installé
+  (`~/.agent-carbon/src`) et y ferait le commit/tag au lieu du repo dev (cf. §
+  Rappels projet).
 - `patch` : corrections backward-compatibles · `minor` : nouvelles features
   backward-compatibles · `major` : changements incompatibles.
 - Prérequis : arbre propre, sur `main`, tag cible inexistant.

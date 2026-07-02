@@ -179,8 +179,13 @@ cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère les MoE.
 
 Un release bump la version sémantique, génère le CHANGELOG et crée le tag.
 
+**Toujours avec le binaire du venv local** (`.venv/bin/agent-carbon`), jamais la
+commande globale `agent-carbon` : celle-ci exécute le code du clone installé
+(`~/.agent-carbon/src`) et y ferait le commit/tag au lieu du repo dev où tu
+travailles.
+
 ```bash
-agent-carbon release bump <patch|minor|major> [--no-push]
+.venv/bin/agent-carbon release bump <patch|minor|major> [--no-push]
 ```
 
 - `patch` : corrections backward-compatible
