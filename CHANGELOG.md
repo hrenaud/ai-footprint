@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.4.0] — 2026-07-02
+
+### Features
+
+- resolve --retry-hf retente la cascade HF sur les non couverts (N3)
+- le rapport signale les modèles à params estimés (M2c)
+- fourchette de params quand le dtype est inconnu (M2b)
+- (skill) — étape web de secours cadrée dans agent-carbon-resolve
+
+### Bug Fixes
+
+- plafonds réseau méthode 3 et validation du format de repo (N4)
+- add_pending recommite immédiatement (visibilité inter-connexions)
+- timestamps ISO UTC canoniques en DB + migration des anciens (N2)
+- ids synthétiques déterministes pour les events Crush sans identifiant (N1)
+- octets/param déduits du dtype au lieu du 4-bit universel (M2a)
+- warning moe-assumed-dense seulement si le nom suggère un MoE (M3)
+- aligne __version__ sur 0.3.2
+
+### Documentation
+
+- méthodologie d'estimation des params et statut de la spec qualité
+- plan d'implémentation qualité lecture & résolution
+- fusionne le TODO self-hosted dans la spec qualité et le supprime
+- spec d'audit qualité lecture données & résolution modèles
+- (skill) — garde-fou JSON pur pour AskUserQuestion dans agent-carbon-report
+- procédure de release dans AGENTS.md
+- resync du clone installé via tag + script d'install
+
+### Performance
+
+- cache négatif HF persisté avec TTL 7 jours (M1b)
+- cache négatif HF en mémoire par run (M1a)
 ## [0.3.2] — 2026-07-02
 
 ### Features
