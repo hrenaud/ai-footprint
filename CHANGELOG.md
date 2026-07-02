@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0] — 2026-07-02
+
+### Features
+
+- (report) — add per-tool intensity section
+- (pi) — support Pi as a third collector
 ## [0.5.1] — 2026-07-02
 
 ### Documentation
