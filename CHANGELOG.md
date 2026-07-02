@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.1] — 2026-07-02
+
+### Documentation
+
+- clarifier le lifecycle du clone installé et le binaire de release
 ## [0.5.0] — 2026-07-02
 
 ### Features
