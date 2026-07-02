@@ -255,6 +255,24 @@ class SQLiteStore:
         return [{"model": r["model"], "tokens": r["toks"] or 0, "events": r["n"]}
                 for r in self.conn.execute(sql, tuple(params))]
 
+    def estimated_param_models(self, since: str | None = None) -> list[str]:
+        """Modèles mesurés dont les params viennent d'une estimation par taille
+        de fichiers (dtype supposé ou fourchette) — signalés dans le rapport."""
+        sql = (
+            "SELECT DISTINCT e.model FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL AND ("
+            "i.warnings LIKE '%params-bytes-per-param%' "
+            "OR i.warnings LIKE '%params-range-unknown-dtype%' "
+            "OR i.warnings LIKE '%params-from-cli-used_storage%')"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " ORDER BY e.model"
+        return [r["model"] for r in self.conn.execute(sql, tuple(params))]
+
     def mark_model_events_error(self, provider: str, model: str, error: str) -> None:
         """Marque en erreur les impacts des events d'un (provider, model) donné,
         pour qu'un recompute les reprenne (ex. après l'oubli d'un mapping)."""

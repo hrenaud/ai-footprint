@@ -216,3 +216,12 @@ def test_render_projects_detailed_shows_minmax():
 
 def test_render_projects_empty():
     assert render_projects([]) == ""
+
+
+def test_render_estimated_note():
+    """M2c : note d'avertissement listant les modèles à params estimés."""
+    from agent_carbon.report.cli import render_estimated_note
+    assert render_estimated_note([]) == ""
+    note = render_estimated_note(["est-model", "autre"])
+    assert "est-model" in note and "autre" in note
+    assert "estim" in note.lower()

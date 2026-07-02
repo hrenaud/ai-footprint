@@ -253,3 +253,12 @@ def render_uncovered(rows: list[dict]) -> str:
     out.append("  Paramètres inconnus d'EcoLogits → impact non estimable en l'état.")
     out.append("  → lance le skill `/agent-carbon-resolve` pour tenter de les résoudre via Hugging Face.")
     return "\n".join(out)
+
+
+def render_estimated_note(models: list[str]) -> str:
+    """Note d'avertissement : params estimés depuis la taille des fichiers
+    (dtype supposé, précision limitée). Chaîne vide si aucun modèle concerné."""
+    if not models:
+        return ""
+    return ("⚠️  Params estimés depuis la taille des fichiers (précision limitée) : "
+            + ", ".join(models))

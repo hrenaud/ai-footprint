@@ -17,6 +17,7 @@ from agent_carbon.impact.params import (
 )
 from agent_carbon.impact.resolver import ModelResolver
 from agent_carbon.report.cli import (
+    render_estimated_note,
     render_intensity,
     render_projects,
     render_report,
@@ -277,6 +278,9 @@ def main(argv: list[str] | None = None) -> int:
         tokens = render_tokens_by_model(store.tokens_by_model(args.since), detailed=args.detail)
         if tokens:
             out += "\n\n" + tokens
+        estimated = render_estimated_note(store.estimated_param_models(args.since))
+        if estimated:
+            out += "\n\n" + estimated
         uncovered = render_uncovered(store.uncovered_by_model(args.since))
         if uncovered:
             out += "\n\n" + uncovered

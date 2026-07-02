@@ -254,3 +254,26 @@ def test_mark_model_events_error_targets_only_that_model(tmp_path):
     # seuls les 2 events de A repassent en erreur ; B (s1, mA2) reste couvert
     assert store.coverage()["uncovered"] == 2
     assert {r["model"] for r in store.rows_for_report()} == {"B"}
+
+
+def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
+    """M2c : les modèles dont les params sont estimés (taille de fichiers)
+    ressortent pour être signalés dans le rapport."""
+    import json as _json
+    from agent_carbon.store.db import SQLiteStore
+    store = SQLiteStore(str(tmp_path / "t.db"))
+    store.conn.execute(
+        "INSERT INTO events VALUES ('s1','m1','ollama','est-model',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'')")
+    store.conn.execute(
+        "INSERT INTO impacts VALUES ('s1','m1','est-model','WOR','v',"
+        "1,2,1,2,1,2,1,2,1,2,'{}',?,NULL)",
+        (_json.dumps(["params-from-cli-used_storage", "params-bytes-per-param:0.5"]),))
+    store.conn.execute(
+        "INSERT INTO events VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'')")
+    store.conn.execute(
+        "INSERT INTO impacts VALUES ('s1','m2','gpt-4o-mini','WOR','v',"
+        "1,2,1,2,1,2,1,2,1,2,'{}','[]',NULL)")
+    store.conn.commit()
+    assert store.estimated_param_models() == ["est-model"]
