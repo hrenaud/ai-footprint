@@ -538,6 +538,35 @@ def test_backfill_active_seconds_capped():
     os.rmdir(tmp_dir)
 
 
+def test_messages_without_ids_get_distinct_deterministic_ids(tmp_path):
+    """N1 : deux messages assistant sans id ne se téléscopent pas (PK DB) et
+    l'id synthétique est déterministe d'un run à l'autre."""
+    import json
+    from agent_carbon.collectors.crush import CrushCollector
+    export = {
+        "info": {"id": "sess-1"},
+        "directory": "/Users/me/DEV/projA",
+        "messages": [
+            {"data": {"role": "assistant",
+                      "model": {"providerID": "ollama", "modelID": "m"},
+                      "tokens": {"input": 10, "output": 5},
+                      "time": {"created": 1719741600000}}},
+            {"data": {"role": "assistant",
+                      "model": {"providerID": "ollama", "modelID": "m"},
+                      "tokens": {"input": 20, "output": 7},
+                      "time": {"created": 1719741660000}}},
+        ],
+    }
+    p = tmp_path / "export.json"
+    p.write_text(json.dumps(export))
+    events1 = list(CrushCollector(root=str(p)).collect())
+    events2 = list(CrushCollector(root=str(p)).collect())
+    assert len(events1) == 2
+    assert events1[0].msg_id and events1[1].msg_id          # jamais vide
+    assert events1[0].msg_id != events1[1].msg_id           # distincts
+    assert events1[0].msg_id == events2[0].msg_id           # déterministe
+
+
 # --- Helpers ---
 
 def _write_json(path: str, data: dict) -> None:

@@ -1,6 +1,7 @@
 """Collecteur pour les donnees d'exportation JSON d'Opencode/Crush et backfill SQLite."""
 
 import glob
+import hashlib
 import json
 import os
 import sqlite3
@@ -27,6 +28,13 @@ def _safe_int(value: int | float | None) -> int:
     if value is None:
         return 0
     return int(value)
+
+
+def _synthetic_id(prefix: str, *parts) -> str:
+    """Id déterministe pour un event sans identifiant : évite que tous les
+    events ("","") s'écrasent sur la même PK en DB (perte silencieuse)."""
+    digest = hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()[:16]
+    return f"{prefix}-{digest}"
 
 
 class CrushCollector(Collector):
@@ -100,17 +108,17 @@ class CrushCollector(Collector):
             ts_ms = info.get("time", {}).get("created")
             timestamp = _parse_ts_utc_ms(ts_ms)
 
-            # Session
-            session_id = info.get("session_id") or info.get("ID") or ""
-            if not session_id:
-                session_id = obj.get("info", {}).get("id", "")
+            # Session (la branche `info.get("ID")` était morte : le format
+            # d'export ne la contient pas — cf. tests/fixtures/crush-export.json)
+            session_id = info.get("session_id") or obj.get("info", {}).get("id", "")
 
             # Project (basename du directory)
             directory = info.get("directory") or obj.get("directory") or ""
             project = _project_from_cwd(directory)
 
-            # Msg ID
-            msg_id = info.get("id") or ""
+            # Msg ID — synthétique si absent (déterministe : mêmes champs → même id)
+            msg_id = info.get("id") or _synthetic_id(
+                "crush", session_id, ts_ms, model, input_tokens, output_tokens)
 
             # Active secondes (delta)
             created_ms = info.get("time", {}).get("created")
@@ -218,8 +226,9 @@ class CrushCollector(Collector):
             directory = session["directory"] or ""
             project = _project_from_cwd(directory)
 
-            # Msg ID
-            msg_id = msg["id"] or ""
+            # Msg ID — synthétique si absent
+            msg_id = msg["id"] or _synthetic_id(
+                "crush", session_id, created_ms, model, input_tokens, output_tokens)
 
             # Active seconds
             active_seconds = self._calc_active_seconds(created_ms, completed_ms)
