@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"sess-A","timestamp":"2026-06-27T10:00:00.000Z","cwd":"/Users/me/DEV/projA"}
+{"type":"message","id":"u0","parentId":null,"timestamp":"2026-06-27T10:00:00.000Z","message":{"role":"user","content":[{"type":"text","text":"hi"}]}}
+{"type":"model_change","id":"mc0","parentId":"u0","timestamp":"2026-06-27T10:00:01.000Z","provider":"anthropic","modelId":"claude-opus-4-8"}
+{"type":"message","id":"u1","parentId":"u0","timestamp":"2026-06-27T10:08:45.619Z","message":{"role":"assistant","content":[{"type":"text","text":"hello"}],"provider":"anthropic","model":"claude-opus-4-8","usage":{"input":8427,"output":287,"cacheRead":8020,"cacheWrite":7052,"totalTokens":15786,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop"}}
+{"type":"message","id":"u2","parentId":"u1","timestamp":"2026-06-27T11:00:00.000Z","message":{"role":"assistant","content":[{"type":"text","text":"ok"}],"provider":"lm-studios","model":"qwen/qwen3.6-35b-a3b","usage":{"input":1200,"output":540,"cacheRead":300,"cacheWrite":0,"totalTokens":2040,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop"}}

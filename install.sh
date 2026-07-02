@@ -221,6 +221,32 @@ else
   say "Opencode/CRUSH non détecté — câblage ignoré."
 fi
 
+# 8. Câblage Pi (extension + backfill) ----------------------------------------
+if command -v pi >/dev/null 2>&1; then
+  PI_EXT_DIR="$HOME/.pi/agent/extensions"
+  PI_SESSIONS_DIR="$HOME/.pi/agent/sessions"
+
+  EXT_SRC="$INSTALL_DIR/skills/agent-carbon-pi/agent-carbon-pi.ts"
+  EXT_DST="$PI_EXT_DIR/agent-carbon-pi.ts"
+
+  if [ -f "$EXT_SRC" ]; then
+    mkdir -p "$PI_EXT_DIR"
+    cp "$EXT_SRC" "$EXT_DST"
+    ok "Extension Pi installée ($EXT_DST)"
+  else
+    warn "Extension Pi introuvable dans $EXT_SRC — omission."
+  fi
+
+  if [ -d "$PI_SESSIONS_DIR" ]; then
+    say "Backfill Pi en cours (lecture de $PI_SESSIONS_DIR) ..."
+    "$AC_BIN" ingest --db "$DB_PATH" --source-pi "$PI_SESSIONS_DIR" 2>/dev/null \
+      && ok "Backfill initial effectué." \
+      || warn "Backfill initial non abouti — relancez 'agent-carbon ingest --source-pi $PI_SESSIONS_DIR'."
+  fi
+else
+  say "Pi non détecté — câblage ignoré."
+fi
+
 printf '\n'
 ok "Terminé."
 say "Rapport   : agent-carbon report"

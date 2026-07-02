@@ -1,8 +1,9 @@
 # agent-carbon
 
 **Connaître l'empreinte environnementale de tes sessions d'IA.** agent-carbon lit les
-transcripts de Claude Code, estime l'impact de chaque réponse générée, et te le
-restitue sous forme de rapport et de statusline — directement dans Claude Code.
+transcripts de Claude Code, Opencode/CRUSH et Pi, estime l'impact de chaque réponse
+générée, et te le restitue sous forme de rapport et de statusline — directement dans
+Claude Code.
 
 Le calcul n'est pas réinventé : il est délégué à **[EcoLogits](https://github.com/mlco2/ecologits)**,
 un moteur reconnu, **offline** et **multi-critères**.
@@ -36,7 +37,9 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/agent-carbon/main/install.s
 L'installeur détecte Python ≥ 3.10, installe agent-carbon + EcoLogits, expose la
 commande `agent-carbon`, déploie les skills, et câble la statusline + un hook
 d'ingestion dans `~/.claude/settings.json` (sans toucher à une statusline déjà prise
-par un autre outil). **Redémarre Claude Code** ensuite pour activer les skills.
+par un autre outil). Il détecte aussi Opencode/CRUSH (plugin) et Pi (extension) s'ils
+sont installés, et fait un backfill initial de leurs sessions locales. **Redémarre
+Claude Code** ensuite pour activer les skills.
 
 Variables optionnelles : `AGENT_CARBON_DIR`, `AGENT_CARBON_DB`,
 `AGENT_CARBON_NO_CLAUDE=1` (ne pas modifier `settings.json`), `AGENT_CARBON_NO_INGEST=1`.
@@ -54,8 +57,8 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/agent-carbon/main/uninstall
 ```
 
 Retire le binaire, les skills, le câblage `~/.claude/settings.json` (statusline + hook
-d'ingestion), le plugin Opencode/CRUSH et le répertoire source. **La base
-`carbon.db` (historique d'impact) est conservée par défaut** — ajoute
+d'ingestion), le plugin Opencode/CRUSH, l'extension Pi et le répertoire source. **La
+base `carbon.db` (historique d'impact) est conservée par défaut** — ajoute
 `AGENT_CARBON_PURGE_DB=1` avant la commande pour la supprimer aussi.
 
 ## Utilisation — via les skills (recommandé)

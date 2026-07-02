@@ -18,6 +18,7 @@ SETTINGS_FILE="$HOME/.claude/settings.json"
 SKILLS_DST="$HOME/.claude/skills"
 OPENCODE_PLUGIN="$HOME/.config/opencode/plugins/agent-carbon-crush.js"
 OPENCODE_CFG="$HOME/.config/opencode/opencode.json"
+PI_EXTENSION="$HOME/.pi/agent/extensions/agent-carbon-pi.ts"
 PYTHON="$(command -v python3 || true)"
 
 say()  { printf '  %s\n' "$*"; }
@@ -111,7 +112,13 @@ if plugins and plugin_path in plugins:
 PY
 fi
 
-# 5. Source + venv ($INSTALL_DIR) -----------------------------------------------------
+# 5. Pi — extension ------------------------------------------------------------------
+if [ -f "$PI_EXTENSION" ]; then
+  rm "$PI_EXTENSION"
+  ok "Extension Pi supprimée: $PI_EXTENSION"
+fi
+
+# 6. Source + venv ($INSTALL_DIR) -----------------------------------------------------
 if [ -d "$INSTALL_DIR" ]; then
   rm -rf "$INSTALL_DIR"
   ok "Répertoire d'installation supprimé: $INSTALL_DIR"
@@ -119,7 +126,7 @@ else
   say "$INSTALL_DIR absent — ignoré."
 fi
 
-# 6. Base de données — conservée par défaut ------------------------------------------
+# 7. Base de données — conservée par défaut ------------------------------------------
 if [ "${AGENT_CARBON_PURGE_DB:-0}" = "1" ]; then
   if [ -f "$DB_PATH" ]; then
     rm -f "$DB_PATH" "$DB_PATH-wal" "$DB_PATH-shm"
