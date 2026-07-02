@@ -129,3 +129,43 @@ def test_resolve_forget_only_affects_target_model(tmp_path, monkeypatch):
     store = SQLiteStore(db)
     uncovered_models = {r["model"] for r in store.uncovered_by_model()}
     assert uncovered_models == {"ModelA"}, f"Expected only ModelA uncovered, got {uncovered_models}"
+
+
+def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
+    """N3 : --retry-hf purge le cache négatif et retente la cascade HF sur les
+    non couverts (sans mapping manuel)."""
+    import json as _json
+    from types import SimpleNamespace
+    import agent_carbon.impact.params as params_mod
+    from agent_carbon.impact.params import ParamsResult
+    from agent_carbon.config import Config
+    from agent_carbon.resolve.cli import cmd_resolve
+    from agent_carbon.store.db import SQLiteStore
+
+    db = str(tmp_path / "t.db")
+    store = SQLiteStore(db)
+    store.conn.execute(
+        "INSERT INTO events VALUES ('s1','m1','ollama','org/nouveau',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'')")
+    store.conn.execute(
+        "INSERT INTO impacts VALUES ('s1','m1','org/nouveau','WOR','v',"
+        "NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"
+        "'{}','[]','model-params-unresolved')")
+    store.conn.commit()
+    store.conn.close()
+
+    # Config isolée (ne pas toucher ~/.agent-carbon) + HF factice qui réussit
+    cfg = Config(electricity_mix_zone="WOR",
+                 hf_unresolved={"ollama/org/nouveau": "2026-07-02T00:00:00+00:00"})
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+    monkeypatch.setattr(Config, "save", lambda self, path=None: None)
+    monkeypatch.setattr(params_mod, "fetch_hf_params",
+                        lambda repo: ParamsResult(active=7.0, total=7.0,
+                                                  arch="dense", source="huggingface"))
+
+    args = SimpleNamespace(db=db, since=None, list=False, json=False,
+                           set=[], forget=[], recompute=False, retry_hf=True)
+    assert cmd_resolve(args) == 0
+    assert "ollama/org/nouveau" not in cfg.hf_unresolved  # purgé avant retente
+    check = SQLiteStore(db)
+    assert check.coverage()["uncovered"] == 0             # résolu par la cascade

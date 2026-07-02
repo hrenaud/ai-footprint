@@ -139,9 +139,19 @@ def cmd_resolve(args) -> int:
     for model_key in forgotten_models:
         provider, model = model_key.split("/", 1)
         store.mark_model_events_error(provider, model, "model-params-reset")
-    if args.recompute or changed:
+
+    retry_hf = getattr(args, "retry_hf", False)
+    if retry_hf:
+        # Purge du cache négatif pour les modèles encore non couverts, puis
+        # recompute complet : la cascade retentera le tier Hugging Face.
+        for provider, model in store.uncovered_keys():
+            config.hf_unresolved.pop(f"{provider}/{model}", None)
+
+    if args.recompute or retry_hf or changed:
         engine = EcoLogitsEngine(ModelResolver(config.model_aliases))
-        _print_recompute(store.recompute_errors(engine, config))
+        _print_recompute(store.recompute_errors(engine, config, retry_all=retry_hf))
+        if retry_hf:
+            config.save()  # persiste les succès (cache positif) et les nouveaux échecs
     if args.list:
         _print_list(store.uncovered_by_model(args.since), args.json)
     return 0

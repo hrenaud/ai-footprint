@@ -232,7 +232,12 @@ def main(argv: list[str] | None = None) -> int:
     p_res.add_argument("--json", action="store_true")
     p_res.add_argument("--set", action="append", default=[], metavar="P/M=REPO")
     p_res.add_argument("--forget", action="append", default=[], metavar="P/M")
-    p_res.add_argument("--recompute", action="store_true")
+    p_res.add_argument("--recompute", action="store_true",
+                       help="recalcule les events en erreur des modèles déjà mappés "
+                            "(ne tente PAS de nouvelle résolution — voir --retry-hf)")
+    p_res.add_argument("--retry-hf", dest="retry_hf", action="store_true",
+                       help="purge le cache négatif des non couverts et retente la "
+                            "cascade Hugging Face sur tous les events en erreur")
 
     p_rel = sub.add_parser(
         "release",

@@ -306,30 +306,37 @@ class SQLiteStore:
             (error, provider, model))
         self.conn.commit()
 
-    def recompute_errors(self, engine: EcoLogitsEngine, config: Config) -> dict:
-        """Recalcule l'impact des events en erreur pour les modèles dont les params
-        sont maintenant disponibles (utile après ajout de mappings via --set).
-        Retourne {before, after} = nombre de non couverts avant/après.
+    def uncovered_keys(self) -> list[tuple[str, str]]:
+        """Couples (provider, model) des events à impact non estimé,
+        hors placeholders `<synthetic>`."""
+        return [(r["provider"], r["model"]) for r in self.conn.execute(
+            "SELECT DISTINCT e.provider, e.model FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'")]
 
-        Ne recalcule que les modèles ayant un mapping dans config.model_params,
-        évitant les calculs inutiles sur les modèles toujours non couverts. Le
-        ModelParamsResolver met les params en cache dès la première résolution, donc
-        chaque modèle n'est résolu qu'une fois sur l'ensemble de la boucle."""
+    def recompute_errors(self, engine: EcoLogitsEngine, config: Config,
+                         retry_all: bool = False) -> dict:
+        """Recalcule l'impact des events en erreur.
+
+        Par défaut, seuls les modèles ayant un mapping dans config.model_params
+        sont repris (évite les calculs inutiles) — donc **sans mapping,
+        --recompute seul ne tente rien**. Avec retry_all=True (--retry-hf),
+        tous les events en erreur (hors <synthetic>) repassent par la cascade,
+        y compris le tier Hugging Face."""
         before = self.coverage()["uncovered"]
 
-        # Déterminer les modèles à recalculer (ceux qui ont un mapping)
-        mapped_keys = set(config.model_params.keys())
-
-        # Récupérer les events en erreur, puis filtrer par modèles résolus
+        # Récupérer les events en erreur (hors <synthetic>)
         rows = self.conn.execute(
             "SELECT e.* FROM events e JOIN impacts i "
             "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NOT NULL"
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'"
         ).fetchall()
-        if mapped_keys:
-            rows = [r for r in rows if f"{r['provider']}/{r['model']}" in mapped_keys]
-        else:
-            rows = []
+
+        # Filtrer selon le mode : par défaut seuls les mappés, sinon tous
+        if not retry_all:
+            mapped_keys = set(config.model_params.keys())
+            rows = [r for r in rows
+                    if f"{r['provider']}/{r['model']}" in mapped_keys] if mapped_keys else []
 
         # Commit par batch de 100 events pour éviter les timeout
         batch_size = 100
