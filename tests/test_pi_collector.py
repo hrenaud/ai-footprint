@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from agent_carbon.collectors.pi import PiCollector
+from ai_footprint.collectors.pi import PiCollector
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pi"
 

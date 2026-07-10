@@ -2,9 +2,9 @@ import json
 import sys
 from pathlib import Path
 
-from agent_carbon.__main__ import _read_stdin_json, main
-from agent_carbon.statusline.line import render_statusline
-from agent_carbon.store.db import SQLiteStore
+from ai_footprint.__main__ import _read_stdin_json, main
+from ai_footprint.statusline.line import render_statusline
+from ai_footprint.store.db import SQLiteStore
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

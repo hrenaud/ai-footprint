@@ -1,5 +1,5 @@
-from agent_carbon.config import Config
-from agent_carbon.impact.params import ModelParamsResolver, ParamsResult
+from ai_footprint.config import Config
+from ai_footprint.impact.params import ModelParamsResolver, ParamsResult
 
 
 def test_registry_tier_resolves_known_model():

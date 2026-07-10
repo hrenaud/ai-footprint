@@ -1,6 +1,6 @@
 # Méthodologie — comment l'impact est évalué
 
-agent-carbon **ne réécrit aucun modèle d'impact**. Il collecte les métadonnées
+ai-footprint **ne réécrit aucun modèle d'impact**. Il collecte les métadonnées
 d'usage (tokens, modèle, horodatage) et délègue tout le calcul environnemental à
 **[EcoLogits](https://github.com/mlco2/ecologits)** (moteur offline, multi-critères,
 multi-phases). Ce document décrit ce qu'on envoie à EcoLogits, ce qu'on en reçoit,
@@ -9,7 +9,7 @@ et les choix de méthodologie (avec leurs limites).
 ## Pourquoi EcoLogits
 
 L'audit de `claude-carbon` (mono-critère CO₂, facteurs dérivés du **prix**) a montré
-les limites d'une modélisation maison. agent-carbon s'appuie sur EcoLogits :
+les limites d'une modélisation maison. ai-footprint s'appuie sur EcoLogits :
 
 - **multi-critères** (5 critères, pas seulement le CO₂) ;
 - **multi-phases** (usage + fabrication) ;
@@ -18,7 +18,7 @@ les limites d'une modélisation maison. agent-carbon s'appuie sur EcoLogits :
 
 ## Les échanges avec EcoLogits
 
-Pour **chaque message d'inférence** (un appel modèle dans un transcript), agent-carbon
+Pour **chaque message d'inférence** (un appel modèle dans un transcript), ai-footprint
 fait un calcul. Deux chemins selon que le modèle est connu d'EcoLogits ou non.
 
 ### Ce qu'on envoie
@@ -51,7 +51,7 @@ Pour chaque message, EcoLogits renvoie les **5 critères**, chacun en **fourchet
 - **usage** : l'inférence elle-même.
 - **embodied** : la fabrication/amortissement du matériel (gwp, adpe, pe).
 
-agent-carbon stocke ces fourchettes telles quelles (table `impacts`), avec la
+ai-footprint stocke ces fourchettes telles quelles (table `impacts`), avec la
 version de méthodologie utilisée. Le rapport agrège ensuite par total / projet /
 modèle, et affiche une **valeur centrale `~`** (moyenne des bornes) accompagnée de la
 **plage min–max**.
@@ -78,17 +78,17 @@ modèle, et affiche une **valeur centrale `~`** (moyenne des bornes) accompagné
     On documente cette incertitude plutôt que de la dissimuler derrière un chiffre
     faussement précis. La valeur centrale `~` n'est qu'un repère.
 - **Zone électrique configurable.** Défaut USA ; réglable (ex. FRA) via
-  `/agent-carbon-config`. Elle change fortement le GWP (le mix varie d'un facteur
+  `/footprint-config`. Elle change fortement le GWP (le mix varie d'un facteur
   ~10 entre pays).
 
 ## Modèles auto-hébergés et tiers
 
 Beaucoup de modèles ne sont pas dans le registre EcoLogits (inférence locale, modèles
 open-weight, routeurs tiers). Pour estimer leur impact, il faut leurs **paramètres**.
-agent-carbon les résout en cascade :
+ai-footprint les résout en cascade :
 
 1. **Registre EcoLogits** (si finalement reconnu) — gère dense et **MoE** (actif/total).
-2. **Cache config** (`~/.agent-carbon/config.json`) — params déclarés ou résolus
+2. **Cache config** (`~/.ai-footprint/config.json`) — params déclarés ou résolus
    précédemment, avec provenance (`source`, `hf_repo`).
 3. **Hugging Face** — nombre de paramètres lu depuis les métadonnées safetensors
    (`total ÷ 1e9`, en **milliards**). Offline-safe : tout échec ⇒ non résolu.
@@ -115,7 +115,7 @@ La sortie d'`ingest` (et le rapport) distingue :
   - les placeholders internes `<synthetic>` de Claude Code (0 token, aucune inférence
     réelle) — non couvrables par nature, exclus du rapport ;
   - les vrais modèles tiers/auto-hébergés non résolus — **résolubles** vers un repo
-    Hugging Face via `agent-carbon resolve` (skill `/agent-carbon-resolve`).
+    Hugging Face via `ai-footprint resolve` (skill `/footprint-resolve`).
 
 La résolution d'un modèle déclenche un **recalcul** des impacts déjà en base
 (`resolve --recompute`), sans re-parser les transcripts.

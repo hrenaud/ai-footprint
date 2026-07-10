@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_carbon.collectors.crush import CrushCollector
-from agent_carbon.models import InferenceEvent
+from ai_footprint.collectors.crush import CrushCollector
+from ai_footprint.models import InferenceEvent
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CRUSH_EXPORT = FIXTURES / "crush-export.json"
@@ -542,7 +542,7 @@ def test_messages_without_ids_get_distinct_deterministic_ids(tmp_path):
     """N1 : deux messages assistant sans id ne se téléscopent pas (PK DB) et
     l'id synthétique est déterministe d'un run à l'autre."""
     import json
-    from agent_carbon.collectors.crush import CrushCollector
+    from ai_footprint.collectors.crush import CrushCollector
     export = {
         "info": {"id": "sess-1"},
         "directory": "/Users/me/DEV/projA",

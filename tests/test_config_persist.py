@@ -1,6 +1,6 @@
 import os
 from ecologits.utils.range_value import RangeValue
-from agent_carbon.config import Config
+from ai_footprint.config import Config
 
 
 def test_defaults():

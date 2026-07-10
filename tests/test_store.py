@@ -1,8 +1,8 @@
-from agent_carbon.config import Config
-from agent_carbon.impact.engine import EcoLogitsEngine
-from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.models import InferenceEvent
-from agent_carbon.store.db import SQLiteStore
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import EcoLogitsEngine
+from ai_footprint.impact.resolver import ModelResolver
+from ai_footprint.models import InferenceEvent
+from ai_footprint.store.db import SQLiteStore
 
 
 def _events():
@@ -309,7 +309,7 @@ def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
     """M2c : les modèles dont les params sont estimés (taille de fichiers)
     ressortent pour être signalés dans le rapport."""
     import json as _json
-    from agent_carbon.store.db import SQLiteStore
+    from ai_footprint.store.db import SQLiteStore
     store = SQLiteStore(str(tmp_path / "t.db"))
     store.conn.execute(
         "INSERT INTO events VALUES ('s1','m1','ollama','est-model',1,2,0,0,"
@@ -330,7 +330,7 @@ def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
 
 def test_ingest_normalizes_timestamp_to_utc_canonical(tmp_path):
     """N2 : un timestamp « Z » est stocké en ISO UTC canonique (+00:00)."""
-    from agent_carbon.store.db import SQLiteStore, _canonical_ts
+    from ai_footprint.store.db import SQLiteStore, _canonical_ts
     assert _canonical_ts("2026-07-02T10:00:00Z") == "2026-07-02T10:00:00+00:00"
     assert _canonical_ts("2026-07-02T12:00:00+02:00") == "2026-07-02T10:00:00+00:00"
     assert _canonical_ts("pas-une-date") == "pas-une-date"  # laissé tel quel
@@ -339,7 +339,7 @@ def test_ingest_normalizes_timestamp_to_utc_canonical(tmp_path):
 def test_open_migrates_legacy_z_timestamps(tmp_path):
     """N2 : à l'ouverture, les vieux timestamps « …Z » sont convertis en +00:00."""
     import sqlite3
-    from agent_carbon.store.db import SQLiteStore
+    from ai_footprint.store.db import SQLiteStore
     db = str(tmp_path / "t.db")
     s = SQLiteStore(db)
     s.conn.execute(

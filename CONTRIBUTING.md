@@ -1,4 +1,4 @@
-# Contribuer à agent-carbon
+# Contribuer à ai-footprint
 
 Guide technique : mise en place dev, conventions, architecture du code, schéma de
 données, et comment étendre le projet. Pour **comment l'impact est calculé** (les
@@ -8,34 +8,34 @@ données, et comment étendre le projet. Pour **comment l'impact est calculé** 
 ## Mise en place
 
 ```bash
-git clone https://github.com/hrenaud/agent-carbon
-cd agent-carbon
+git clone https://github.com/hrenaud/ai-footprint
+cd ai-footprint
 python3 -m venv .venv
-.venv/bin/pip install -e .        # installe agent-carbon + EcoLogits (tag 0.11.0)
+.venv/bin/pip install -e .        # installe ai-footprint + EcoLogits (tag 0.11.0)
 .venv/bin/python -m pytest -q     # la suite doit être verte
 ```
 
-Lancer la CLI en dev : `.venv/bin/python -m agent_carbon <commande>`.
+Lancer la CLI en dev : `.venv/bin/python -m ai_footprint <commande>`.
 
 ### Tester `install.sh` sur une branche (avant merge sur `main`)
 
-`install.sh` installe par défaut `main`, mais accepte `AGENT_CARBON_REF` pour
+`install.sh` installe par défaut `main`, mais accepte `AI_FOOTPRINT_REF` pour
 pointer sur n'importe quelle branche ou tag — utile pour tester une contribution
 en conditions réelles (clone + venv + hook Claude Code) avant de merger :
 
 ```bash
-AGENT_CARBON_REF=ma-branche AGENT_CARBON_DIR=/tmp/agent-carbon-test \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/agent-carbon/main/install.sh | bash
+AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
 ```
 
-`AGENT_CARBON_DIR` évite d'écraser l'installation courante dans
-`~/.agent-carbon/src` pendant le test. Voir aussi `AGENT_CARBON_DB`,
-`AGENT_CARBON_NO_CLAUDE`, `AGENT_CARBON_NO_INGEST` en tête d'`install.sh`.
+`AI_FOOTPRINT_DIR` évite d'écraser l'installation courante dans
+`~/.ai-footprint/src` pendant le test. Voir aussi `AI_FOOTPRINT_DB`,
+`AI_FOOTPRINT_NO_CLAUDE`, `AI_FOOTPRINT_NO_INGEST` en tête d'`install.sh`.
 
-Pour nettoyer une installation de test : `AGENT_CARBON_DIR=/tmp/agent-carbon-test
-AGENT_CARBON_PURGE_DB=1 bash uninstall.sh` (`uninstall.sh` défait tout ce que
-`install.sh` met en place ; utilise les mêmes variables `AGENT_CARBON_DIR` /
-`AGENT_CARBON_DB`, plus `AGENT_CARBON_PURGE_DB=1` pour aussi supprimer la base).
+Pour nettoyer une installation de test : `AI_FOOTPRINT_DIR=/tmp/ai-footprint-test
+AI_FOOTPRINT_PURGE_DB=1 bash uninstall.sh` (`uninstall.sh` défait tout ce que
+`install.sh` met en place ; utilise les mêmes variables `AI_FOOTPRINT_DIR` /
+`AI_FOOTPRINT_DB`, plus `AI_FOOTPRINT_PURGE_DB=1` pour aussi supprimer la base).
 
 ## Conventions
 
@@ -67,7 +67,7 @@ SQLiteStore (idempotent ; events / impacts / sessions / pending_models)
 CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSONL)
 ```
 
-### Modules (`agent_carbon/`)
+### Modules (`ai_footprint/`)
 
 | Module                      | Rôle                                                                                                                                                                                     |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -81,10 +81,10 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 | `resolve/cli.py`            | sous-commande `resolve` (list/set/recompute/forget).                                                                                                                                     |
 | `statusline/line.py`        | ligne compacte.                                                                                                                                                                          |
 | `dates.py`                  | `parse_since()` (normalise les dates `--since`).                                                                                                                                         |
-| `config.py`                 | dataclass `Config` (JSON `~/.agent-carbon/config.json`).                                                                                                                                 |
+| `config.py`                 | dataclass `Config` (JSON `~/.ai-footprint/config.json`).                                                                                                                                 |
 | `__main__.py`               | parseur d'arguments + dispatch des commandes.                                                                                                                                            |
 
-### Schéma de la base (`~/.agent-carbon/carbon.db`)
+### Schéma de la base (`~/.ai-footprint/ai-footprint.db`)
 
 `sqlite3`, `row_factory = Row`, migrations additives par `ALTER TABLE`.
 
@@ -161,7 +161,7 @@ Lancer : `.venv/bin/python -m pytest -q`.
   L'installeur le déploie par symlink dans `~/.claude/skills/`.
 - **Résolution de modèles** : la cascade vit dans `impact/params.py` ; la CLI
   `resolve` (déterministe : HF + recompute) dans `resolve/cli.py` ; le mapping
-  nom→repo (jugement) dans le skill `/agent-carbon-resolve`. Les échecs HF sont
+  nom→repo (jugement) dans le skill `/footprint-resolve`. Les échecs HF sont
   mémorisés (cache négatif en mémoire + persisté dans `config.json`, TTL 7 jours) ;
   `resolve --retry-hf` purge ce cache et retente la cascade sur les non couverts.
   Les params estimés depuis la taille des fichiers portent des warnings de
@@ -179,13 +179,13 @@ cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère les MoE.
 
 Un release bump la version sémantique, génère le CHANGELOG et crée le tag.
 
-**Toujours avec le binaire du venv local** (`.venv/bin/agent-carbon`), jamais la
-commande globale `agent-carbon` : celle-ci exécute le code du clone installé
-(`~/.agent-carbon/src`) et y ferait le commit/tag au lieu du repo dev où tu
+**Toujours avec le binaire du venv local** (`.venv/bin/ai-footprint`), jamais la
+commande globale `ai-footprint` : celle-ci exécute le code du clone installé
+(`~/.ai-footprint/src`) et y ferait le commit/tag au lieu du repo dev où tu
 travailles.
 
 ```bash
-.venv/bin/agent-carbon release bump <patch|minor|major> [--no-push]
+.venv/bin/ai-footprint release bump <patch|minor|major> [--no-push]
 ```
 
 - `patch` : corrections backward-compatible
@@ -197,7 +197,7 @@ Le process :
 1. Vérifie que l'arbre est propre, qu'on est sur `main`, et que le tag cible n'existe pas.
 2. Calcule la nouvelle version (ex. `0.1.0` → `0.2.0`).
 3. Génère le CHANGELOG entre le dernier tag `v*` et HEAD en exploitant les commits conventionnels (`feat:`, `fix:`, etc.).
-4. Bump `pyproject.toml` + `agent_carbon/__init__.py`.
+4. Bump `pyproject.toml` + `ai_footprint/__init__.py`.
 5. Prepend le nouveau bloc dans `CHANGELOG.md`.
 6. Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`.
 7. **Push `origin main --tags` par défaut** (option `--no-push` pour skipper).
@@ -211,7 +211,7 @@ Preuve : les tests `tests/test_release.py` (31 tests) couvrent le cycle complet.
 Un workflow GitHub Actions (`.github/workflows/check-tool-updates.yml`, cron
 hebdomadaire + déclenchement manuel) compare les versions pinnées dans
 `pyproject.toml` (ecologits sur un tag git exact, huggingface_hub) aux dernières
-versions publiées (PyPI / tags GitHub via `agent_carbon/tool_updates.py`) et
+versions publiées (PyPI / tags GitHub via `ai_footprint/tool_updates.py`) et
 ouvre une issue si une nouvelle version existe.
 
 **Aucun bump automatique** : ecologits est épinglé sur un tag git précis car un

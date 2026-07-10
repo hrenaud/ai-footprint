@@ -1,4 +1,4 @@
-from agent_carbon.impact.resolver import ModelResolver
+from ai_footprint.impact.resolver import ModelResolver
 
 
 def test_passthrough_when_no_alias():

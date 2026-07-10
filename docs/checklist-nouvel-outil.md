@@ -4,7 +4,7 @@
 un futur client type Codex, etc.). Référence technique complète : voir
 [CONTRIBUTING.md](../CONTRIBUTING.md) (architecture, schéma DB, conventions).
 
-## 1. Collecteur (`agent_carbon/collectors/`)
+## 1. Collecteur (`ai_footprint/collectors/`)
 
 - [ ] Implémenter une classe héritant de l'ABC `Collector` (`base.py`) :
       attributs `provider` / `client`, méthode `collect() -> Iterator[InferenceEvent]`.
@@ -24,7 +24,7 @@ un futur client type Codex, etc.). Référence technique complète : voir
       d'entrée diffère significativement des collecteurs existants.
 - [ ] `.venv/bin/python -m pytest -q` vert avant de continuer.
 
-## 3. Câblage CLI (`agent_carbon/__main__.py`)
+## 3. Câblage CLI (`ai_footprint/__main__.py`)
 
 - [ ] Enregistrer le nouveau collecteur (option `--source-<outil>` si
       pertinent, cf. `--source-crush`).
@@ -42,7 +42,7 @@ un futur client type Codex, etc.). Référence technique complète : voir
 ## 5. Skill (`skills/`)
 
 - [ ] Si l'outil a une UX conversationnelle propre, ajouter
-      `skills/agent-carbon-<outil>/SKILL.md` (frontmatter `name`/`description`).
+      `skills/ai-footprint-<outil>/SKILL.md` (frontmatter `name`/`description`).
       L'installeur le déploie automatiquement par symlink.
 
 ## 6. Documentation
@@ -60,10 +60,10 @@ un futur client type Codex, etc.). Référence technique complète : voir
 
 - [ ] Suite de tests complète verte.
 - [ ] Test manuel d'un `install.sh` de bout en bout (idéalement via
-      `AGENT_CARBON_REF=<branche>` sur un répertoire de test, cf.
+      `AI_FOOTPRINT_REF=<branche>` sur un répertoire de test, cf.
       CONTRIBUTING § Tester `install.sh` sur une branche) confirmant que la
       détection, le backfill et le câblage fonctionnent sans toucher aux
       configs d'un autre outil.
-- [ ] Release (`agent-carbon release bump <patch|minor>`) une fois mergé sur
+- [ ] Release (`ai-footprint release bump <patch|minor>`) une fois mergé sur
       `main`, puis relancer le script d'install (cf. § Deux codebases, une
       base dans AGENTS.md).

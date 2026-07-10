@@ -2,9 +2,9 @@ import io
 import sys
 import types
 from contextlib import redirect_stdout
-from agent_carbon.store.db import SQLiteStore
-from agent_carbon import __main__ as cli
-from agent_carbon.config import Config
+from ai_footprint.store.db import SQLiteStore
+from ai_footprint import __main__ as cli
+from ai_footprint.config import Config
 
 
 def _patch_config(monkeypatch, path):

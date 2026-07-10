@@ -3,12 +3,12 @@ import json
 import sys
 import types
 from contextlib import redirect_stdout
-from agent_carbon import __main__ as cli
-from agent_carbon.config import Config
-from agent_carbon.impact.engine import EcoLogitsEngine
-from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.models import InferenceEvent
-from agent_carbon.store.db import SQLiteStore
+from ai_footprint import __main__ as cli
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import EcoLogitsEngine
+from ai_footprint.impact.resolver import ModelResolver
+from ai_footprint.models import InferenceEvent
+from ai_footprint.store.db import SQLiteStore
 
 
 def _engine():
@@ -136,11 +136,11 @@ def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
     non couverts (sans mapping manuel)."""
     import json as _json
     from types import SimpleNamespace
-    import agent_carbon.impact.params as params_mod
-    from agent_carbon.impact.params import ParamsResult
-    from agent_carbon.config import Config
-    from agent_carbon.resolve.cli import cmd_resolve
-    from agent_carbon.store.db import SQLiteStore
+    import ai_footprint.impact.params as params_mod
+    from ai_footprint.impact.params import ParamsResult
+    from ai_footprint.config import Config
+    from ai_footprint.resolve.cli import cmd_resolve
+    from ai_footprint.store.db import SQLiteStore
 
     db = str(tmp_path / "t.db")
     store = SQLiteStore(db)
@@ -154,7 +154,7 @@ def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
     store.conn.commit()
     store.conn.close()
 
-    # Config isolée (ne pas toucher ~/.agent-carbon) + HF factice qui réussit
+    # Config isolée (ne pas toucher ~/.ai-footprint) + HF factice qui réussit
     cfg = Config(electricity_mix_zone="WOR",
                  hf_unresolved={"ollama/org/nouveau": "2026-07-02T00:00:00+00:00"})
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))

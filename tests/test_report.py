@@ -1,4 +1,4 @@
-from agent_carbon.report.cli import (
+from ai_footprint.report.cli import (
     render_intensity,
     render_intensity_by_client,
     render_projects,
@@ -206,7 +206,7 @@ def test_render_uncovered_lists_tokens_and_suggests_resolve():
     out = render_uncovered(rows)
     assert "non couvert" in out.lower()
     assert "~3k" in out                       # tokens générés affichés (3480 → ~3k)
-    assert "/agent-carbon-resolve" in out      # invite à lancer le skill
+    assert "/footprint-resolve" in out      # invite à lancer le skill
     # trié par tokens générés décroissant
     assert out.index("nemotron") < out.index("glm")
 
@@ -258,7 +258,7 @@ def test_render_projects_empty():
 
 def test_render_estimated_note():
     """M2c : note d'avertissement listant les modèles à params estimés."""
-    from agent_carbon.report.cli import render_estimated_note
+    from ai_footprint.report.cli import render_estimated_note
     assert render_estimated_note([]) == ""
     note = render_estimated_note(["est-model", "autre"])
     assert "est-model" in note and "autre" in note

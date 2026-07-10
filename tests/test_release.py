@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from agent_carbon.release import (
+from ai_footprint.release import (
     ReleaseError,
     _check_clean_tree,
     _check_on_main,
@@ -128,8 +128,8 @@ def _mock_git_side_effect(commands, output_map):
 def test_check_clean_tree_blocks_on_modification(tmp_path):
     """Si `git status --porcelain` renvoie autre chose que vide → bloquer."""
     def dirty(*_args, **_kwargs):
-        return "M agent_carbon/foo.py"
-    with patch("agent_carbon.release._git", side_effect=dirty):
+        return "M ai_footprint/foo.py"
+    with patch("ai_footprint.release._git", side_effect=dirty):
         with pytest.raises(ReleaseError, match="sale"):
             _check_clean_tree()
 
@@ -138,7 +138,7 @@ def test_check_on_main_blocks_on_feature(tmp_path):
     """Si on est sur feature → bloquer avec le nom de branche."""
     def on_feature(*_args, **_kwargs):
         return "feature-x"
-    with patch("agent_carbon.release._git", side_effect=on_feature):
+    with patch("ai_footprint.release._git", side_effect=on_feature):
         with pytest.raises(ReleaseError, match="feature-x"):
             _check_on_main()
 
@@ -146,7 +146,7 @@ def test_check_on_main_blocks_on_feature(tmp_path):
 def test_check_on_main_passes_on_main(tmp_path):
     def ok(*_args, **_kwargs):
         return "main"
-    with patch("agent_carbon.release._git", side_effect=ok):
+    with patch("ai_footprint.release._git", side_effect=ok):
         _check_on_main()  # ne doit pas lever
 
 
@@ -154,7 +154,7 @@ def test_check_tag_absent_allows_missing_tag(tmp_path):
     """Pas de tag → pas d'erreur."""
     def missing(*_args, **_kwargs):
         raise subprocess.CalledProcessError(128, _args)
-    with patch("agent_carbon.release._git", side_effect=missing):
+    with patch("ai_footprint.release._git", side_effect=missing):
         _check_tag_absent("9.9.9")  # ne doit pas lever
 
 
@@ -162,7 +162,7 @@ def test_check_tag_absent_blocks_existing_tag(tmp_path):
     """Tag existant → erreur."""
     def found(*_args, **_kwargs):
         return "v9.9.9"
-    with patch("agent_carbon.release._git", side_effect=found):
+    with patch("ai_footprint.release._git", side_effect=found):
         with pytest.raises(ReleaseError, match="existe déjà"):
             _check_tag_absent("9.9.9")
 
@@ -170,14 +170,14 @@ def test_check_tag_absent_blocks_existing_tag(tmp_path):
 def test_last_tag_returns_none_when_no_tags(tmp_path):
     def no_tags(*_args, **_kwargs):
         raise subprocess.CalledProcessError(128, _args)
-    with patch("agent_carbon.release._git", side_effect=no_tags):
+    with patch("ai_footprint.release._git", side_effect=no_tags):
         assert last_tag() is None
 
 
 def test_last_tag_returns_tag(tmp_path):
     def has_tag(*_args, **_kwargs):
         return "v0.1.0"
-    with patch("agent_carbon.release._git", side_effect=has_tag):
+    with patch("ai_footprint.release._git", side_effect=has_tag):
         assert last_tag() == "v0.1.0"
 
 
@@ -185,7 +185,7 @@ def test_changelog_range_no_last_tag(tmp_path):
     """Sans dernier tag : tous les commits."""
     def log_all(*args, **_):
         return "feat:A\nfix:B\n"
-    with patch("agent_carbon.release._git", side_effect=log_all):
+    with patch("ai_footprint.release._git", side_effect=log_all):
         assert changelog_range(None) == "feat:A\nfix:B\n"
 
 
@@ -197,7 +197,7 @@ def test_changelog_range_with_last_tag(tmp_path):
         calls.append(tuple(args))
         return "fix:C\n"
 
-    with patch("agent_carbon.release._git", side_effect=log_between):
+    with patch("ai_footprint.release._git", side_effect=log_between):
         changelog_range("v0.1.0")
 
     # L'ordre des args est : ("log", range, "--pretty=format:%s")
@@ -242,110 +242,110 @@ def _make_git_map(*, clean=True, branch="main", tags=None):
 def test_run_bumps_patch_successfully(tmp_path, monkeypatch):
     """Cycle complet : bump patch, tag créé, push effectué."""
     # Monkeypatch BASE_DIR, PYPROJECT, INIT_FILE, CHANGELOG vers tmp_path
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=True, tags=[])
-    with patch("agent_carbon.release._git", side_effect=git_handler):
+    with patch("ai_footprint.release._git", side_effect=git_handler):
         new = run("patch")
 
         assert new == "0.1.1"
         # Vérifie que les fichiers ont été bumpés
         assert (fake_base / "pyproject.toml").read_text().startswith('version = "0.1.1"')
-        assert (fake_base / "agent_carbon" / "__init__.py").read_text().startswith('__version__ = "0.1.1"')
+        assert (fake_base / "ai_footprint" / "__init__.py").read_text().startswith('__version__ = "0.1.1"')
         # Le CHANGELOG contient le nouveau bloc
         changelog_content = (fake_base / "CHANGELOG.md").read_text()
         assert "## [0.1.1]" in changelog_content
 
 
 def test_run_blocks_dirty_tree(tmp_path, monkeypatch):
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=False, tags=[])
-    with patch("agent_carbon.release._git", side_effect=git_handler):
+    with patch("ai_footprint.release._git", side_effect=git_handler):
         with pytest.raises(ReleaseError, match="sale"):
             run("patch")
 
 
 def test_run_blocks_on_non_main(tmp_path, monkeypatch):
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=True, branch="feature-x", tags=[])
-    with patch("agent_carbon.release._git", side_effect=git_handler):
+    with patch("ai_footprint.release._git", side_effect=git_handler):
         with pytest.raises(ReleaseError, match="feature-x"):
             run("patch")
 
 
 def test_run_blocks_on_existing_tag(tmp_path, monkeypatch):
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=True, tags=["v0.1.1"])
-    with patch("agent_carbon.release._git", side_effect=git_handler):
+    with patch("ai_footprint.release._git", side_effect=git_handler):
         with pytest.raises(ReleaseError, match="existe déjà"):
             run("patch")
 
 
 def test_run_pushes_by_default(tmp_path, monkeypatch):
     """Push par défaut : le release pousse main + tags sans flag."""
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=True, tags=[])
@@ -355,7 +355,7 @@ def test_run_pushes_by_default(tmp_path, monkeypatch):
         calls.append(tuple(args))
         return git_handler(*args, **_)
 
-    with patch("agent_carbon.release._git", side_effect=tracking_handler):
+    with patch("ai_footprint.release._git", side_effect=tracking_handler):
         run("patch")
 
     # Le dernier appel doit être le push
@@ -367,18 +367,18 @@ def test_run_pushes_by_default(tmp_path, monkeypatch):
 
 def test_run_no_push_skips_push(tmp_path, monkeypatch):
     """Avec push=False, pas de push dans les appels git."""
-    import agent_carbon.release as rel
+    import ai_footprint.release as rel
 
     fake_base = tmp_path / "repo"
     fake_base.mkdir()
     (fake_base / "pyproject.toml").write_text('version = "0.1.0"\n')
-    (fake_base / "agent_carbon").mkdir()
-    (fake_base / "agent_carbon" / "__init__.py").write_text('__version__ = "0.1.0"\n')
+    (fake_base / "ai_footprint").mkdir()
+    (fake_base / "ai_footprint" / "__init__.py").write_text('__version__ = "0.1.0"\n')
     (fake_base / "CHANGELOG.md").write_text("# Changelog\n")
 
     monkeypatch.setattr(rel, "BASE_DIR", fake_base)
     monkeypatch.setattr(rel, "PYPROJECT", fake_base / "pyproject.toml")
-    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "agent_carbon" / "__init__.py")
+    monkeypatch.setattr(rel, "INIT_FILE", fake_base / "ai_footprint" / "__init__.py")
     monkeypatch.setattr(rel, "CHANGELOG", fake_base / "CHANGELOG.md")
 
     git_handler = _make_git_map(clean=True, tags=[])
@@ -388,7 +388,7 @@ def test_run_no_push_skips_push(tmp_path, monkeypatch):
         calls.append(tuple(args))
         return git_handler(*args, **_)
 
-    with patch("agent_carbon.release._git", side_effect=tracking_handler):
+    with patch("ai_footprint.release._git", side_effect=tracking_handler):
         run("patch", push=False)
 
     push_calls = [c for c in calls if c[0] == "push"]

@@ -1,13 +1,13 @@
 import sys
 import types
 import pytest
-from agent_carbon.config import Config
-from agent_carbon.impact.params import ModelParamsResolver, fetch_hf_params, _detect_bytes_per_param
+from ai_footprint.config import Config
+from ai_footprint.impact.params import ModelParamsResolver, fetch_hf_params, _detect_bytes_per_param
 
 
 def test_huggingface_failure_not_retried_same_run(monkeypatch):
     """M1a : un échec HF n'est pas retenté dans le même run (cache négatif mémoire)."""
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     call_count = [0]
     mod = types.ModuleType("huggingface_hub")
     def boom(repo_id, **kw):
@@ -130,7 +130,7 @@ def test_fetch_hf_params_no_safetensors_returns_none(monkeypatch):
 
 def _hf_counting(monkeypatch):
     """Faux huggingface_hub qui compte les appels et échoue toujours."""
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     call_count = [0]
     mod = types.ModuleType("huggingface_hub")
     def boom(repo_id, **kw):
@@ -209,7 +209,7 @@ def test_detect_bytes_per_param(repo, expected):
 def test_used_storage_uses_detected_dtype(monkeypatch):
     """M2a : méthode 2 (used_storage) — un repo fp16 divise par 2 octets/param,
     pas par 0.5 (l'ancien comportement surestimait 4×)."""
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
     monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
@@ -225,7 +225,7 @@ def test_used_storage_uses_detected_dtype(monkeypatch):
 def test_unknown_dtype_yields_param_range(monkeypatch):
     """M2b : dtype indétectable → fourchette 0.5–2 octets/param, pas une valeur unique."""
     from ecologits.utils.range_value import RangeValue
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
     monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
@@ -243,7 +243,7 @@ def test_unknown_dtype_yields_param_range(monkeypatch):
 def test_param_range_roundtrips_through_cache(monkeypatch):
     """M2b : la fourchette survit à l'aller-retour cache config (JSON)."""
     from ecologits.utils.range_value import RangeValue
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
     monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
@@ -263,7 +263,7 @@ def test_param_range_roundtrips_through_cache(monkeypatch):
 
 def test_invalid_repo_format_short_circuits_without_network(monkeypatch):
     """Mineur : un identifiant non « org/name » ne déclenche aucune requête."""
-    import agent_carbon.impact.params as params_mod
+    import ai_footprint.impact.params as params_mod
     called = []
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: called.append(repo_id)
@@ -283,7 +283,7 @@ def test_index_with_too_many_files_aborts(monkeypatch):
     import io
     import json as _json
     import urllib.request
-    from agent_carbon.impact.params import _fetch_safetensors_index_bytes
+    from ai_footprint.impact.params import _fetch_safetensors_index_bytes
     index = {"weight_map": {f"w{i}": f"shard-{i}.safetensors" for i in range(31)}}
     head_calls = []
 

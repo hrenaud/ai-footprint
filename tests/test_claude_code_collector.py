@@ -1,6 +1,6 @@
 from pathlib import Path
-from agent_carbon.collectors.claude_code import ClaudeCodeCollector
-from agent_carbon.collectors.stubs import CodexCollector
+from ai_footprint.collectors.claude_code import ClaudeCodeCollector
+from ai_footprint.collectors.stubs import CodexCollector
 import pytest
 
 FIXTURES = Path(__file__).parent / "fixtures"

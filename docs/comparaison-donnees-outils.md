@@ -1,6 +1,6 @@
 # Comparaison des données par outil
 
-**Objectif** : Comparer les données disponibles dans les JSON/transcripts de chaque outil supporté par agent-carbon.
+**Objectif** : Comparer les données disponibles dans les JSON/transcripts de chaque outil supporté par ai-footprint.
 
 **Mise à jour** : Ce document est mis à jour à chaque nouvel outil ajouté.
 
@@ -18,7 +18,7 @@
 
 ## Tableau comparatif
 
-| Champ                         | Claude Code (JSONL)           | Opencode/CRUSH (JSON)              | Pi (JSONL)                                              | Usage dans agent-carbon                                 |
+| Champ                         | Claude Code (JSONL)           | Opencode/CRUSH (JSON)              | Pi (JSONL)                                              | Usage dans ai-footprint                                 |
 | ----------------------------- | ----------------------------- | ---------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
 | **Identifiants**              |                               |                                    |                                                         |                                                         |
 | `sessionId`                   | ✅                            | ✅ `session_id`                    | ✅ header `type:"session"`, `id`                        | Clé de jointure avec `sessions` table                   |
@@ -113,7 +113,7 @@
 **Sources disponibles** :
 
 1. **BDD locale** : `~/.local/share/opencode/opencode.db` (SQLite)
-2. **Exports plugin** : `~/.agent-carbon/crush-exports/<sessionId>.json`
+2. **Exports plugin** : `~/.ai-footprint/crush-exports/<sessionId>.json`
 3. **SDK SSE** : `event.subscribe()` (temps réel)
 
 **Structure d'une session (table `session`)** :
@@ -210,7 +210,7 @@
 Quand un nouvel outil est ajouté, mettre à jour :
 
 1. Ce document (tableau comparatif)
-2. Le collecteur correspondant dans `agent_carbon/collectors/`
+2. Le collecteur correspondant dans `ai_footprint/collectors/`
 3. Les tests dans `tests/test_<outil>_collector.py`
 
 **Champs obligatoires à mapper dans `InferenceEvent`** :

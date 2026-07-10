@@ -1,11 +1,11 @@
 import logging
 
-from agent_carbon.__main__ import _ingest_summary
-from agent_carbon.config import Config
-from agent_carbon.impact.engine import EcoLogitsEngine
-from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.models import InferenceEvent
-from agent_carbon.store.db import SQLiteStore
+from ai_footprint.__main__ import _ingest_summary
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import EcoLogitsEngine
+from ai_footprint.impact.resolver import ModelResolver
+from ai_footprint.models import InferenceEvent
+from ai_footprint.store.db import SQLiteStore
 
 
 def _events():
@@ -51,9 +51,9 @@ def test_ingest_summary_no_uncovered_clause_when_full_coverage():
 
 def test_ingest_summary_suggests_resolve_skill_when_uncovered():
     msg = _ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
-    assert "/agent-carbon-resolve" in msg
+    assert "/footprint-resolve" in msg
 
 
 def test_ingest_summary_no_resolve_hint_when_full_coverage():
     msg = _ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
-    assert "/agent-carbon-resolve" not in msg
+    assert "/footprint-resolve" not in msg

@@ -1,5 +1,5 @@
-from agent_carbon.models import InferenceEvent
-from agent_carbon.config import Config
+from ai_footprint.models import InferenceEvent
+from ai_footprint.config import Config
 
 
 def test_inference_event_holds_normalized_fields():
@@ -7,7 +7,7 @@ def test_inference_event_holds_normalized_fields():
         provider="anthropic", model="claude-opus-4-8",
         input_tokens=8427, output_tokens=287,
         cache_creation_tokens=7052, cache_read_tokens=8020,
-        timestamp="2026-06-27T10:08:45.619Z", project="agent-carbon",
+        timestamp="2026-06-27T10:08:45.619Z", project="ai-footprint",
         session_id="sess-1", msg_id="uuid-1",
     )
     assert e.output_tokens == 287

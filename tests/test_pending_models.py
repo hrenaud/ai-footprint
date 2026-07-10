@@ -1,4 +1,4 @@
-from agent_carbon.store.db import SQLiteStore
+from ai_footprint.store.db import SQLiteStore
 
 
 def test_add_and_list_pending(tmp_path):

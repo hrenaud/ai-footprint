@@ -1,4 +1,4 @@
-from agent_carbon.config_detect import detect_zone, ALPHA2_TO_ALPHA3
+from ai_footprint.config_detect import detect_zone, ALPHA2_TO_ALPHA3
 
 
 def test_detect_zone_from_locale():

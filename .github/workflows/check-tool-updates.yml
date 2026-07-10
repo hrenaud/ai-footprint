@@ -19,4 +19,4 @@ jobs:
       - name: Vérifie les nouvelles versions ecologits / huggingface_hub
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python -m agent_carbon.tool_updates
+        run: python -m ai_footprint.tool_updates

@@ -1,0 +1,423 @@
+import dataclasses
+import json
+import sqlite3
+from collections.abc import Iterable
+from datetime import datetime, timezone
+
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import CRITERIA, EcoLogitsEngine
+from ai_footprint.models import InferenceEvent
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS events (
+  session_id TEXT, msg_id TEXT, provider TEXT, model TEXT,
+  input_tokens INTEGER, output_tokens INTEGER,
+  cache_creation_tokens INTEGER, cache_read_tokens INTEGER,
+  timestamp TEXT, project TEXT,
+  active_seconds REAL DEFAULT 0,
+  client TEXT DEFAULT '',
+  PRIMARY KEY (session_id, msg_id)
+);
+CREATE TABLE IF NOT EXISTS impacts (
+  session_id TEXT, msg_id TEXT, model_resolved TEXT, zone TEXT,
+  methodology_version TEXT,
+  energy_min REAL, energy_max REAL, gwp_min REAL, gwp_max REAL,
+  adpe_min REAL, adpe_max REAL, pe_min REAL, pe_max REAL,
+  wcf_min REAL, wcf_max REAL,
+  breakdown_json TEXT, warnings TEXT, error TEXT,
+  PRIMARY KEY (session_id, msg_id)
+);
+CREATE TABLE IF NOT EXISTS sessions (
+  session_id TEXT PRIMARY KEY, project TEXT, started_at TEXT, ended_at TEXT
+);
+CREATE TABLE IF NOT EXISTS pending_models (
+  provider TEXT, model TEXT, first_seen TEXT, occurrences INTEGER DEFAULT 0,
+  PRIMARY KEY (provider, model)
+);
+"""
+
+
+# critère → (alias colonne min, alias colonne max) dans les SELECT agrégés
+# de tokens_by_model / intensity_by_model.
+_CRIT_COLS = {"energy": ("emin", "emax"), "gwp": ("gmin", "gmax"),
+              "adpe": ("amin", "amax"), "pe": ("pmin", "pmax"),
+              "wcf": ("wmin", "wmax")}
+
+
+def _parse_ts(ts: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+
+
+def _canonical_ts(ts: str) -> str:
+    """ISO UTC canonique (+00:00) : un seul format en DB → comparaisons
+    lexicales sûres (N2). Entrée non parsable renvoyée telle quelle."""
+    dt = _parse_ts(ts)
+    if dt is None:
+        return ts
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
+
+
+class SQLiteStore:
+    def __init__(self, path: str):
+        self.conn = sqlite3.connect(path)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.executescript(_SCHEMA)
+        # Migrations : colonnes ajoutées après coup sur une DB pré-existante.
+        for ddl in (
+            "ALTER TABLE events ADD COLUMN active_seconds REAL DEFAULT 0",
+            "ALTER TABLE events ADD COLUMN client TEXT DEFAULT ''",
+        ):
+            try:
+                self.conn.execute(ddl)
+            except sqlite3.OperationalError:
+                pass  # colonne déjà présente
+        self.conn.commit()
+        # Migration N2 : timestamps hérités « …Z » → format canonique « +00:00 »
+        # (idempotent : ne touche que les lignes au vieux format).
+        self.conn.execute(
+            "UPDATE events SET timestamp = replace(timestamp,'Z','+00:00') "
+            "WHERE timestamp LIKE '%Z'")
+        self.conn.execute(
+            "UPDATE sessions SET started_at = replace(started_at,'Z','+00:00'), "
+            "ended_at = replace(ended_at,'Z','+00:00') "
+            "WHERE started_at LIKE '%Z' OR ended_at LIKE '%Z'")
+        self.conn.commit()
+
+    def import_legacy(self, carbon_db_path: str):
+        raise NotImplementedError("backfill carbon.db pas encore implémenté")
+
+    def ingest(self, events: Iterable[InferenceEvent],
+               engine: EcoLogitsEngine, config: Config) -> int:
+        new_count = 0
+        for e in events:
+            e = dataclasses.replace(e, timestamp=_canonical_ts(e.timestamp))
+            cur = self.conn.execute(
+                "INSERT OR IGNORE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (e.session_id, e.msg_id, e.provider, e.model,
+                 e.input_tokens, e.output_tokens,
+                 e.cache_creation_tokens, e.cache_read_tokens,
+                 e.timestamp, e.project, e.active_seconds, e.client),
+            )
+            if cur.rowcount == 0:
+                # déjà ingéré → idempotent ; on backfille juste les colonnes
+                # ajoutées après coup (active_seconds, client) sans recalculer l'impact.
+                self.conn.execute(
+                    "UPDATE events SET active_seconds=? "
+                    "WHERE session_id=? AND msg_id=? AND active_seconds=0",
+                    (e.active_seconds, e.session_id, e.msg_id),
+                )
+                self.conn.execute(
+                    "UPDATE events SET client=? "
+                    "WHERE session_id=? AND msg_id=? AND client=''",
+                    (e.client, e.session_id, e.msg_id),
+                )
+                continue
+            new_count += 1
+            rec = engine.compute(e, config)
+            self._store_impact(e, rec)
+            if rec.error == "model-params-unresolved":
+                self.add_pending(e.provider, e.model, e.timestamp)
+            self._touch_session(e)
+        self.conn.commit()
+        return new_count
+
+    def _store_impact(self, e: InferenceEvent, rec) -> None:
+        def mm(crit):
+            return rec.totals.get(crit, (None, None))
+        self.conn.execute(
+            "INSERT OR REPLACE INTO impacts VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (e.session_id, e.msg_id, rec.model_resolved, rec.zone,
+             rec.methodology_version,
+             *mm("energy"), *mm("gwp"), *mm("adpe"), *mm("pe"), *mm("wcf"),
+             json.dumps({"usage": rec.usage, "embodied": rec.embodied}),
+             json.dumps(rec.warnings), rec.error),
+        )
+
+    def _touch_session(self, e: InferenceEvent) -> None:
+        row = self.conn.execute(
+            "SELECT started_at, ended_at FROM sessions WHERE session_id=?",
+            (e.session_id,),
+        ).fetchone()
+        if row is None:
+            self.conn.execute(
+                "INSERT INTO sessions VALUES (?,?,?,?)",
+                (e.session_id, e.project, e.timestamp, e.timestamp),
+            )
+            return
+        started = min(row["started_at"], e.timestamp)
+        ended = max(row["ended_at"], e.timestamp)
+        self.conn.execute(
+            "UPDATE sessions SET started_at=?, ended_at=? WHERE session_id=?",
+            (started, ended, e.session_id),
+        )
+
+    def add_pending(self, provider: str, model: str, ts: str) -> None:
+        self.conn.execute(
+            "INSERT INTO pending_models (provider, model, first_seen, occurrences) "
+            "VALUES (?,?,?,1) "
+            "ON CONFLICT(provider, model) DO UPDATE SET occurrences = occurrences + 1",
+            (provider, model, ts),
+        )
+        # Commit immédiat requis : des lecteurs sur d'autres connexions (CLI models, tests) doivent voir les pending sans attendre le commit d'ingest, et une transaction ouverte bloquerait la migration à l'ouverture d'une autre connexion.
+        self.conn.commit()
+
+    def list_pending(self) -> list[dict]:
+        return [dict(r) for r in self.conn.execute(
+            "SELECT provider, model, first_seen, occurrences "
+            "FROM pending_models ORDER BY occurrences DESC").fetchall()]
+
+    def clear_pending(self, provider: str, model: str) -> None:
+        self.conn.execute(
+            "DELETE FROM pending_models WHERE provider=? AND model=?",
+            (provider, model))
+        self.conn.commit()
+
+    def rows_for_report(self, since: str | None = None,
+                        session_id: str | None = None) -> list[dict]:
+        sql = (
+            "SELECT e.model, e.project, e.timestamp, e.client, "
+            "i.energy_min, i.energy_max, i.gwp_min, i.gwp_max, "
+            "i.adpe_min, i.adpe_max, i.pe_min, i.pe_max, i.wcf_min, i.wcf_max "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        if session_id:
+            sql += " AND e.session_id = ?"
+            params.append(session_id)
+        return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
+
+    def intensity_by_model(self, since: str | None = None) -> list[dict]:
+        """Par modèle, sur les seuls messages à temps actif mesuré (>0) et
+        impact estimé : heures actives, tokens de sortie, et valeur centrale
+        des 5 critères. Permet de calculer tok/h et impact/h. ``since`` filtre
+        la plage (cohérent avec les autres sections du rapport)."""
+        sql = (
+            "SELECT e.model AS model, SUM(e.active_seconds) AS sec, "
+            "SUM(e.output_tokens) AS toks, "
+            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
+            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
+            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
+            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
+            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL AND e.active_seconds > 0"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.model"
+        out = []
+        for r in self.conn.execute(sql, tuple(params)):
+            hours = (r["sec"] or 0) / 3600.0
+            if hours <= 0:
+                continue
+            row = {"model": r["model"], "hours": hours, "tokens": r["toks"]}
+            for c, (lo, hi) in _CRIT_COLS.items():
+                row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
+                row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
+            out.append(row)
+        return out
+
+    def intensity_by_client(self, since: str | None = None) -> list[dict]:
+        """Par outil client (claude-code, opencode, pi…), sur les seuls messages
+        à temps actif mesuré (>0) et impact estimé : heures actives, tokens de
+        sortie, et valeur centrale des 5 critères. Permet de comparer, à débit
+        égal, quel outil consomme le plus de tokens et a les impacts les plus
+        forts. ``since`` filtre la plage (cohérent avec les autres sections)."""
+        sql = (
+            "SELECT e.client AS client, SUM(e.active_seconds) AS sec, "
+            "SUM(e.output_tokens) AS toks, "
+            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
+            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
+            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
+            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
+            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL AND e.active_seconds > 0"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.client"
+        out = []
+        for r in self.conn.execute(sql, tuple(params)):
+            hours = (r["sec"] or 0) / 3600.0
+            if hours <= 0:
+                continue
+            row = {"client": r["client"] or "claude-code", "hours": hours, "tokens": r["toks"]}
+            for c, (lo, hi) in _CRIT_COLS.items():
+                row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
+                row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
+            out.append(row)
+        return out
+
+    def tokens_by_model(self, since: str | None = None) -> list[dict]:
+        """Par modèle, sur la plage (``since`` optionnel) : tokens totaux
+        utilisés (entrée + sortie + cache) et valeur centrale des 5 critères
+        d'impact. Seuls les messages à impact estimé (error IS NULL) comptent."""
+        sql = (
+            "SELECT e.model AS model, "
+            "SUM(e.input_tokens + e.output_tokens "
+            "+ e.cache_creation_tokens + e.cache_read_tokens) AS toks, "
+            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
+            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
+            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
+            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
+            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.model"
+        out = []
+        for r in self.conn.execute(sql, tuple(params)):
+            row = {"model": r["model"], "tokens": r["toks"] or 0}
+            for c, (lo, hi) in _CRIT_COLS.items():
+                row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
+                row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
+            out.append(row)
+        return out
+
+    def uncovered_by_model(self, since: str | None = None) -> list[dict]:
+        """Modèles à impact non estimé (error non NULL), hors `<synthetic>`
+        (placeholders Claude Code, 0 token) : tokens générés (sortie) et nombre
+        d'events par modèle sur la plage. Sert à proposer une résolution."""
+        sql = (
+            "SELECT e.model AS model, SUM(e.output_tokens) AS toks, COUNT(*) AS n "
+            "FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " GROUP BY e.model"
+        return [{"model": r["model"], "tokens": r["toks"] or 0, "events": r["n"]}
+                for r in self.conn.execute(sql, tuple(params))]
+
+    def estimated_param_models(self, since: str | None = None) -> list[str]:
+        """Modèles mesurés dont les params viennent d'une estimation par taille
+        de fichiers (dtype supposé ou fourchette) — signalés dans le rapport."""
+        sql = (
+            "SELECT DISTINCT e.model FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL AND ("
+            "i.warnings LIKE '%params-bytes-per-param%' "
+            "OR i.warnings LIKE '%params-range-unknown-dtype%' "
+            "OR i.warnings LIKE '%params-from-cli-used_storage%')"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " ORDER BY e.model"
+        return [r["model"] for r in self.conn.execute(sql, tuple(params))]
+
+    def mark_model_events_error(self, provider: str, model: str, error: str) -> None:
+        """Marque en erreur les impacts des events d'un (provider, model) donné,
+        pour qu'un recompute les reprenne (ex. après l'oubli d'un mapping)."""
+        self.conn.execute(
+            "UPDATE impacts SET error = ? WHERE (session_id, msg_id) IN ("
+            "SELECT session_id, msg_id FROM events WHERE provider = ? AND model = ?)",
+            (error, provider, model))
+        self.conn.commit()
+
+    def uncovered_keys(self) -> list[tuple[str, str]]:
+        """Couples (provider, model) des events à impact non estimé,
+        hors placeholders `<synthetic>`."""
+        return [(r["provider"], r["model"]) for r in self.conn.execute(
+            "SELECT DISTINCT e.provider, e.model FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'")]
+
+    def recompute_errors(self, engine: EcoLogitsEngine, config: Config,
+                         retry_all: bool = False) -> dict:
+        """Recalcule l'impact des events en erreur.
+
+        Par défaut, seuls les modèles ayant un mapping dans config.model_params
+        sont repris (évite les calculs inutiles) — donc **sans mapping,
+        --recompute seul ne tente rien**. Avec retry_all=True (--retry-hf),
+        tous les events en erreur (hors <synthetic>) repassent par la cascade,
+        y compris le tier Hugging Face."""
+        before = self.coverage()["uncovered"]
+
+        # Récupérer les events en erreur (hors <synthetic>)
+        rows = self.conn.execute(
+            "SELECT e.* FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'"
+        ).fetchall()
+
+        # Filtrer selon le mode : par défaut seuls les mappés, sinon tous
+        if not retry_all:
+            mapped_keys = set(config.model_params.keys())
+            rows = [r for r in rows
+                    if f"{r['provider']}/{r['model']}" in mapped_keys] if mapped_keys else []
+
+        # Commit par batch de 100 events pour éviter les timeout
+        batch_size = 100
+        for i, r in enumerate(rows):
+            e = InferenceEvent(
+                provider=r["provider"], model=r["model"],
+                input_tokens=r["input_tokens"], output_tokens=r["output_tokens"],
+                cache_creation_tokens=r["cache_creation_tokens"],
+                cache_read_tokens=r["cache_read_tokens"],
+                timestamp=r["timestamp"], project=r["project"],
+                session_id=r["session_id"], msg_id=r["msg_id"],
+                active_seconds=r["active_seconds"], client=r["client"])
+            self._store_impact(e, engine.compute(e, config))
+            if (i + 1) % batch_size == 0:
+                self.conn.commit()
+        self.conn.commit()
+        after = self.coverage()["uncovered"]
+        return {"before": before, "after": after, "recomputed": len(rows)}
+
+    def coverage(self) -> dict:
+        """Couverture de mesure : total, mesurés (impact estimé), non couverts
+        (modèle non modélisé par EcoLogits → event conservé, impact non estimé).
+
+        Les placeholders `<synthetic>` (0 token, aucune inférence réelle) sont
+        exclus des trois compteurs : les compter gonflerait le total et le nombre
+        de non couverts, en incohérence avec la liste des modèles concernés
+        (déjà filtrée dans `uncovered_by_model` / le résumé d'ingest)."""
+        total = self.conn.execute(
+            "SELECT COUNT(*) FROM impacts i JOIN events e "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE e.model != '<synthetic>'"
+        ).fetchone()[0]
+        uncovered = self.conn.execute(
+            "SELECT COUNT(*) FROM impacts i JOIN events e "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NOT NULL AND e.model != '<synthetic>'"
+        ).fetchone()[0]
+        return {"total": total, "measured": total - uncovered, "uncovered": uncovered}
+
+    def session_count(self) -> int:
+        return self.conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+
+    def total_duration_seconds(self) -> float:
+        total = 0.0
+        for r in self.conn.execute("SELECT started_at, ended_at FROM sessions"):
+            a, b = _parse_ts(r["started_at"]), _parse_ts(r["ended_at"])
+            if a and b:
+                total += (b - a).total_seconds()
+        return total

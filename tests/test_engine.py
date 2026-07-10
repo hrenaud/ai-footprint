@@ -1,7 +1,7 @@
-from agent_carbon.config import Config
-from agent_carbon.impact.engine import EcoLogitsEngine, ImpactRecord, CRITERIA
-from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.models import InferenceEvent
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import EcoLogitsEngine, ImpactRecord, CRITERIA
+from ai_footprint.impact.resolver import ModelResolver
+from ai_footprint.models import InferenceEvent
 
 
 def _event(model, out=1000):

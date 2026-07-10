@@ -1,5 +1,5 @@
 [project]
-name = "agent-carbon"
+name = "ai-footprint"
 version = "0.6.0"
 description = "Compteur d'impact environnemental multi-critères pour outils d'IA agentique (vendor-neutral, via EcoLogits)"
 requires-python = ">=3.10,<4"
@@ -12,11 +12,11 @@ dependencies = [
 dev = ["pytest>=8"]
 
 [project.scripts]
-agent-carbon = "agent_carbon.__main__:main"
+ai-footprint = "ai_footprint.__main__:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["agent_carbon*"]
+include = ["ai_footprint*"]

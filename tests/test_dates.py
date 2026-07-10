@@ -1,6 +1,6 @@
 import pytest
 
-from agent_carbon.dates import parse_since
+from ai_footprint.dates import parse_since
 
 
 def test_iso_date_kept():

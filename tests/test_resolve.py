@@ -1,7 +1,7 @@
 import sys
 import types
-from agent_carbon.config import Config
-from agent_carbon.resolve.cli import parse_mapping, set_mappings, forget, _print_set
+from ai_footprint.config import Config
+from ai_footprint.resolve.cli import parse_mapping, set_mappings, forget, _print_set
 
 
 def _fake_hf(total, monkeypatch):

@@ -1,4 +1,4 @@
-from agent_carbon.tool_updates import (
+from ai_footprint.tool_updates import (
     check_updates,
     current_ecologits_tag,
     current_hf_min_version,

@@ -1,8 +1,8 @@
 from ecologits.utils.range_value import RangeValue
-from agent_carbon.config import Config
-from agent_carbon.impact.engine import EcoLogitsEngine
-from agent_carbon.impact.resolver import ModelResolver
-from agent_carbon.models import InferenceEvent
+from ai_footprint.config import Config
+from ai_footprint.impact.engine import EcoLogitsEngine
+from ai_footprint.impact.resolver import ModelResolver
+from ai_footprint.models import InferenceEvent
 
 
 def _event(provider, model):
@@ -46,7 +46,7 @@ def test_unresolved_model_reports_error():
 
 def test_selfhosted_range_params_produce_wider_bounds():
     """M2b : des params en fourchette traversent compute_llm_impacts (min < max)."""
-    from agent_carbon.models import InferenceEvent
+    from ai_footprint.models import InferenceEvent
     cfg = Config(
         electricity_mix_zone="WOR",
         model_params={"ollama/range-model": {
