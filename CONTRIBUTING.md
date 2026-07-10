@@ -210,11 +210,11 @@ Preuve : les tests `tests/test_release.py` (31 tests) couvrent le cycle complet.
 
 Un workflow GitHub Actions (`.github/workflows/check-tool-updates.yml`, cron
 hebdomadaire + déclenchement manuel) compare les versions pinnées dans
-`pyproject.toml` (ecologits sur un tag git exact, huggingface_hub) aux dernières
-versions publiées (PyPI / tags GitHub via `ai_footprint/tool_updates.py`) et
+`pyproject.toml` (ecologits épinglé en exact, huggingface_hub) aux dernières
+versions publiées sur PyPI (via `ai_footprint/tool_updates.py`) et
 ouvre une issue si une nouvelle version existe.
 
-**Aucun bump automatique** : ecologits est épinglé sur un tag git précis car un
+**Aucun bump automatique** : ecologits est épinglé sur une version PyPI exacte car un
 bump mineur en `0.x` peut casser la cascade de calcul, et l'outil installé
 partage sa base avec le repo dev (cf. § Deux codebases, une base) — un bump
 silencieux serait risqué. L'issue sert juste de rappel ; le bump se fait à la

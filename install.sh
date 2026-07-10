@@ -98,7 +98,7 @@ else
 fi
 ok "Source: $INSTALL_DIR ($REF)"
 
-# 3. Environnement virtuel + installation (tire EcoLogits depuis le tag git) --
+# 3. Environnement virtuel + installation (EcoLogits depuis PyPI) ------------
 say "Création du venv et installation (EcoLogits peut prendre 1-2 min) ..."
 "$PYTHON" -m venv "$INSTALL_DIR/.venv"
 "$INSTALL_DIR/.venv/bin/python" -m pip install --quiet --upgrade pip

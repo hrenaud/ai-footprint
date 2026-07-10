@@ -1,8 +1,8 @@
 """Détecte les nouvelles versions d'ecologits / huggingface_hub disponibles.
 
 Aucune mise à jour automatique n'est effectuée : le risque de breaking change
-(ecologits est épinglé sur un tag git exact, huggingface_hub sans plafond de
-version) est trop élevé pour un bump silencieux. Ce module se contente
+(ecologits est épinglé sur une version PyPI exacte, huggingface_hub sans
+plafond de version) est trop élevé pour un bump silencieux. Ce module se contente
 d'alerter (ouverture d'une issue GitHub via `gh`) — c'est à l'utilisateur de
 tester puis d'épingler la nouvelle version dans pyproject.toml.
 
@@ -19,16 +19,14 @@ from pathlib import Path
 
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
-_ECOLOGITS_TAG_RE = re.compile(
-    r"ecologits @ git\+https://github\.com/mlco2/ecologits\.git@([\w\.\-]+)"
-)
+_ECOLOGITS_PIN_RE = re.compile(r"ecologits==([\w\.\-]+)")
 _HF_MIN_VERSION_RE = re.compile(r"huggingface_hub>=([\d.]+)")
 
 
 def current_ecologits_tag(pyproject_text: str) -> str:
-    m = _ECOLOGITS_TAG_RE.search(pyproject_text)
+    m = _ECOLOGITS_PIN_RE.search(pyproject_text)
     if m is None:
-        raise ValueError("Tag ecologits introuvable dans pyproject.toml")
+        raise ValueError("Version ecologits introuvable dans pyproject.toml")
     return m.group(1)
 
 
@@ -48,15 +46,6 @@ def latest_pypi_version(package: str) -> str:
     with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json", timeout=10) as resp:
         data = json.load(resp)
     return data["info"]["version"]
-
-
-def latest_github_tag(owner: str, repo: str) -> str:
-    url = f"https://api.github.com/repos/{owner}/{repo}/tags"
-    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        tags = json.load(resp)
-    versions = sorted(((parse_version(t["name"]), t["name"]) for t in tags), key=lambda p: p[0])
-    return versions[-1][1]
 
 
 def check_updates(pyproject_text: str, *, hf_latest: str, ecologits_latest: str) -> list[dict]:
@@ -86,7 +75,7 @@ def format_issue_body(update: dict) -> str:
 def main() -> None:
     pyproject_text = PYPROJECT.read_text(encoding="utf-8")
     hf_latest = latest_pypi_version("huggingface_hub")
-    eco_latest = latest_github_tag("mlco2", "ecologits")
+    eco_latest = latest_pypi_version("ecologits")
 
     updates = check_updates(pyproject_text, hf_latest=hf_latest, ecologits_latest=eco_latest)
     if not updates:

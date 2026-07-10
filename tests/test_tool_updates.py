@@ -8,7 +8,7 @@ from ai_footprint.tool_updates import (
 
 PYPROJECT_SAMPLE = """
 dependencies = [
-  "ecologits @ git+https://github.com/mlco2/ecologits.git@0.11.0",
+  "ecologits==0.11.0",
   "huggingface_hub>=0.20",
 ]
 """
