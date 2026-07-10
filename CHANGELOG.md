@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0] — 2026-07-10
+
+### Features
+
+- pin ecologits to the PyPI release instead of the git tag
+
+### Documentation
+
+- add AI Footprint rename and footprint-card specs
+- mention the conditional per-tool intensity report section
+
+### Autres
+
+- feat!: rename agent-carbon to ai-footprint
 ## [0.6.0] — 2026-07-02
 
 ### Features
