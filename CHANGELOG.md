@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] — 2026-07-11
+
+### Features
+
+- (card) — ajoute la commande /footprint-card (export PNG partageable)
 ## [1.0.3] — 2026-07-11
 
 ### Bug Fixes
