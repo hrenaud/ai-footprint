@@ -30,14 +30,17 @@ def test_empty_when_no_rows():
 
 def test_marks_line_as_provisional_when_extrapolated_warning_present():
     """Un modèle trop récent pour le registre EcoLogits (ex. claude-sonnet-5)
-    utilise un stand-in extrapolé : la statusline le signale via un préfixe « ≈ »."""
+    utilise un stand-in extrapolé : la statusline le signale via un préfixe « ≈ »
+    et une note courte nommant le modèle inconnu et la version de repli."""
     rows = [
-        {"energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
+        {"model": "claude-sonnet-5",
+         "energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
          "wcf_min": 3.0, "wcf_max": 4.0,
          "warnings": '["params-extrapolated-anthropic:claude-sonnet-4-6"]'},
     ]
     line = render_statusline(rows)
     assert line.startswith("≈ ")
+    assert "sonnet-5" in line and "inconnu" in line and "sonnet-4" in line
 
 
 def test_no_marker_when_no_extrapolated_warning():

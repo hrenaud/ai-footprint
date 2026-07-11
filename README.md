@@ -110,9 +110,10 @@ manuel, elle retombe sur le **total global**.
 L'installeur la câble dans `~/.claude/settings.json` (et ne remplace pas une
 statusline appartenant à un autre outil — il affiche alors la commande pour basculer).
 
-Un préfixe `≈` signale que la session utilise un modèle trop récent pour le registre
-EcoLogits (ex. tout juste sorti) : l'impact affiché est un **repère provisoire**,
-extrapolé des paramètres officiels d'une version sœur connue — voir
+Un préfixe `≈` (suivi d'un rappel entre parenthèses, ex. `sonnet-5 inconnu, params
+sonnet-4`) signale que la session utilise un modèle trop récent pour le registre
+EcoLogits : l'impact affiché est un **repère provisoire**, extrapolé des paramètres
+officiels de la version sœur nommée — voir
 [docs/METHODOLOGY.md](docs/METHODOLOGY.md#modèles-anthropic-trop-récents-pour-le-registre-ecologits).
 
 ## En ligne de commande (sous le capot)
