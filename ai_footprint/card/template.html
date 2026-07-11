@@ -1,0 +1,280 @@
+<meta charset="utf-8" />
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    background: transparent;
+  }
+
+  .card {
+    --surface: #f6f9f7;
+    --panel: #e3ebe6;
+    --ink: #16211b;
+    --sec: #52645a;
+    --muted: #7d8d84;
+    --accent: #0f8f63;
+    --accent-hi: #0b7a54;
+    --hairline: #dbe4de;
+
+    width: 1080px;
+    height: 1080px;
+    flex: none;
+    background: var(--surface);
+    color: var(--ink);
+    padding: 64px 84px 56px;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    font-family:
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+  }
+  {{THEME_STYLE}}
+
+  .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Header */
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .wordmark {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .wordmark span {
+    color: var(--accent-hi);
+  }
+  .period {
+    font-size: 22px;
+    color: var(--sec);
+    letter-spacing: 0.04em;
+  }
+
+  /* Héro GWP */
+  .hero {
+    margin-top: 48px;
+  }
+  .hero-label {
+    font-size: 26px;
+    color: var(--sec);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .hero-value {
+    margin-top: 10px;
+    font-size: 152px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+  .hero-value small {
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--sec);
+    margin-left: 18px;
+  }
+  .hero-sub {
+    margin-top: 14px;
+    font-size: 25px;
+    color: var(--sec);
+  }
+  .hero-sub b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Jauge de fourchette — l'élément signature */
+  .range {
+    margin-top: 28px;
+  }
+  .range-track {
+    position: relative;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--panel);
+  }
+  .range-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 5px;
+    background: var(--accent);
+    opacity: 0.55;
+  }
+  .range-tick {
+    position: absolute;
+    top: -7px;
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--accent-hi);
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  .range-bounds {
+    white-space: nowrap;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 20px;
+    color: var(--muted);
+  }
+  .range-bounds .mid {
+    color: var(--sec);
+  }
+
+  /* Rangée des 4 autres critères */
+  .tiles {
+    margin-top: 46px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+    padding-top: 38px;
+    border-top: 1px solid var(--hairline);
+  }
+  .tile {
+    display: flex;
+    flex-direction: column;
+  }
+  .tile-label {
+    min-height: 50px;
+    font-size: 19px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tile-value {
+    white-space: nowrap;
+    margin-top: 12px;
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .tile-value small {
+    font-size: 23px;
+    font-weight: 500;
+    color: var(--sec);
+    margin-left: 6px;
+  }
+  .tile .range {
+    margin-top: auto;
+    padding-top: 18px;
+  }
+  .tile .range-track {
+    height: 6px;
+    border-radius: 3px;
+  }
+  .tile .range-tick {
+    top: -5px;
+    width: 3px;
+    height: 16px;
+  }
+  .tile .range-bounds {
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  /* Top projets */
+  .projects {
+    margin-top: 44px;
+    padding-top: 36px;
+    border-top: 1px solid var(--hairline);
+    flex: 1;
+  }
+  .projects-title {
+    font-size: 19px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .proj {
+    display: grid;
+    grid-template-columns: 300px 1fr auto;
+    gap: 24px;
+    align-items: center;
+    margin-top: 22px;
+  }
+  .proj-name {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .proj-bar-slot {
+    height: 14px;
+  }
+  .proj-bar {
+    height: 14px;
+    border-radius: 0 4px 4px 0;
+    background: var(--accent);
+  }
+  .proj-val {
+    white-space: nowrap;
+    font-size: 24px;
+    color: var(--sec);
+    text-align: right;
+  }
+  .proj-val b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Footer */
+  .card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 30px;
+    border-top: 1px solid var(--hairline);
+    font-size: 18px;
+    color: var(--muted);
+    white-space: nowrap;
+    gap: 24px;
+  }
+  .card-foot .tools {
+    letter-spacing: 0.05em;
+  }
+  .card-foot .repo {
+    color: var(--accent-hi);
+  }
+</style>
+
+<div class="card{{THEME_CLASS}}">
+  <div class="card-head">
+    <div class="wordmark">ai <span>footprint</span></div>
+    <div class="period mono">{{PERIOD}}</div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-label mono">{{HERO_LABEL}}</div>
+    <div class="hero-value">{{HERO_VALUE}}<small>{{HERO_UNIT}}</small></div>
+    <div class="hero-sub">{{HERO_SUB}}</div>
+    {{HERO_RANGE}}
+  </div>
+
+  <div class="tiles">{{TILES_HTML}}</div>
+
+  <div class="projects">
+    <div class="projects-title mono">{{PROJECTS_TITLE}}</div>
+    {{PROJECTS_HTML}}
+  </div>
+
+  <div class="card-foot">
+    <div class="tools mono">{{FOOTER_TOOLS}}</div>
+    <div class="repo mono">{{FOOTER_REPO}}</div>
+  </div>
+</div>

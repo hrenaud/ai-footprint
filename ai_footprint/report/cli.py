@@ -84,6 +84,17 @@ def render_report(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _ranked_projects(rows: list[dict]) -> list[tuple[str, list[float]]]:
+    """(nom de projet, [gwp_min, gwp_max]) agrégés, triés du plus au moins
+    impactant (GWP). Réutilisé par ``render_projects`` et par la card."""
+    groups: dict[str, list[float]] = {}
+    for row in rows:
+        g = groups.setdefault(row.get("project") or "?", [0.0, 0.0])
+        g[0] += row["gwp_min"]
+        g[1] += row["gwp_max"]
+    return sorted(groups.items(), key=lambda kv: kv[1][0] + kv[1][1], reverse=True)
+
+
 def render_projects(rows: list[dict], show_all: bool = False,
                     detailed: bool = False) -> str:
     """Projets classés du plus au moins impactant (GWP). Par défaut valeur
@@ -91,17 +102,10 @@ def render_projects(rows: list[dict], show_all: bool = False,
     le reste regroupé en « autres » ; ``show_all`` affiche la liste complète."""
     if not rows:
         return ""
-    groups: dict[str, list[float]] = {}
-    for row in rows:
-        g = groups.setdefault(row.get("project") or "?", [0.0, 0.0])
-        g[0] += row["gwp_min"]
-        g[1] += row["gwp_max"]
-
-    total = [sum(v[0] for v in groups.values()), sum(v[1] for v in groups.values())]
+    ranked = _ranked_projects(rows)
+    total = [sum(v[0] for _, v in ranked), sum(v[1] for _, v in ranked)]
     factor, unit = _scale(total[1] or 1.0, "gwp")
     total_mid = (total[0] + total[1]) / 2 or 1.0
-
-    ranked = sorted(groups.items(), key=lambda kv: kv[1][0] + kv[1][1], reverse=True)
 
     # (nom affiché, fourchette gwp) ; longue traîne regroupée en « autres ».
     data: list[tuple[str, list[float]]] = []

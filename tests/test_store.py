@@ -336,6 +336,47 @@ def test_ingest_normalizes_timestamp_to_utc_canonical(tmp_path):
     assert _canonical_ts("pas-une-date") == "pas-une-date"  # laissé tel quel
 
 
+def test_session_count_filters_by_since(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "sess-A", "u1"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-28T10:00:00.000Z", "p", "sess-B", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert store.session_count() == 2
+    assert store.session_count(since="2026-06-28T00:00:00.000Z") == 1
+
+
+def test_first_session_started_at(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    assert store.first_session_started_at() is None
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "sess-A", "u1"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-05-01T10:00:00.000Z", "p", "sess-B", "u2"),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert store.first_session_started_at().startswith("2026-05-01")
+
+
+def test_clients_covered(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "sess-A", "u1",
+                       client="opencode"),
+        InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
+                       "2026-06-28T10:00:00.000Z", "p", "sess-B", "u2",
+                       client=""),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert store.clients_covered() == ["claude-code", "opencode"]
+    assert store.clients_covered(since="2026-06-28T00:00:00.000Z") == ["claude-code"]
+
+
 def test_open_migrates_legacy_z_timestamps(tmp_path):
     """N2 : à l'ouverture, les vieux timestamps « …Z » sont convertis en +00:00."""
     import sqlite3

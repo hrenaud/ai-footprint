@@ -3,6 +3,7 @@ import json
 import os
 import sys
 
+from ai_footprint.card.cli import cmd_card
 from ai_footprint.collectors.claude_code import ClaudeCodeCollector
 from ai_footprint.collectors.crush import CrushCollector
 from ai_footprint.collectors.pi import PiCollector
@@ -30,6 +31,7 @@ from ai_footprint.release import ReleaseError, run as run_release
 from ai_footprint.resolve.cli import cmd_resolve
 from ai_footprint.statusline.line import render_statusline
 from ai_footprint.store.db import SQLiteStore
+from ai_footprint.tool_updates import session_start_check
 
 _DEFAULT_SOURCE = os.path.expanduser("~/.claude/projects")
 _DEFAULT_DB = os.path.expanduser("~/.ai-footprint/ai-footprint.db")
@@ -239,6 +241,14 @@ def main(argv: list[str] | None = None) -> int:
     p_rep.add_argument("--detail", "--detailed", dest="detail", action="store_true",
                        help="afficher les fourchettes min–max au lieu de la valeur centrale (~)")
 
+    p_card = sub.add_parser("card", help="générer une card PNG partageable")
+    p_card.add_argument("--db", default=_DEFAULT_DB)
+    p_card.add_argument("--since", default=None, type=parse_since,
+                        help="date de début (ex. 2026-06-27, 27/06/2026, 27/06/26)")
+    p_card.add_argument("--out", default=os.path.expanduser("~/.ai-footprint/exports/"))
+    p_card.add_argument("--lang", choices=("fr", "en", "both"), default="both")
+    p_card.add_argument("--theme", choices=("light", "dark", "both"), default="light")
+
     p_st = sub.add_parser("statusline", help="ligne compacte pour la statusline")
     p_st.add_argument("--db", default=_DEFAULT_DB)
 
@@ -273,6 +283,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_bump.add_argument("--no-push", action="store_true",
                         help="ne pas pusher main + tags après le release (push par défaut)")
+
+    p_tu = sub.add_parser(
+        "tool-updates-check",
+        help="signale (hook SessionStart) une mise à jour ecologits/huggingface_hub disponible",
+    )
+    p_tu.add_argument(
+        "--cache",
+        default=os.path.join(os.path.dirname(__file__), "..", ".claude", "tool-updates-cache.json"),
+    )
 
     args = parser.parse_args(argv)
 
@@ -332,6 +351,9 @@ def main(argv: list[str] | None = None) -> int:
         print(out)
         return 0
 
+    if args.cmd == "card":
+        return cmd_card(args)
+
     if args.cmd == "statusline":
         store = _store(args.db)
         # Claude Code fournit la session courante sur stdin.
@@ -365,6 +387,13 @@ def main(argv: list[str] | None = None) -> int:
         except ReleaseError as e:
             print(f"Release bloqué : {e}", file=sys.stderr)
             return 1
+
+    if args.cmd == "tool-updates-check":
+        from pathlib import Path
+        notice = session_start_check(Path(args.cache))
+        if notice:
+            print(notice)
+        return 0
 
     return 1
 

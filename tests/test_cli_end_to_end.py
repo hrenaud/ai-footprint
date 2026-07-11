@@ -1,5 +1,9 @@
 from pathlib import Path
+
+import pytest
+
 from ai_footprint.__main__ import main
+from ai_footprint.card.cli import _find_chrome
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -51,3 +55,16 @@ def test_statusline_runs(tmp_path, capsys):
     rc = main(["statusline", "--db", db])
     assert rc == 0
     assert "kWh" in capsys.readouterr().out
+
+
+@pytest.mark.skipif(_find_chrome() is None, reason="Chrome/Chromium introuvable")
+def test_card_runs(tmp_path, capsys):
+    db = str(tmp_path / "ai-footprint.db")
+    out_dir = tmp_path / "exports"
+    main(["ingest", "--source", str(FIXTURES), "--db", db])
+    capsys.readouterr()
+    rc = main(["card", "--db", db, "--out", str(out_dir), "--lang", "fr", "--theme", "light"])
+    assert rc == 0
+    paths = capsys.readouterr().out.strip().splitlines()
+    assert len(paths) == 1
+    assert Path(paths[0]).exists()

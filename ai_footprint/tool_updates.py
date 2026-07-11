@@ -15,9 +15,11 @@ import json
 import re
 import subprocess
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
+CACHE_TTL = timedelta(hours=24)
 
 _ECOLOGITS_PIN_RE = re.compile(r"ecologits==([\w\.\-]+)")
 _HF_MIN_VERSION_RE = re.compile(r"huggingface_hub>=([\d.]+)")
@@ -70,6 +72,70 @@ def format_issue_body(update: dict) -> str:
         "Aucune mise à jour automatique n'est effectuée (risque de breaking "
         "change) — à tester manuellement puis à épingler dans `pyproject.toml`."
     )
+
+
+def session_start_notice(pyproject_text: str, *, hf_latest: str, ecologits_latest: str) -> str | None:
+    """Message court pour le hook SessionStart, ou None si rien à signaler."""
+    updates = check_updates(pyproject_text, hf_latest=hf_latest, ecologits_latest=ecologits_latest)
+    if not updates:
+        return None
+    lines = [
+        f"  - {u['package']} : {u['current']} → {u['latest']}"
+        for u in updates
+    ]
+    return (
+        "🔄 Mise à jour disponible (à tester puis épingler manuellement dans pyproject.toml) :\n"
+        + "\n".join(lines)
+    )
+
+
+def load_cache(cache_path: Path) -> dict:
+    try:
+        return json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def save_cache(cache_path: Path, *, checked_at: datetime, hf_latest: str, ecologits_latest: str) -> None:
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(
+        json.dumps({
+            "checked_at": checked_at.isoformat(),
+            "hf_latest": hf_latest,
+            "ecologits_latest": ecologits_latest,
+        }),
+        encoding="utf-8",
+    )
+
+
+def should_refresh(cache: dict, *, now: datetime) -> bool:
+    checked_at = cache.get("checked_at")
+    if not checked_at:
+        return True
+    try:
+        last = datetime.fromisoformat(checked_at)
+    except ValueError:
+        return True
+    return now - last > CACHE_TTL
+
+
+def session_start_check(cache_path: Path) -> str | None:
+    """Point d'entrée du hook SessionStart : réseau throttlé (24h) via cache."""
+    now = datetime.now(timezone.utc)
+    cache = load_cache(cache_path)
+    if should_refresh(cache, now=now):
+        try:
+            hf_latest = latest_pypi_version("huggingface_hub")
+            eco_latest = latest_pypi_version("ecologits")
+        except OSError:
+            return None
+        save_cache(cache_path, checked_at=now, hf_latest=hf_latest, ecologits_latest=eco_latest)
+    else:
+        hf_latest = cache["hf_latest"]
+        eco_latest = cache["ecologits_latest"]
+
+    pyproject_text = PYPROJECT.read_text(encoding="utf-8")
+    return session_start_notice(pyproject_text, hf_latest=hf_latest, ecologits_latest=eco_latest)
 
 
 def main() -> None:

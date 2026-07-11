@@ -68,6 +68,7 @@ Dans Claude Code, tape la commande, ou demande en langage naturel :
 | Skill                    | À quoi ça sert                                                                                | Exemple                                             |
 | ------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | **`/footprint-report`**  | Ton rapport d'impact complet.                                                                 | « mon impact », « mon empreinte CO₂ »               |
+| **`/footprint-card`**    | Une card PNG partageable (1080×1080) résumant ton empreinte.                                  | « exporte mon empreinte en image »                  |
 | **`/footprint-resolve`** | Estimer l'impact de modèles tiers/locaux non reconnus (les associe à un modèle Hugging Face). | quand le rapport liste des « modèles non couverts » |
 | **`/footprint-config`**  | Régler ta zone électrique (ex. France) et les paramètres datacenter.                          | « configure ma zone élec »                          |
 | **`/footprint-help`**    | Aide : toutes les commandes et options.                                                       | « comment utiliser ai-footprint »                   |
@@ -82,6 +83,19 @@ quel outil consomme le plus de tokens et a les impacts les plus forts, à débit
 Options utiles du rapport : `--since 2026-06-27` (ou `27/06/26`) pour une période,
 `--detail` pour les fourchettes min–max par modèle/projet, `--all-projects` pour la
 liste complète. `/footprint-help` (ou `ai-footprint report --help`) les liste toutes.
+
+### Card partageable
+
+`/footprint-card` exporte une image PNG 1080×1080 résumant ton empreinte : le
+carbone (GWP) en héro, les 4 autres critères (eau, énergie, ADPe, énergie primaire)
+en tuiles, et le top 3 des projets les plus impactants. Chaque valeur est posée sur
+sa fourchette min–max via une jauge à marqueur central — la signature visuelle du
+projet, pour ne jamais présenter un chiffre unique trompeur.
+
+Nécessite Chrome ou Chromium installé localement (rendu HTML → PNG en headless,
+aucune dépendance Python supplémentaire). Options : `--since`, `--theme
+light|dark|both` (défaut `light`), `--lang fr|en|both` (défaut `both`), `--out`
+(défaut `~/.ai-footprint/exports/`).
 
 ## Statusline dans Claude Code
 
@@ -103,6 +117,7 @@ Les skills appellent simplement la CLI ; tu peux l'utiliser directement :
 ```bash
 ai-footprint ingest      # parse les transcripts → base SQLite (~/.ai-footprint/ai-footprint.db)
 ai-footprint report      # rapport multi-critères (--since, --detail, --all-projects)
+ai-footprint card        # card PNG partageable (--since, --theme, --lang, --out)
 ai-footprint statusline   # ligne compacte
 ai-footprint resolve --list   # modèles non couverts à résoudre
 ```

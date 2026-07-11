@@ -411,8 +411,25 @@ class SQLiteStore:
         ).fetchone()[0]
         return {"total": total, "measured": total - uncovered, "uncovered": uncovered}
 
-    def session_count(self) -> int:
+    def session_count(self, since: str | None = None) -> int:
+        if since:
+            return self.conn.execute(
+                "SELECT COUNT(DISTINCT session_id) FROM events WHERE timestamp >= ?",
+                (since,)).fetchone()[0]
         return self.conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+
+    def first_session_started_at(self) -> str | None:
+        return self.conn.execute(
+            "SELECT MIN(started_at) FROM sessions").fetchone()[0]
+
+    def clients_covered(self, since: str | None = None) -> list[str]:
+        sql = "SELECT DISTINCT COALESCE(NULLIF(client,''),'claude-code') AS c FROM events"
+        params: list = []
+        if since:
+            sql += " WHERE timestamp >= ?"
+            params.append(since)
+        sql += " ORDER BY c"
+        return [r["c"] for r in self.conn.execute(sql, tuple(params))]
 
     def total_duration_seconds(self) -> float:
         total = 0.0

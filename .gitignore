@@ -17,3 +17,6 @@ venv/
 
 # OS
 .DS_Store
+
+# Cache local du hook SessionStart (tool-updates-check)
+.claude/tool-updates-cache.json

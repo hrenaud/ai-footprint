@@ -69,20 +69,21 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 
 ### Modules (`ai_footprint/`)
 
-| Module                      | Rôle                                                                                                                                                                                     |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `collectors/claude_code.py` | parse les JSONL → `InferenceEvent` (ignore non-`assistant`/sans usage ; dérive projet du `cwd` ; estime `active_seconds` ; renseigne `client`). Aucun contenu de prompt/réponse extrait. |
-| `models.py`                 | dataclass `InferenceEvent`.                                                                                                                                                              |
-| `impact/engine.py`          | `EcoLogitsEngine.compute()` : chemin registre vs fallback auto-hébergé ; `_extract_impacts` (totals/usage/embodied en min/max).                                                          |
-| `impact/resolver.py`        | `ModelResolver` : alias de noms (`Config.model_aliases`).                                                                                                                                |
-| `impact/params.py`          | `ModelParamsResolver` (cascade registre→cache→HF→file) + `fetch_hf_params(repo)` (safetensors ÷ 1e9, offline-safe).                                                                      |
-| `store/db.py`               | `SQLiteStore` : ingestion idempotente, agrégations, recompute.                                                                                                                           |
-| `report/cli.py`             | rendu des sections du rapport (5 + une 6ᵉ, intensité par outil, si plusieurs outils sont présents).                                                                                      |
-| `resolve/cli.py`            | sous-commande `resolve` (list/set/recompute/forget).                                                                                                                                     |
-| `statusline/line.py`        | ligne compacte.                                                                                                                                                                          |
-| `dates.py`                  | `parse_since()` (normalise les dates `--since`).                                                                                                                                         |
-| `config.py`                 | dataclass `Config` (JSON `~/.ai-footprint/config.json`).                                                                                                                                 |
-| `__main__.py`               | parseur d'arguments + dispatch des commandes.                                                                                                                                            |
+| Module                      | Rôle                                                                                                                                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collectors/claude_code.py` | parse les JSONL → `InferenceEvent` (ignore non-`assistant`/sans usage ; dérive projet du `cwd` ; estime `active_seconds` ; renseigne `client`). Aucun contenu de prompt/réponse extrait.                 |
+| `models.py`                 | dataclass `InferenceEvent`.                                                                                                                                                                              |
+| `impact/engine.py`          | `EcoLogitsEngine.compute()` : chemin registre vs fallback auto-hébergé ; `_extract_impacts` (totals/usage/embodied en min/max).                                                                          |
+| `impact/resolver.py`        | `ModelResolver` : alias de noms (`Config.model_aliases`).                                                                                                                                                |
+| `impact/params.py`          | `ModelParamsResolver` (cascade registre→cache→HF→file) + `fetch_hf_params(repo)` (safetensors ÷ 1e9, offline-safe).                                                                                      |
+| `store/db.py`               | `SQLiteStore` : ingestion idempotente, agrégations, recompute.                                                                                                                                           |
+| `report/cli.py`             | rendu des sections du rapport (5 + une 6ᵉ, intensité par outil, si plusieurs outils sont présents). Expose aussi `_central`/`_scale`/`_ranked_projects`, réutilisés par `card/cli.py`.                   |
+| `card/cli.py`               | sous-commande `card` : agrège les totaux (`build_card_data`), génère le HTML (`render_card_html` + `card/template.html`), rend le PNG via Chrome/Chromium headless local (`render_png`, `_find_chrome`). |
+| `resolve/cli.py`            | sous-commande `resolve` (list/set/recompute/forget).                                                                                                                                                     |
+| `statusline/line.py`        | ligne compacte.                                                                                                                                                                                          |
+| `dates.py`                  | `parse_since()` (normalise les dates `--since`).                                                                                                                                                         |
+| `config.py`                 | dataclass `Config` (JSON `~/.ai-footprint/config.json`).                                                                                                                                                 |
+| `__main__.py`               | parseur d'arguments + dispatch des commandes.                                                                                                                                                            |
 
 ### Schéma de la base (`~/.ai-footprint/ai-footprint.db`)
 
@@ -125,6 +126,8 @@ lexicographique sur `timestamp`) :
 
 - `rows_for_report(since, session_id)` — total / projets.
 - `tokens_by_model(since)` — tokens totaux + centrale & bornes min/max par critère.
+- `session_count(since)`, `first_session_started_at()`, `clients_covered(since)` —
+  utilisées par la card (sous-héro, libellé de période, outils couverts).
 - `intensity_by_model(since)` — heures actives, tok/h, impact/h (events à temps > 0).
 - `uncovered_by_model(since)` — modèles non couverts (hors `<synthetic>`).
 - `coverage()` — `{total, measured, uncovered}`.
@@ -136,6 +139,16 @@ lexicographique sur `timestamp`) :
 
 `events` = source brute normalisée (immuable). `impacts` = résultat du calcul (dépend
 du moteur + zone + params). Permet de **recalculer** sans re-parser les JSONL.
+
+### Card PNG : Chrome headless plutôt que Playwright
+
+Le rendu HTML → PNG de `ai-footprint card` pilote un **Chrome/Chromium local déjà
+installé** en subprocess (`--headless=new --screenshot=...`), pas Playwright : zéro
+nouvelle dépendance Python, n'alourdit pas l'installation par défaut (le hook Stop
+de la statusline n'a pas besoin d'un navigateur). `card/cli.py::_find_chrome()`
+détecte le binaire (`CHROME_BIN`, chemins macOS usuels, puis `PATH`) ; si absent,
+la commande échoue proprement avec l'instruction d'installation plutôt que de
+planter.
 
 ## Tests
 
@@ -219,6 +232,16 @@ bump mineur en `0.x` peut casser la cascade de calcul, et l'outil installé
 partage sa base avec le repo dev (cf. § Deux codebases, une base) — un bump
 silencieux serait risqué. L'issue sert juste de rappel ; le bump se fait à la
 main dans `pyproject.toml` après test.
+
+En complément du cron hebdomadaire, un hook **`SessionStart` local au repo dev**
+(`.claude/settings.json`, _pas_ le `~/.claude/settings.json` global installé par
+`install.sh`) lance `ai-footprint tool-updates-check` à chaque démarrage de
+session Claude Code dans ce projet, et affiche un message si une mise à jour
+ecologits/huggingface_hub est disponible. La vérification réseau est mise en
+cache 24h (`.claude/tool-updates-cache.json`, ignoré par git) pour ne pas
+ralentir chaque démarrage de session. Logique testée dans
+`tests/test_tool_updates.py` (`session_start_notice`, `should_refresh`,
+`load_cache`).
 
 ## Hors périmètre actuel (coutures posées)
 
