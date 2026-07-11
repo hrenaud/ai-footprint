@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] — 2026-07-11
+
+### Chores
+
+- (deps) — bump huggingface_hub to >=1.23.0
 ## [1.1.0] — 2026-07-11
 
 ### Features
