@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] — 2026-07-11
+
+### Features
+
+- (ci) — industrialise les releases (CI, GitHub Release, bump Homebrew)
 ## [1.0.1] — 2026-07-11
 
 ### Features
