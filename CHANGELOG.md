@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.1] — 2026-07-11
+
+### Features
+
+- add PyPI publish workflow and agent-footprint shell package
+
+### Documentation
+
+- add PyPI manual publication guide
+- add AGPL-3.0-or-later license
 ## [1.0.0] — 2026-07-10
 
 ### Features
