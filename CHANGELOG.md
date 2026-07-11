@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] — 2026-07-11
+
+### Features
+
+- (impact) — stand-in extrapolé pour les modèles Anthropic trop récents
 ## [1.1.1] — 2026-07-11
 
 ### Chores
