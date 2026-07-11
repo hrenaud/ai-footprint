@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] — 2026-07-11
+
+### Features
+
+- (statusline) — explicite le modèle inconnu et son fallback dans le marqueur ≈
 ## [1.2.0] — 2026-07-11
 
 ### Features
