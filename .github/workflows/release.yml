@@ -1,0 +1,33 @@
+name: release
+
+# Crée une GitHub Release à chaque tag v* (poussé par `ai-footprint release
+# bump`), avec pour notes la section correspondante du CHANGELOG.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extraire la section du CHANGELOG pour ce tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          awk -v version="$version" '
+            $0 ~ "^## \\[" version "\\]" { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+
+      - name: Créer la GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --title "$TAG" --notes-file release-notes.md

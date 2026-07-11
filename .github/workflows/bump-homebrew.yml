@@ -1,0 +1,62 @@
+name: bump-homebrew
+
+# Ouvre automatiquement une PR sur hrenaud/homebrew-tap pour mettre à jour
+# l'URL et le sha256 de l'archive à chaque tag v*. Les `resource` PyPI
+# (dépendances) ne sont PAS régénérées ici — à refaire manuellement via
+# `brew update-python-resources` si les dépendances ont changé (cf.
+# docs/publication-pypi.md).
+#
+# Prérequis : secret HOMEBREW_TAP_TOKEN (PAT avec accès contents+pull-requests
+# sur hrenaud/homebrew-tap) — le GITHUB_TOKEN par défaut ne peut pas écrire
+# sur un autre dépôt.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculer version et sha256 de l'archive
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          url="https://github.com/hrenaud/ai-footprint/archive/refs/tags/${TAG}.tar.gz"
+          sha256=$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "ARCHIVE_URL=$url" >> "$GITHUB_ENV"
+          echo "SHA256=$sha256" >> "$GITHUB_ENV"
+
+      - name: Checkout hrenaud/homebrew-tap
+        uses: actions/checkout@v4
+        with:
+          repository: hrenaud/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Mettre à jour url + sha256 dans la formule
+        working-directory: homebrew-tap
+        run: |
+          sed -i \
+            -e "s|url \".*archive/refs/tags/v.*\.tar\.gz\"|url \"${ARCHIVE_URL}\"|" \
+            -e "0,/sha256 \"/s|sha256 \".*\"|sha256 \"${SHA256}\"|" \
+            Formula/ai-footprint.rb
+
+      - name: Ouvrir la PR
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        working-directory: homebrew-tap
+        run: |
+          branch="bump-ai-footprint-${VERSION}"
+          git checkout -b "$branch"
+          git config user.name "ai-footprint-bot"
+          git config user.email "actions@github.com"
+          git commit -am "chore: bump ai-footprint to ${VERSION}"
+          git push origin "$branch"
+          gh pr create \
+            --repo hrenaud/homebrew-tap \
+            --title "chore: bump ai-footprint to ${VERSION}" \
+            --body "Mise à jour automatique url/sha256 suite au tag v${VERSION} de hrenaud/ai-footprint. Vérifier si les dépendances PyPI ont changé (brew update-python-resources) avant de merger." \
+            --head "$branch" \
+            --base main
