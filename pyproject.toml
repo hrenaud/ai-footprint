@@ -2,6 +2,7 @@
 name = "ai-footprint"
 version = "1.0.2"
 description = "Compteur d'impact environnemental multi-critères pour outils d'IA agentique (vendor-neutral, via EcoLogits)"
+readme = "README.md"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.10,<4"
@@ -9,6 +10,11 @@ dependencies = [
   "ecologits==0.11.0",
   "huggingface_hub>=0.20",
 ]
+
+[project.urls]
+Homepage = "https://github.com/hrenaud/ai-footprint"
+Repository = "https://github.com/hrenaud/ai-footprint"
+Changelog = "https://github.com/hrenaud/ai-footprint/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
