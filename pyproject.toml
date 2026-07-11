@@ -2,6 +2,8 @@
 name = "ai-footprint"
 version = "1.0.0"
 description = "Compteur d'impact environnemental multi-critères pour outils d'IA agentique (vendor-neutral, via EcoLogits)"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10,<4"
 dependencies = [
   "ecologits==0.11.0",
