@@ -263,3 +263,14 @@ def test_render_estimated_note():
     note = render_estimated_note(["est-model", "autre"])
     assert "est-model" in note and "autre" in note
     assert "estim" in note.lower()
+
+
+def test_render_extrapolated_note():
+    """Note d'avertissement listant les modèles trop récents pour le registre
+    EcoLogits, dont l'impact repose sur un stand-in extrapolé (ex. claude-sonnet-5
+    réutilise les params officiels de claude-sonnet-4-6)."""
+    from ai_footprint.report.cli import render_extrapolated_note
+    assert render_extrapolated_note([]) == ""
+    note = render_extrapolated_note(["claude-sonnet-5", "claude-fable-5"])
+    assert "claude-sonnet-5" in note and "claude-fable-5" in note
+    assert "extrapol" in note.lower()

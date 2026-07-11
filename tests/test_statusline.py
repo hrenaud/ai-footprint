@@ -28,6 +28,27 @@ def test_empty_when_no_rows():
     assert render_statusline([]) == ""
 
 
+def test_marks_line_as_provisional_when_extrapolated_warning_present():
+    """Un modèle trop récent pour le registre EcoLogits (ex. claude-sonnet-5)
+    utilise un stand-in extrapolé : la statusline le signale via un préfixe « ≈ »."""
+    rows = [
+        {"energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
+         "wcf_min": 3.0, "wcf_max": 4.0,
+         "warnings": '["params-extrapolated-anthropic:claude-sonnet-4-6"]'},
+    ]
+    line = render_statusline(rows)
+    assert line.startswith("≈ ")
+
+
+def test_no_marker_when_no_extrapolated_warning():
+    rows = [
+        {"energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
+         "wcf_min": 3.0, "wcf_max": 4.0, "warnings": "[]"},
+    ]
+    line = render_statusline(rows)
+    assert not line.startswith("≈")
+
+
 class _FakeStdin:
     def __init__(self, text: str):
         self._text = text

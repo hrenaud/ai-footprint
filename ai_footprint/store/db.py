@@ -182,7 +182,8 @@ class SQLiteStore:
         sql = (
             "SELECT e.model, e.project, e.timestamp, e.client, "
             "i.energy_min, i.energy_max, i.gwp_min, i.gwp_max, "
-            "i.adpe_min, i.adpe_max, i.pe_min, i.pe_max, i.wcf_min, i.wcf_max "
+            "i.adpe_min, i.adpe_max, i.pe_min, i.pe_max, i.wcf_min, i.wcf_max, "
+            "i.warnings "
             "FROM events e JOIN impacts i "
             "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
             "WHERE i.error IS NULL"
@@ -324,6 +325,22 @@ class SQLiteStore:
             "i.warnings LIKE '%params-bytes-per-param%' "
             "OR i.warnings LIKE '%params-range-unknown-dtype%' "
             "OR i.warnings LIKE '%params-from-cli-used_storage%')"
+        )
+        params: list = []
+        if since:
+            sql += " AND e.timestamp >= ?"
+            params.append(since)
+        sql += " ORDER BY e.model"
+        return [r["model"] for r in self.conn.execute(sql, tuple(params))]
+
+    def extrapolated_param_models(self, since: str | None = None) -> list[str]:
+        """Modèles trop récents pour le registre EcoLogits, dont l'impact repose
+        sur un stand-in extrapolé (params d'une version sœur connue) — signalés
+        séparément des estimations HF dans le rapport."""
+        sql = (
+            "SELECT DISTINCT e.model FROM events e JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
+            "WHERE i.error IS NULL AND i.warnings LIKE '%params-extrapolated-%'"
         )
         params: list = []
         if since:

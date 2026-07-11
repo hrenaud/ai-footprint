@@ -328,6 +328,29 @@ def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
     assert store.estimated_param_models() == ["est-model"]
 
 
+def test_extrapolated_param_models_lists_models_with_extrapolation_warning(tmp_path):
+    """Modèles dont les params sont un provisoire extrapolé (ex. Anthropic
+    trop récent pour le registre EcoLogits) — signalés séparément dans le rapport."""
+    import json as _json
+    from ai_footprint.store.db import SQLiteStore
+    store = SQLiteStore(str(tmp_path / "t.db"))
+    store.conn.execute(
+        "INSERT INTO events VALUES ('s1','m1','anthropic','claude-sonnet-5',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'')")
+    store.conn.execute(
+        "INSERT INTO impacts VALUES ('s1','m1','claude-sonnet-5','WOR','v',"
+        "1,2,1,2,1,2,1,2,1,2,'{}',?,NULL)",
+        (_json.dumps(["params-extrapolated-anthropic:claude-sonnet-4-6"]),))
+    store.conn.execute(
+        "INSERT INTO events VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'')")
+    store.conn.execute(
+        "INSERT INTO impacts VALUES ('s1','m2','gpt-4o-mini','WOR','v',"
+        "1,2,1,2,1,2,1,2,1,2,'{}','[]',NULL)")
+    store.conn.commit()
+    assert store.extrapolated_param_models() == ["claude-sonnet-5"]
+
+
 def test_ingest_normalizes_timestamp_to_utc_canonical(tmp_path):
     """N2 : un timestamp « Z » est stocké en ISO UTC canonique (+00:00)."""
     from ai_footprint.store.db import SQLiteStore, _canonical_ts

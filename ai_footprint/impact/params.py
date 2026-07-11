@@ -293,7 +293,8 @@ class ModelParamsResolver:
         return ParamsResult(
             active=_param_from_json(entry["active"]),
             total=_param_from_json(entry["total"]),
-            arch=entry.get("arch", "dense"), source=entry.get("source", "user"))
+            arch=entry.get("arch", "dense"), source=entry.get("source", "user"),
+            warnings=list(entry.get("warnings", [])))
 
     def _negative_fresh(self, key: str) -> bool:
         """Vrai si un échec HF récent (< TTL) est mémorisé en config pour key."""

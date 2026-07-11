@@ -137,6 +137,24 @@ rapport 1:4 sur les params) plutôt qu'une valeur unique. Ces estimations
 portent un warning de provenance en base et les modèles concernés sont
 signalés dans le rapport (« Params estimés depuis la taille des fichiers »).
 
+## Modèles Anthropic trop récents pour le registre EcoLogits
+
+Le registre EcoLogits porte ses propres estimations (extrapolées, `model-arch-not-
+released`) pour les modèles Anthropic fermés — mais un modèle tout juste sorti
+(ex. `claude-sonnet-5`, `claude-fable-5`) peut ne pas encore y figurer. Plutôt que de
+le laisser **non couvert**, ai-footprint réutilise en attendant les paramètres
+qu'EcoLogits déclare pour la version connue de la même lignée (ex. la famille
+Sonnet-4.x : MoE, 440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le
+débit `tps` change d'une version à l'autre). Ce stand-in est déclaré à la main dans
+`model_params` (`source: "extrapolated"`) et porte un warning dédié
+(`params-extrapolated-anthropic:…`).
+
+Ces modèles sont signalés séparément des estimations HF, dans le rapport (note
+« Params extrapolés d'une version sœur ») et dans la statusline (préfixe `≈`) : les
+chiffres affichés sont un **repère provisoire**, pas une mesure EcoLogits officielle
+pour ce modèle précis. Dès qu'une release EcoLogits couvre le modèle, l'entrée
+manuelle doit être retirée (`resolve --forget`) pour repasser sur le registre.
+
 ## Limites assumées
 
 - Impact piloté par les **tokens de sortie** (entrée/cache non comptés).

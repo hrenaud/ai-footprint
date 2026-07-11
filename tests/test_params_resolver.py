@@ -27,6 +27,19 @@ def test_unknown_model_returns_none():
     assert r.resolve("ollama", "modele-inexistant-xyz") is None
 
 
+def test_cache_tier_propagates_warnings():
+    """Un mapping manuel (ex. params extrapolés d'une version sœur) porte ses
+    warnings jusqu'au ParamsResult, pour être signalé en aval (report/statusline)."""
+    cfg = Config(model_params={
+        "anthropic/claude-sonnet-5": {
+            "active": 88.0, "total": 440.0, "arch": "moe", "source": "extrapolated",
+            "warnings": ["params-extrapolated-anthropic:claude-sonnet-4-6"]}})
+    r = ModelParamsResolver(cfg)
+    res = r.resolve("anthropic", "claude-sonnet-5")
+    assert res.source == "extrapolated"
+    assert res.warnings == ["params-extrapolated-anthropic:claude-sonnet-4-6"]
+
+
 def test_registry_range_value_resolved_as_mean():
     """Teste que les paramètres RangeValue du registre sont résolus par moyenne."""
     r = ModelParamsResolver(Config())

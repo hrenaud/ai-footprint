@@ -289,3 +289,13 @@ def render_estimated_note(models: list[str]) -> str:
         return ""
     return ("⚠️  Params estimés depuis la taille des fichiers (précision limitée) : "
             + ", ".join(models))
+
+
+def render_extrapolated_note(models: list[str]) -> str:
+    """Note d'avertissement : modèles trop récents pour le registre EcoLogits,
+    dont l'impact repose sur un stand-in extrapolé (params officiels d'une
+    version sœur connue). Chaîne vide si aucun modèle concerné."""
+    if not models:
+        return ""
+    return ("≈ Params extrapolés d'une version sœur (modèle trop récent pour "
+            "EcoLogits) : " + ", ".join(models))

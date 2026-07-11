@@ -20,6 +20,7 @@ from ai_footprint.impact.params import (
 from ai_footprint.impact.resolver import ModelResolver
 from ai_footprint.report.cli import (
     render_estimated_note,
+    render_extrapolated_note,
     render_intensity,
     render_intensity_by_client,
     render_projects,
@@ -336,6 +337,9 @@ def main(argv: list[str] | None = None) -> int:
         estimated = render_estimated_note(store.estimated_param_models(args.since))
         if estimated:
             out += "\n\n" + estimated
+        extrapolated = render_extrapolated_note(store.extrapolated_param_models(args.since))
+        if extrapolated:
+            out += "\n\n" + extrapolated
         uncovered = render_uncovered(store.uncovered_by_model(args.since))
         if uncovered:
             out += "\n\n" + uncovered
