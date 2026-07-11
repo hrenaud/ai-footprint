@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.3] — 2026-07-11
+
+### Bug Fixes
+
+- (packaging) — déclarer readme et project.urls pour PyPI
 ## [1.0.2] — 2026-07-11
 
 ### Features

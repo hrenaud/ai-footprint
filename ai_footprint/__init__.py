@@ -1,4 +1,4 @@
 """ai-footprint — compteur d'impact multi-critères pour l'IA agentique."""
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 ENGINE_VERSION = 1
