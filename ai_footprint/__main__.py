@@ -174,6 +174,48 @@ def _cmd_models(args) -> int:
     return 0
 
 
+def _cmd_nudge(args) -> int:
+    from pathlib import Path
+
+    from ai_footprint.nudge import (
+        build_claude_hook_output,
+        check_self_update,
+        check_uncovered_batch,
+        mark_batch_prompted,
+    )
+
+    store = _store(args.db)
+    config = Config.load()
+
+    if args.mark_prompted:
+        mark_batch_prompted(config, store)
+        if not args.json:
+            print("Lot de modèles non couverts marqué comme proposé.")
+        return 0
+
+    update_available = check_self_update(config, cache_path=Path(args.cache))
+    uncovered_new = check_uncovered_batch(store, config)
+
+    if args.claude_hook:
+        output = build_claude_hook_output(update_available, uncovered_new)
+        if output:
+            print(json.dumps(output, ensure_ascii=False))
+        return 0
+
+    result = {"update_available": update_available, "uncovered_new": uncovered_new}
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
+
+    if update_available:
+        print(f"Mise à jour disponible : {update_available['current']} → {update_available['latest']}")
+    if uncovered_new:
+        print(f"{len(uncovered_new)} modèle(s) non couvert(s) jamais proposés : {', '.join(uncovered_new)}")
+    if not update_available and not uncovered_new:
+        print("Rien à signaler.")
+    return 0
+
+
 def _read_stdin_json() -> dict | None:
     """Claude Code passe un JSON de session sur stdin (session_id,
     transcript_path…). Renvoie None en lancement manuel (terminal)."""
@@ -294,6 +336,19 @@ def main(argv: list[str] | None = None) -> int:
         default=os.path.join(os.path.dirname(__file__), "..", ".claude", "tool-updates-cache.json"),
     )
 
+    p_nudge = sub.add_parser(
+        "nudge",
+        help="propose une mise à jour ai-footprint et/ou un resolve des modèles non couverts",
+    )
+    p_nudge.add_argument("--db", default=_DEFAULT_DB)
+    p_nudge.add_argument(
+        "--cache",
+        default=os.path.expanduser("~/.ai-footprint/nudge-cache.json"),
+    )
+    p_nudge.add_argument("--json", action="store_true")
+    p_nudge.add_argument("--mark-prompted", dest="mark_prompted", action="store_true")
+    p_nudge.add_argument("--claude-hook", dest="claude_hook", action="store_true")
+
     args = parser.parse_args(argv)
 
     if getattr(args, "db", None) == _DEFAULT_DB:
@@ -398,6 +453,9 @@ def main(argv: list[str] | None = None) -> int:
         if notice:
             print(notice)
         return 0
+
+    if args.cmd == "nudge":
+        return _cmd_nudge(args)
 
     return 1
 
