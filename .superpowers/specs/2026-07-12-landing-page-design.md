@@ -41,10 +41,15 @@ Dans l'ordre :
    (principe validé en brainstorming : rester cohérent avec « pas de faux chiffre
    précis » porté par le reste du produit). Exemple de ton : « Chaque prompt a un
    coût — invisible, mais réel. » Sous-titre : explique en une phrase les 5
-   critères mesurés + la promesse de transparence (fourchettes). Deux CTA :
-   « Installer » (ancre vers la section Comment ça marche ou commande copiable) et
-   « Voir la doc ». Emplacement pour un aperçu visuel (image ou GIF de la
-   statusline / du rapport — production du média hors scope, cf. § Hors scope).
+   critères mesurés + la promesse de transparence (fourchettes). Juste sous le
+   sous-titre, un **badge de confiance** : « Calculé avec EcoLogits — moteur
+   open source reconnu, offline, aucun chiffre inventé », avec lien vers le dépôt
+   EcoLogits (https://github.com/mlco2/ecologits). Objectif : crédibiliser
+   immédiatement la source des chiffres, pas seulement dans une section plus bas.
+   Deux CTA : « Installer » (ancre vers la section Comment ça marche ou commande
+   copiable) et « Voir la doc ». Emplacement pour un aperçu visuel (image ou GIF
+   de la statusline / du rapport — production du média hors scope, cf. § Hors
+   scope).
 
 3. **Comment ça marche** — 3-4 étapes : installer (one-liner `curl … | bash`) →
    utiliser Claude Code / OpenCode / Pi normalement → voir le rapport / la
@@ -58,8 +63,11 @@ Dans l'ordre :
 5. **Pourquoi des fourchettes** — section pédagogique sur l'incertitude
    irréductible (région exacte des datacenters inconnue, PUE variable), reprise du
    raisonnement du README/METHODOLOGY.md. Argument de différenciation vis-à-vis
-   d'outils qui affichent un chiffre unique invérifiable. Lien vers
-   `docs/METHODOLOGY.md` sur GitHub pour le détail.
+   d'outils qui affichent un chiffre unique invérifiable. **Insiste sur la
+   provenance des calculs** : AI Footprint ne réinvente pas de modélisation, il
+   délègue à EcoLogits — moteur reconnu, open source, vérifiable, utilisé par
+   d'autres projets de la communauté (pas une boîte noire propriétaire). Lien vers
+   `docs/METHODOLOGY.md` sur GitHub et vers le dépôt EcoLogits pour le détail.
 
 6. **Multi-outils** — mention de Claude Code, OpenCode/CRUSH, Pi : rassure chaque
    audience qu'elle est couverte par l'installeur.
