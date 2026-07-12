@@ -23,6 +23,13 @@ Compteur d'impact environnemental multi-critères pour les sessions d'IA, via
 
 ## Rappels projet
 
+- **Multi-outils obligatoire** : toute fonctionnalité utilisateur (skills,
+  hooks, nudges…) doit être développée et adaptée pour **tous les outils
+  supportés** (Claude Code, OpenCode, Pi, etc.), pas seulement Claude Code. Si
+  un outil ne dispose pas encore du point d'accroche nécessaire (ex. un
+  équivalent de SessionStart), l'ajouter fait partie de la tâche, pas une
+  extension future.
+
 - **Fichiers superpowers centralisés dans `.superpowers/`** : plans, specs et
   artefacts SDD vont toujours sous `.superpowers/` (jamais `docs/superpowers/`,
   qui est un héritage migré). Toute nouvelle spec/plan créé par les skills
