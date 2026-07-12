@@ -7,6 +7,15 @@ Lance `ai-footprint card` pour générer une image PNG résumant l'empreinte, pu
 
 ## Étapes
 
+0. Avant de produire la carte, exécuter `ai-footprint nudge --json`. Si
+   `uncovered_new` est non vide, proposer à l'utilisateur (via la méthode
+   listée dans « Comment poser les questions » ci-dessous) de lancer le skill
+   `/footprint-resolve` avant de continuer. Que la réponse soit oui ou non,
+   exécuter ensuite `ai-footprint nudge --mark-prompted`. Si
+   `update_available` est non `null`, proposer d'abord la mise à jour seule
+   (cf. `.superpowers/specs/2026-07-12-nudges-resolve-maj.md` § Flux) avant
+   cette étape.
+
 1. Localiser le binaire et rafraîchir la base (silencieux) :
 
 ```bash

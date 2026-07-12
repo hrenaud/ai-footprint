@@ -126,6 +126,14 @@ Chaque impact stocke sa `methodology_version`
 (`engine=…;ecologits=…`). On peut ainsi recalculer après une mise à jour d'EcoLogits
 et comparer les résultats anciens/nouveaux.
 
+Ce recalcul (`ai-footprint resolve --retry-hf`) n'est plus seulement manuel :
+à chaque démarrage de session, `ai-footprint nudge` propose proactivement une
+mise à jour d'ai-footprint si elle existe, puis un `footprint-resolve` pour
+les modèles non couverts jamais proposés (silence par lot — un modèle décliné
+n'est reproposé qu'après une mise à jour d'ai-footprint, seul événement
+susceptible de faire évoluer sa couverture). Voir `ai_footprint/nudge.py` et
+`CONTRIBUTING.md` § Modules.
+
 ## Estimation des paramètres des modèles auto-hébergés
 
 Quand un modèle n'est ni dans le registre EcoLogits ni doté de metadata

@@ -83,6 +83,8 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 | `statusline/line.py`        | ligne compacte.                                                                                                                                                                                          |
 | `dates.py`                  | `parse_since()` (normalise les dates `--since`).                                                                                                                                                         |
 | `config.py`                 | dataclass `Config` (JSON `~/.ai-footprint/config.json`).                                                                                                                                                 |
+| `cache.py`                  | cache JSON générique throttlé par TTL (`load_json_cache`/`save_json_cache`/`should_refresh`), réutilisé par `tool_updates.py` et `nudge.py`.                                                             |
+| `nudge.py`                  | propositions proactives : `check_self_update` (mise à jour ai-footprint via tag GitHub), `check_uncovered_batch`/`mark_batch_prompted` (resolve des modèles non couverts, silence par lot).              |
 | `__main__.py`               | parseur d'arguments + dispatch des commandes.                                                                                                                                                            |
 
 ### Schéma de la base (`~/.ai-footprint/ai-footprint.db`)
@@ -130,6 +132,7 @@ lexicographique sur `timestamp`) :
   utilisées par la card (sous-héro, libellé de période, outils couverts).
 - `intensity_by_model(since)` — heures actives, tok/h, impact/h (events à temps > 0).
 - `uncovered_by_model(since)` — modèles non couverts (hors `<synthetic>`).
+- `uncovered_keys()` — couples `(provider, model)` non couverts (hors `<synthetic>`), sans filtre `since` ; utilisée par `resolve --retry-hf` et par `ai_footprint/nudge.py`.
 - `coverage()` — `{total, measured, uncovered}`.
 - `recompute_errors(engine, config)` — recalcule les events en `error` → `{before, after}`.
 - `mark_model_events_error(provider, model, error)` — repasse un modèle en erreur
@@ -242,6 +245,14 @@ cache 24h (`.claude/tool-updates-cache.json`, ignoré par git) pour ne pas
 ralentir chaque démarrage de session. Logique testée dans
 `tests/test_tool_updates.py` (`session_start_notice`, `should_refresh`,
 `load_cache`).
+
+> **À ne pas confondre avec le hook `SessionStart` global** ajouté par
+> `install.sh` pour les nudges utilisateur (`ai-footprint nudge --claude-hook`,
+> cf. `ai_footprint/nudge.py`) : celui-ci est **interne au repo dev**
+> (`.claude/settings.json`, non installé chez les utilisateurs finaux) et sert
+> à alerter les mainteneurs d'ai-footprint sur les nouvelles versions
+> d'ecologits/huggingface_hub — un sujet entièrement différent des nudges
+> destinés aux utilisateurs finaux d'ai-footprint.
 
 ## Hors périmètre actuel (coutures posées)
 

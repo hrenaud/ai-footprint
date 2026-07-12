@@ -14,6 +14,12 @@ AC="$(command -v ai-footprint || echo "$HOME/.ai-footprint/src/.venv/bin/ai-foot
 
 ## Étapes
 
+> **Entrée proactive** : ce skill peut désormais être invoqué automatiquement
+> par `footprint-report`, `footprint-card`, ou par le nudge de démarrage de
+> session (hook `SessionStart` Claude Code, event `session.created` OpenCode,
+> event `session_start` Pi), en plus d'une invocation manuelle par
+> l'utilisateur. Le comportement du skill est identique dans les deux cas.
+
 1. **Lister les non couverts** : `"$AC" resolve --list --json`. Si la liste est vide, informer qu'il n'y a rien à résoudre et s'arrêter.
 
 2. **Proposer un repo HF canonique pour chaque modèle**, à partir de l'identifiant brut. Retirer les suffixes de routeur (`:free`), les suffixes de date (`-YYYYMMDD`), corriger les noms d'organisation (ex. `z-ai` → `zai-org`, `openai/gpt-oss-120b:free` → `openai/gpt-oss-120b`). **Laisser de côté** les modèles propriétaires ou introuvables sur HF (ex. `poolside/…`) : ne pas inventer de repo.
