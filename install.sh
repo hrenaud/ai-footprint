@@ -138,9 +138,10 @@ if [ "${AI_FOOTPRINT_NO_CLAUDE:-0}" != "1" ]; then
   mkdir -p "$(dirname "$SETTINGS_FILE")"
   STATUSLINE_CMD="$INSTALL_DIR/scripts/statusline.sh $DB_PATH"
   INGEST_CMD="$AC_BIN ingest --db $DB_PATH"
-  "$INSTALL_DIR/.venv/bin/python" - "$SETTINGS_FILE" "$STATUSLINE_CMD" "$INGEST_CMD" <<'PY'
+  NUDGE_CMD="$AC_BIN nudge --db $DB_PATH --claude-hook"
+  "$INSTALL_DIR/.venv/bin/python" - "$SETTINGS_FILE" "$STATUSLINE_CMD" "$INGEST_CMD" "$NUDGE_CMD" <<'PY'
 import json, sys
-path, statusline_cmd, ingest_cmd = sys.argv[1], sys.argv[2], sys.argv[3]
+path, statusline_cmd, ingest_cmd, nudge_cmd = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     with open(path, encoding="utf-8") as fh:
         cfg = json.load(fh)
@@ -180,6 +181,21 @@ if already:
 else:
     stop.append({"matcher": "", "hooks": [{"type": "command", "command": ingest_cmd}]})
     print("  hook Stop (ingest): ajouté")
+
+# Hook SessionStart → propose mise à jour ai-footprint / resolve des
+# modèles non couverts en début de session (cf.
+# .superpowers/specs/2026-07-12-nudges-resolve-maj.md).
+session_start_hooks = hooks.setdefault("SessionStart", [])
+already_nudge = any(
+    "ai-footprint" in (h.get("command") or "") and "nudge" in (h.get("command") or "")
+    for group in session_start_hooks
+    for h in group.get("hooks", [])
+)
+if already_nudge:
+    print("  hook SessionStart (nudge) : déjà configuré")
+else:
+    session_start_hooks.append({"matcher": "", "hooks": [{"type": "command", "command": nudge_cmd}]})
+    print("  hook SessionStart (nudge) : ajouté")
 
 with open(path, "w", encoding="utf-8") as fh:
     json.dump(cfg, fh, indent=2, ensure_ascii=False)
