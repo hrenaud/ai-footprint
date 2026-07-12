@@ -53,3 +53,15 @@ def test_config_roundtrips_hf_unresolved(tmp_path):
     cfg = Config(hf_unresolved={"ollama/org/x": "2026-07-02T00:00:00+00:00"})
     cfg.save(p)
     assert Config.load(p).hf_unresolved == {"ollama/org/x": "2026-07-02T00:00:00+00:00"}
+
+
+def test_config_roundtrips_resolve_prompt_state(tmp_path):
+    """Nudges M2 : le lot de modèles non couverts déjà proposés est persisté."""
+    p = str(tmp_path / "config.json")
+    cfg = Config(resolve_prompt_state={"prompted_keys": ["ollama/x:y"]})
+    cfg.save(p)
+    assert Config.load(p).resolve_prompt_state == {"prompted_keys": ["ollama/x:y"]}
+
+
+def test_config_resolve_prompt_state_defaults_to_empty_dict():
+    assert Config().resolve_prompt_state == {}

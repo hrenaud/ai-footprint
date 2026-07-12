@@ -22,6 +22,9 @@ class Config:
     # dernier échec de résolution. Purgé par succès, TTL côté résolveur.
     hf_unresolved: dict[str, str] = field(default_factory=dict)
     local_wh_per_token: float | None = None
+    # Nudges (2026-07-12) : lot de modèles non couverts déjà proposés à
+    # l'utilisateur, pour ne jamais reproposer le même lot deux fois.
+    resolve_prompt_state: dict = field(default_factory=dict)
 
     @classmethod
     def load(cls, path: str = DEFAULT_CONFIG_PATH) -> "Config":
