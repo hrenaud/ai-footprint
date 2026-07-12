@@ -128,3 +128,13 @@ def test_build_claude_hook_output_mentions_update():
 def test_build_claude_hook_output_mentions_uncovered_models():
     output = build_claude_hook_output(None, ["ollama/x:y"])
     assert "ollama/x:y" in output["hookSpecificOutput"]["additionalContext"]
+
+
+def test_build_claude_hook_output_mentions_both_when_combined():
+    output = build_claude_hook_output(
+        {"current": "1.2.1", "latest": "1.3.0"}, ["ollama/x:y"]
+    )
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "1.2.1" in context
+    assert "1.3.0" in context
+    assert "ollama/x:y" in context
