@@ -47,7 +47,10 @@ Nouveau champ dans `~/.ai-footprint/config.json` :
 
 Un modèle non couvert n'est proposé qu'une fois : dès qu'il apparaît dans
 `prompted_keys`, il ne redéclenche plus de proposition (« silence par lot »),
-jusqu'à ce qu'un modèle **différent** apparaisse en non-couvert.
+jusqu'à ce qu'un modèle **différent** apparaisse en non-couvert, **ou** qu'une
+mise à jour d'ai-footprint réinitialise `prompted_keys` (voir Flux, étape 2) —
+c'est le seul événement qui peut faire évoluer la couverture EcoLogits/HF d'un
+modèle donné, donc le seul moment pertinent pour retenter une proposition.
 
 ### Réutilisation (pas de nouveau module parallèle)
 
@@ -87,8 +90,17 @@ pas de blocage.
 1. Au démarrage de session, appel de `ai-footprint nudge --json`.
 2. Si `update_available` : proposer la mise à jour seule d'abord.
    - Accepté → exécuter `curl -fsSL .../install.sh | bash` (idempotent),
-     afficher le résultat, puis **ré-appeler** `nudge --json` (le registre
-     EcoLogits embarqué a pu changer) avant de passer à l'étape 3.
+     afficher le résultat, puis :
+     1. lancer silencieusement `ai-footprint resolve --retry-hf` (pas de
+        confirmation : c'est une simple recompute, non destructive — la
+        mise à jour a pu embarquer une nouvelle version d'ecologits qui
+        couvre nativement des modèles jusque-là non couverts, via
+        `llm_impacts()` en premier essai, avant même le tier Hugging Face) ;
+     2. **réinitialiser `prompted_keys`** — le paysage de résolution a changé,
+        donc tout modèle encore non couvert après la recompute mérite une
+        proposition fraîche, même s'il avait déjà été proposé (et décliné)
+        avant la mise à jour ;
+     3. **ré-appeler** `nudge --json` avant de passer à l'étape 3.
    - Échec de l'install → afficher l'erreur brute, ne pas enchaîner sur le
      resolve, ne pas marquer de lot comme traité (on retentera à la session
      suivante).
@@ -129,6 +141,13 @@ interactif.
   `should_refresh` renvoie `True`.
 - **Échec de `install.sh`** : voir flux étape 2, pas de marquage, retry à la
   session suivante.
+- **Échec de `resolve --retry-hf`** (réseau HF indisponible juste après la
+  mise à jour) : ne bloque pas le flux — `prompted_keys` est réinitialisé
+  quand même (l'update a réussi), `uncovered_new` reflète simplement ce qui
+  n'a pas pu être auto-résolu à cet instant ; un prochain `nudge` (session
+  suivante) ne retentera le HF que via une nouvelle mise à jour, pas
+  automatiquement (cf. Hors périmètre : pas de retry HF périodique hors
+  update).
 - **`mark-prompted` appelé sans réponse effective de l'utilisateur** (ex.
   timeout outil) : non géré spécifiquement — le lot est considéré clos ; s'il
   réapparaît identique à la session suivante, il n'est pas reproposé (accepté,
