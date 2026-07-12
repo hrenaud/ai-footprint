@@ -20,3 +20,6 @@ venv/
 
 # Cache local du hook SessionStart (tool-updates-check)
 .claude/tool-updates-cache.json
+
+# Mockups temporaires du compagnon visuel (brainstorming)
+.superpowers/brainstorm/
