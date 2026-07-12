@@ -151,7 +151,11 @@ async function maybeNudge(client, sessionId) {
       `ai-footprint : mise à jour disponible (${updateAvailable.current} → ` +
         `${updateAvailable.latest}). Propose à l'utilisateur (outil question) de ` +
         "lancer l'installeur (curl -fsSL https://raw.githubusercontent.com/hrenaud/" +
-        "ai-footprint/main/install.sh | bash) avant toute autre action liée à ai-footprint.",
+        "ai-footprint/main/install.sh | bash) avant toute autre action liée à " +
+        "ai-footprint. Si acceptée et réussie, exécute ensuite silencieusement " +
+        "`ai-footprint resolve --retry-hf` puis `ai-footprint nudge " +
+        "--reset-prompted`, puis relance `ai-footprint nudge --json` avant de " +
+        "poursuivre avec les modèles non couverts éventuels.",
     );
   }
   if (uncoveredNew && uncoveredNew.length > 0) {

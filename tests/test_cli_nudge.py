@@ -92,6 +92,29 @@ def test_nudge_mark_prompted_closes_batch(tmp_path, monkeypatch):
     assert json.loads(buf.getvalue())["uncovered_new"] == []
 
 
+def test_nudge_reset_prompted_clears_batch(tmp_path, monkeypatch):
+    db = str(tmp_path / "c.db")
+    config_path = str(tmp_path / "config.json")
+    _patch_config(monkeypatch, config_path)
+    _no_update(monkeypatch)
+    _ingest_uncovered_event(db)
+
+    with redirect_stdout(io.StringIO()):
+        rc = cli.main(["nudge", "--db", db, "--mark-prompted"])
+    assert rc == 0
+    assert Config.load(config_path).resolve_prompt_state["prompted_keys"] == ["ollama/x:y"]
+
+    with redirect_stdout(io.StringIO()):
+        rc = cli.main(["nudge", "--db", db, "--reset-prompted"])
+    assert rc == 0
+    assert Config.load(config_path).resolve_prompt_state["prompted_keys"] == []
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        cli.main(["nudge", "--db", db, "--json"])
+    assert json.loads(buf.getvalue())["uncovered_new"] == ["ollama/x:y"]
+
+
 def test_nudge_claude_hook_empty_stdout_when_nothing_to_report(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))

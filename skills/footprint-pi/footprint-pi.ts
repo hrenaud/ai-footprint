@@ -101,6 +101,7 @@ export default function (pi: ExtensionAPI) {
         return;
       }
       await pi.exec(AC_BIN, ["resolve", "--db", DB_PATH, "--retry-hf"]);
+      await pi.exec(AC_BIN, ["nudge", "--db", DB_PATH, "--reset-prompted"]);
       result = await checkNudge();
       if (!result) {
         return;

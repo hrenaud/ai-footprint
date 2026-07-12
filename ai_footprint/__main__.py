@@ -182,6 +182,7 @@ def _cmd_nudge(args) -> int:
         check_self_update,
         check_uncovered_batch,
         mark_batch_prompted,
+        reset_prompted_keys,
     )
 
     store = _store(args.db)
@@ -191,6 +192,12 @@ def _cmd_nudge(args) -> int:
         mark_batch_prompted(config, store)
         if not args.json:
             print("Lot de modèles non couverts marqué comme proposé.")
+        return 0
+
+    if args.reset_prompted:
+        reset_prompted_keys(config)
+        if not args.json:
+            print("prompted_keys réinitialisé.")
         return 0
 
     update_available = check_self_update(config, cache_path=Path(args.cache))
@@ -347,6 +354,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_nudge.add_argument("--json", action="store_true")
     p_nudge.add_argument("--mark-prompted", dest="mark_prompted", action="store_true")
+    p_nudge.add_argument("--reset-prompted", dest="reset_prompted", action="store_true")
     p_nudge.add_argument("--claude-hook", dest="claude_hook", action="store_true")
 
     args = parser.parse_args(argv)

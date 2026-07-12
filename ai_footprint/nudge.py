@@ -79,6 +79,13 @@ def mark_batch_prompted(config: Config, store: SQLiteStore) -> None:
     config.save()
 
 
+def reset_prompted_keys(config: Config) -> None:
+    """Réinitialise prompted_keys après une mise à jour d'ai-footprint réussie
+    (le paysage de résolution a changé, cf. spec § Flux étape 2.2)."""
+    config.resolve_prompt_state["prompted_keys"] = []
+    config.save()
+
+
 def build_claude_hook_output(update_available: dict | None,
                               uncovered_new: list[str]) -> dict | None:
     """Enveloppe hook SessionStart Claude Code (additionalContext), ou None
@@ -93,7 +100,11 @@ def build_claude_hook_output(update_available: dict | None,
             f"{update_available['latest']}). Propose à l'utilisateur de lancer "
             "l'installeur (curl -fsSL https://raw.githubusercontent.com/hrenaud/"
             "ai-footprint/main/install.sh | bash) via AskUserQuestion, avant toute "
-            "autre action liée à ai-footprint."
+            "autre action liée à ai-footprint. Si l'utilisateur accepte et que "
+            "l'installation réussit, exécute ensuite silencieusement (sans "
+            "confirmation) `ai-footprint resolve --retry-hf` puis `ai-footprint "
+            "nudge --reset-prompted`, puis relance `ai-footprint nudge --json` "
+            "avant de poursuivre avec les modèles non couverts éventuels."
         )
     if uncovered_new:
         lines.append(

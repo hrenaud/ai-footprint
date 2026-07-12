@@ -9,6 +9,7 @@ from ai_footprint.nudge import (
     check_self_update,
     check_uncovered_batch,
     mark_batch_prompted,
+    reset_prompted_keys,
 )
 from ai_footprint.store.db import SQLiteStore
 
@@ -112,6 +113,14 @@ def test_mark_batch_prompted_merges_with_existing_prompted_keys(tmp_path):
     assert config.resolve_prompt_state["prompted_keys"] == ["ollama/x:y", "ollama/z:w"]
 
 
+# --- reset_prompted_keys ---
+
+def test_reset_prompted_keys_clears_existing_keys(tmp_path):
+    config = Config(resolve_prompt_state={"prompted_keys": ["ollama/x:y", "ollama/z:w"]})
+    reset_prompted_keys(config)
+    assert config.resolve_prompt_state["prompted_keys"] == []
+
+
 # --- build_claude_hook_output ---
 
 def test_build_claude_hook_output_none_when_nothing_to_report():
@@ -123,6 +132,7 @@ def test_build_claude_hook_output_mentions_update():
     assert output["hookSpecificOutput"]["hookEventName"] == "SessionStart"
     assert "1.2.1" in output["hookSpecificOutput"]["additionalContext"]
     assert "1.3.0" in output["hookSpecificOutput"]["additionalContext"]
+    assert "reset-prompted" in output["hookSpecificOutput"]["additionalContext"]
 
 
 def test_build_claude_hook_output_mentions_uncovered_models():
