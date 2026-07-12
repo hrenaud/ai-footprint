@@ -183,7 +183,7 @@ Lancer : `.venv/bin/python -m pytest -q`.
 
 ## Backlog technique
 
-Voir [`docs/superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md`](docs/superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md) :
+Voir [`.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md`](.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md) :
 correctifs qualité de la lecture des données et de la résolution des modèles
 (cache négatif HF, estimation 4-bit…), et l'évolution « étape WebSearch » dans la
 cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère les MoE.
