@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      AI Footprint — mesure l'impact environnemental de tes sessions d'IA
+    </title>
+    <meta
+      name="description"
+      content="AI Footprint mesure l'impact environnemental (CO2, eau, énergie, métaux rares) de tes sessions Claude Code, OpenCode et Pi, honnêtement — propulsé par EcoLogits."
+    />
+    <link rel="stylesheet" href="../assets/style.css" />
+  </head>
+  <body>
+    <header id="nav" class="nav">
+      <div class="wrap">
+        <a class="nav-brand" href="index.html">AI Footprint</a>
+        <ul class="nav-links">
+          <li>
+            <a
+              href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
+              >Doc</a
+            >
+          </li>
+          <li><a href="https://github.com/hrenaud/ai-footprint">GitHub</a></li>
+          <li><a href="../index.html">EN</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <section id="hero" class="hero">
+      <div class="wrap">
+        <h1>Chaque prompt a un coût — invisible, mais réel.</h1>
+        <p class="subtitle">
+          AI Footprint mesure 5 critères environnementaux de tes sessions d'IA —
+          gaz à effet de serre, eau, énergie, épuisement des métaux rares — et
+          les affiche sous forme de fourchettes honnêtes, jamais un faux chiffre
+          précis.
+        </p>
+        <a class="badge-trust" href="https://github.com/mlco2/ecologits"
+          >Calculé avec EcoLogits — moteur open source reconnu, offline, aucun
+          chiffre inventé</a
+        >
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#how-it-works">Installer</a>
+          <a
+            class="btn btn-secondary"
+            href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
+            >Voir la doc</a
+          >
+        </div>
+        <div class="hero-preview">Aperçu statusline &amp; rapport à venir</div>
+      </div>
+    </section>
+
+    <section id="how-it-works">
+      <div class="wrap">
+        <h2>Comment ça marche</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-num">ÉTAPE 1</span>
+            <p>Installe en une seule commande — zéro configuration.</p>
+            <!-- prettier-ignore -->
+            <code>curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash</code>
+          </div>
+          <div class="step">
+            <span class="step-num">ÉTAPE 2</span>
+            <p>
+              Utilise Claude Code, OpenCode ou Pi exactement comme d'habitude.
+            </p>
+          </div>
+          <div class="step">
+            <span class="step-num">ÉTAPE 3</span>
+            <p>
+              Vois ton impact dans la statusline, en direct, session après
+              session.
+            </p>
+          </div>
+          <div class="step">
+            <span class="step-num">ÉTAPE 4</span>
+            <p>
+              Lance un rapport complet à tout moment pour un détail par projet
+              et par modèle.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="criteria">
+      <div class="wrap">
+        <h2>5 critères mesurés</h2>
+        <div class="criteria-grid">
+          <div class="criterion-card">
+            <span class="criterion-icon">🌍</span>
+            <h3>GWP</h3>
+            <p>Gaz à effet de serre émis, en équivalent CO2.</p>
+          </div>
+          <div class="criterion-card">
+            <span class="criterion-icon">💧</span>
+            <h3>Eau</h3>
+            <p>
+              Eau consommée pour refroidir les datacenters qui font tourner le
+              modèle.
+            </p>
+          </div>
+          <div class="criterion-card">
+            <span class="criterion-icon">⛏</span>
+            <h3>ADPe</h3>
+            <p>
+              Épuisement des ressources minérales rares utilisées pour fabriquer
+              le matériel.
+            </p>
+          </div>
+          <div class="criterion-card">
+            <span class="criterion-icon">⚡</span>
+            <h3>Énergie</h3>
+            <p>
+              Électricité consommée par les serveurs pour répondre à ta requête.
+            </p>
+          </div>
+          <div class="criterion-card">
+            <span class="criterion-icon">🔥</span>
+            <h3>PE</h3>
+            <p>
+              Énergie primaire nécessaire, en amont de la production
+              d'électricité.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="why-ranges" class="why-ranges">
+      <div class="wrap">
+        <h2>Pourquoi des fourchettes, pas un chiffre unique</h2>
+        <p>
+          La région exacte du datacenter qui répond à ta requête est inconnue,
+          et son efficacité énergétique (PUE) varie fortement. Tout outil qui
+          affiche un chiffre précis unique masque cette incertitude — ou
+          l'invente.
+        </p>
+        <p>
+          AI Footprint ne réinvente pas la modélisation : il délègue chaque
+          calcul à <strong>EcoLogits</strong>, un moteur open source reconnu,
+          déjà utilisé par d'autres projets de la communauté — vérifiable, pas
+          une boîte noire propriétaire.
+        </p>
+        <div class="links">
+          <a
+            href="https://github.com/hrenaud/ai-footprint/blob/main/docs/METHODOLOGY.md"
+            >Lire la méthodologie</a
+          >
+          &nbsp;·&nbsp;
+          <a href="https://github.com/mlco2/ecologits">EcoLogits sur GitHub</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="multi-tools">
+      <div class="wrap">
+        <h2>Compatible avec tes outils</h2>
+        <ul class="tools-list">
+          <li>Claude Code</li>
+          <li>OpenCode / CRUSH</li>
+          <li>Pi</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer id="footer" class="footer">
+      <div class="wrap">
+        <p>
+          AI Footprint est sous licence AGPL-3.0-or-later. Calculs propulsés par
+          <a href="https://github.com/mlco2/ecologits">EcoLogits</a>.
+        </p>
+        <ul class="footer-links">
+          <li><a href="https://github.com/hrenaud/ai-footprint">GitHub</a></li>
+          <li>
+            <a
+              href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
+              >Doc</a
+            >
+          </li>
+          <li><a href="../index.html">EN</a></li>
+        </ul>
+      </div>
+    </footer>
+  </body>
+</html>
