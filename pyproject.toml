@@ -1,6 +1,6 @@
 [project]
 name = "ai-footprint"
-version = "1.2.1"
+version = "1.3.0"
 description = "Compteur d'impact environnemental multi-critères pour outils d'IA agentique (vendor-neutral, via EcoLogits)"
 readme = "README.md"
 license = "AGPL-3.0-or-later"

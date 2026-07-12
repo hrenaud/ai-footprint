@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.3.0] — 2026-07-12
+
+### Features
+
+- (footprint-pi) — ajouter le nudge auto-update/resolve sur session_start
+- (install) — ajouter le hook SessionStart Claude Code pour les nudges
+- (cli) — ajouter la commande 'ai-footprint nudge'
+- ajouter ai_footprint/nudge.py (auto-update + resolve non-couverts)
+- (config) — ajouter resolve_prompt_state pour le silence par lot des nudges
+
+### Bug Fixes
+
+- (nudge) — réinitialiser prompted_keys après une mise à jour réussie
+- (footprint-crush) — corriger la forme d'API du plugin Opencode et ajouter le nudge session.created
+
+### Documentation
+
+- documenter les nudges proactifs (resolve + auto-update)
+- gère le renouvellement de prompted_keys après update ai-footprint
+- design propositions proactives resolve/maj ai-footprint
+- corrige les liens vers .superpowers/ après migration
+
+### Chores
+
+- (docs) — centralise plans et specs superpowers dans .superpowers/
+
+### Refactoring
+
+- extraire un cache JSON générique réutilisable (cache.py)
+
+### Tests
+
+- couvrir build_claude_hook_output avec update + uncovered simultanés
 ## [1.2.1] — 2026-07-11
 
 ### Features
