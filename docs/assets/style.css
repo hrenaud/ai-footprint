@@ -1,0 +1,261 @@
+:root {
+  --color-bg: #0b1210;
+  --color-bg-alt: #101a17;
+  --color-text: #e8f0ec;
+  --color-text-muted: #9fb3aa;
+  --color-accent: #4ade80;
+  --color-accent-dark: #16a34a;
+  --color-border: #22332c;
+  --radius: 8px;
+  --max-width: 960px;
+  font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Nav */
+.nav {
+  border-bottom: 1px solid var(--color-border);
+  padding: 16px 0;
+}
+
+.nav .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nav-brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-text-muted);
+}
+
+.nav-links a:hover {
+  color: var(--color-accent);
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #06210f;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+/* Hero */
+.hero {
+  padding: 64px 0 48px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.2rem;
+  margin: 0 0 16px;
+}
+
+.hero .subtitle {
+  color: var(--color-text-muted);
+  max-width: 640px;
+  margin: 0 auto 20px;
+}
+
+.badge-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  margin-bottom: 28px;
+}
+
+.badge-trust:hover {
+  border-color: var(--color-accent);
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-preview {
+  max-width: 720px;
+  margin: 0 auto;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+  background: var(--color-bg-alt);
+}
+
+/* Sections */
+section,
+footer {
+  padding: 48px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+section h2 {
+  font-size: 1.6rem;
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+/* How it works */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.step {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.step .step-num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.step code {
+  display: block;
+  background: #06100b;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+/* Criteria */
+.criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.criterion-card {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.criterion-card .criterion-icon {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Why ranges */
+.why-ranges p {
+  max-width: 720px;
+  margin: 0 auto 16px;
+}
+
+.why-ranges .links {
+  text-align: center;
+  margin-top: 24px;
+}
+
+/* Multi-tools */
+.tools-list {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tools-list li {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.footer-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--color-accent);
+}
