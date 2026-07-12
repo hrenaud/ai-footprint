@@ -11,6 +11,7 @@
       content="AI Footprint measures the environmental impact (CO2, water, energy, rare metals) of your Claude Code, OpenCode and Pi sessions, honestly — powered by EcoLogits."
     />
     <link rel="stylesheet" href="assets/style.css" />
+    <script src="assets/script.js" defer></script>
   </head>
   <body>
     <header id="nav" class="nav">
@@ -30,40 +31,75 @@
     </header>
 
     <section id="hero" class="hero">
-      <div class="wrap">
-        <h1>Every prompt has a cost — invisible, but real.</h1>
-        <p class="subtitle">
-          AI Footprint measures 5 environmental criteria of your AI coding
-          sessions — greenhouse gases, water, energy, rare-metal depletion — and
-          reports them as honest ranges, never a fake precise number.
-        </p>
-        <a class="badge-trust" href="https://github.com/mlco2/ecologits"
-          >Calculated with EcoLogits — recognized open-source engine, offline,
-          no invented numbers</a
-        >
-        <div class="hero-ctas">
-          <a class="btn btn-primary" href="#how-it-works">Install</a>
-          <a
-            class="btn btn-secondary"
-            href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
-            >See the docs</a
+      <div class="wrap hero-grid">
+        <div class="hero-content">
+          <h1>Every prompt has a cost — invisible, but real.</h1>
+          <p class="subtitle">
+            AI Footprint measures 5 environmental criteria of your AI coding
+            sessions — greenhouse gases, water, energy, rare-metal depletion —
+            and reports them as honest ranges, never a fake precise number.
+          </p>
+          <a class="badge-trust" href="https://github.com/mlco2/ecologits"
+            >Calculated with EcoLogits — recognized open-source engine, offline,
+            no invented numbers</a
           >
+          <div class="hero-ctas">
+            <a class="btn btn-primary" href="#how-it-works">Install</a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
+              >See the docs</a
+            >
+          </div>
         </div>
-        <div class="hero-preview">
-          Statusline &amp; report preview coming soon
+        <div class="hero-visual">
+          <img
+            class="report-preview"
+            src="assets/report-en.png"
+            alt="AI Footprint report card showing the 5 environmental criteria as min-max ranges"
+            width="540"
+            height="540"
+          />
         </div>
+      </div>
+    </section>
+
+    <section id="multi-tools">
+      <div class="wrap">
+        <h2>Works with your tools</h2>
+        <ul class="tools-list">
+          <li>
+            <img src="assets/logo-claude.svg" alt="" width="28" height="28" />
+            Claude Code
+          </li>
+          <li>
+            <img src="assets/logo-opencode.png" alt="" width="28" height="28" />
+            OpenCode
+          </li>
+          <li>
+            <img src="assets/logo-pi.svg" alt="" width="28" height="28" />
+            Pi
+          </li>
+        </ul>
       </div>
     </section>
 
     <section id="how-it-works">
       <div class="wrap">
         <h2>How it works</h2>
+        <div
+          class="install-cmd-wrap"
+          data-copy-target="install-cmd"
+          data-copied-label="Copied!"
+        >
+          <!-- prettier-ignore -->
+          <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash</code>
+          <span class="copy-feedback" aria-hidden="true"></span>
+        </div>
         <div class="steps">
           <div class="step">
             <span class="step-num">STEP 1</span>
             <p>Install with a single command — no configuration.</p>
-            <!-- prettier-ignore -->
-            <code>curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash</code>
           </div>
           <div class="step">
             <span class="step-num">STEP 2</span>
@@ -72,16 +108,22 @@
           <div class="step">
             <span class="step-num">STEP 3</span>
             <p>
-              See your impact in the statusline, live, session after session.
+              Run a detailed report (by project and model) with the
+              <code>/footprint-report</code> command, or a shareable image with
+              <code>/footprint-card</code>.
             </p>
           </div>
-          <div class="step">
-            <span class="step-num">STEP 4</span>
-            <p>
-              Run a full report anytime for a detailed breakdown by project and
-              model.
-            </p>
-          </div>
+        </div>
+        <div class="step step-optional">
+          <span class="step-num">Claude Code statusline</span>
+          <p>See your impact in the statusline, live, session after session.</p>
+          <img
+            class="statusline-preview"
+            src="assets/statusline.png"
+            alt="AI Footprint statusline showing live impact ranges during a Claude Code session"
+            width="815"
+            height="53"
+          />
         </div>
       </div>
     </section>
@@ -143,17 +185,6 @@
           &nbsp;·&nbsp;
           <a href="https://github.com/mlco2/ecologits">EcoLogits on GitHub</a>
         </div>
-      </div>
-    </section>
-
-    <section id="multi-tools">
-      <div class="wrap">
-        <h2>Works with your tools</h2>
-        <ul class="tools-list">
-          <li>Claude Code</li>
-          <li>OpenCode / CRUSH</li>
-          <li>Pi</li>
-        </ul>
       </div>
     </section>
 

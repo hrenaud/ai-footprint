@@ -11,6 +11,7 @@
       content="AI Footprint mesure l'impact environnemental (CO2, eau, énergie, métaux rares) de tes sessions Claude Code, OpenCode et Pi, honnêtement — propulsé par EcoLogits."
     />
     <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/script.js" defer></script>
   </head>
   <body>
     <header id="nav" class="nav">
@@ -30,39 +31,86 @@
     </header>
 
     <section id="hero" class="hero">
-      <div class="wrap">
-        <h1>Chaque prompt a un coût — invisible, mais réel.</h1>
-        <p class="subtitle">
-          AI Footprint mesure 5 critères environnementaux de tes sessions d'IA —
-          gaz à effet de serre, eau, énergie, épuisement des métaux rares — et
-          les affiche sous forme de fourchettes honnêtes, jamais un faux chiffre
-          précis.
-        </p>
-        <a class="badge-trust" href="https://github.com/mlco2/ecologits"
-          >Calculé avec EcoLogits — moteur open source reconnu, offline, aucun
-          chiffre inventé</a
-        >
-        <div class="hero-ctas">
-          <a class="btn btn-primary" href="#how-it-works">Installer</a>
-          <a
-            class="btn btn-secondary"
-            href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
-            >Voir la doc</a
+      <div class="wrap hero-grid">
+        <div class="hero-content">
+          <h1>Chaque prompt a un coût — invisible, mais réel.</h1>
+          <p class="subtitle">
+            AI Footprint mesure 5 critères environnementaux de tes sessions d'IA
+            — gaz à effet de serre, eau, énergie, épuisement des métaux rares —
+            et les affiche sous forme de fourchettes honnêtes, jamais un faux
+            chiffre précis.
+          </p>
+          <a class="badge-trust" href="https://github.com/mlco2/ecologits"
+            >Calculé avec EcoLogits — moteur open source reconnu, offline, aucun
+            chiffre inventé</a
           >
+          <div class="hero-ctas">
+            <a class="btn btn-primary" href="#how-it-works">Installer</a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/hrenaud/ai-footprint/blob/main/CONTRIBUTING.md"
+              >Voir la doc</a
+            >
+          </div>
         </div>
-        <div class="hero-preview">Aperçu statusline &amp; rapport à venir</div>
+        <div class="hero-visual">
+          <img
+            class="report-preview"
+            src="../assets/report-fr.png"
+            alt="Carte de rapport AI Footprint montrant les 5 critères environnementaux sous forme de fourchettes min-max"
+            width="540"
+            height="540"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section id="multi-tools">
+      <div class="wrap">
+        <h2>Compatible avec tes outils</h2>
+        <ul class="tools-list">
+          <li>
+            <img
+              src="../assets/logo-claude.svg"
+              alt=""
+              width="28"
+              height="28"
+            />
+            Claude Code
+          </li>
+          <li>
+            <img
+              src="../assets/logo-opencode.png"
+              alt=""
+              width="28"
+              height="28"
+            />
+            OpenCode
+          </li>
+          <li>
+            <img src="../assets/logo-pi.svg" alt="" width="28" height="28" />
+            Pi
+          </li>
+        </ul>
       </div>
     </section>
 
     <section id="how-it-works">
       <div class="wrap">
         <h2>Comment ça marche</h2>
+        <div
+          class="install-cmd-wrap"
+          data-copy-target="install-cmd"
+          data-copied-label="Copié !"
+        >
+          <!-- prettier-ignore -->
+          <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash</code>
+          <span class="copy-feedback" aria-hidden="true"></span>
+        </div>
         <div class="steps">
           <div class="step">
             <span class="step-num">ÉTAPE 1</span>
             <p>Installe en une seule commande — zéro configuration.</p>
-            <!-- prettier-ignore -->
-            <code>curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash</code>
           </div>
           <div class="step">
             <span class="step-num">ÉTAPE 2</span>
@@ -73,17 +121,25 @@
           <div class="step">
             <span class="step-num">ÉTAPE 3</span>
             <p>
-              Vois ton impact dans la statusline, en direct, session après
-              session.
+              Lance un rapport détaillé (par projet et par modèle) avec la
+              commande <code>/footprint-report</code> ou une image partageable
+              avec <code>/footprint-card</code>.
             </p>
           </div>
-          <div class="step">
-            <span class="step-num">ÉTAPE 4</span>
-            <p>
-              Lance un rapport complet à tout moment pour un détail par projet
-              et par modèle.
-            </p>
-          </div>
+        </div>
+        <div class="step step-optional">
+          <span class="step-num">Statusline Claude Code</span>
+          <p>
+            Vois ton impact dans la statusline, en direct, session après
+            session.
+          </p>
+          <img
+            class="statusline-preview"
+            src="../assets/statusline.png"
+            alt="Statusline AI Footprint affichant les fourchettes d'impact en direct pendant une session Claude Code"
+            width="815"
+            height="53"
+          />
         </div>
       </div>
     </section>
@@ -155,17 +211,6 @@
           &nbsp;·&nbsp;
           <a href="https://github.com/mlco2/ecologits">EcoLogits sur GitHub</a>
         </div>
-      </div>
-    </section>
-
-    <section id="multi-tools">
-      <div class="wrap">
-        <h2>Compatible avec tes outils</h2>
-        <ul class="tools-list">
-          <li>Claude Code</li>
-          <li>OpenCode / CRUSH</li>
-          <li>Pi</li>
-        </ul>
       </div>
     </section>
 
