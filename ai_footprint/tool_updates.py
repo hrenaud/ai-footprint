@@ -18,6 +18,9 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from ai_footprint.cache import load_json_cache, save_json_cache
+from ai_footprint.cache import should_refresh as _cache_should_refresh
+
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 CACHE_TTL = timedelta(hours=24)
 
@@ -90,33 +93,20 @@ def session_start_notice(pyproject_text: str, *, hf_latest: str, ecologits_lates
 
 
 def load_cache(cache_path: Path) -> dict:
-    try:
-        return json.loads(cache_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
+    return load_json_cache(cache_path)
 
 
 def save_cache(cache_path: Path, *, checked_at: datetime, hf_latest: str, ecologits_latest: str) -> None:
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(
-        json.dumps({
-            "checked_at": checked_at.isoformat(),
-            "hf_latest": hf_latest,
-            "ecologits_latest": ecologits_latest,
-        }),
-        encoding="utf-8",
+    save_json_cache(
+        cache_path,
+        checked_at=checked_at.isoformat(),
+        hf_latest=hf_latest,
+        ecologits_latest=ecologits_latest,
     )
 
 
 def should_refresh(cache: dict, *, now: datetime) -> bool:
-    checked_at = cache.get("checked_at")
-    if not checked_at:
-        return True
-    try:
-        last = datetime.fromisoformat(checked_at)
-    except ValueError:
-        return True
-    return now - last > CACHE_TTL
+    return _cache_should_refresh(cache, now=now, ttl=CACHE_TTL)
 
 
 def session_start_check(cache_path: Path) -> str | None:
