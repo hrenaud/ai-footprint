@@ -1,21 +1,37 @@
 // footprint-crush.js — Plugin Opencode pour ai-footprint.
 //
-// Ce plugin écoute la fin de session (session.idle) et écrit les exports de
-// session dans ~/.ai-footprint/crush-exports/<sessionId>.json pour ingestion
-// automatique par ai-footprint.
+// Écoute deux événements de session :
+//   - session.created : propose une mise à jour ai-footprint et/ou un
+//     resolve des modèles non couverts jamais proposés (cf.
+//     .superpowers/specs/2026-07-12-nudges-resolve-maj.md).
+//   - session.idle    : écrit un export JSON de la session dans
+//     ~/.ai-footprint/crush-exports/<sessionId>.json pour ingestion.
 //
-// Installation : placé dans ~/.config/opencode/plugins/
+// Installation : copié dans ~/.config/opencode/plugins/ par install.sh.
 // Documentation : https://opencode.ai/docs/plugins/
 
 const fs = require("fs");
 const path = require("path");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
 
-// Répertoire de sortie des exports (créé si nécessaire).
+const execFileAsync = promisify(execFile);
+
 const EXPORT_DIR = path.join(
   process.env.HOME || "~",
   ".ai-footprint",
-  "crush-exports"
+  "crush-exports",
 );
+const AC_BIN =
+  process.env.AI_FOOTPRINT_BIN ||
+  path.join(
+    process.env.HOME || "~",
+    ".ai-footprint",
+    "src",
+    ".venv",
+    "bin",
+    "ai-footprint",
+  );
 
 async function ensureExportDir() {
   await fs.promises.mkdir(EXPORT_DIR, { recursive: true });
@@ -24,18 +40,19 @@ async function ensureExportDir() {
 /**
  * Écrit un export de session au format Opencode/Crush.
  *
- * @param {import("@opencode-ai/sdk").Client} client — client SDK Opencode
+ * @param {import("@opencode-ai/sdk").OpencodeClient} client — client SDK Opencode
  * @param {string} sessionId — identifiant de la session
  */
 async function exportSession(client, sessionId) {
   await ensureExportDir();
 
   try {
-    // Récupérer les messages de la session via le SDK.
-    const messages = await client.session.messages(sessionId);
-
-    // Construire la structure JSON exportée (format `opencode export`).
-    const session = await client.session.get(sessionId);
+    const { data: messages } = await client.session.messages({
+      path: { id: sessionId },
+    });
+    const { data: session } = await client.session.get({
+      path: { id: sessionId },
+    });
     const obj = {
       info: {
         id: session.id || sessionId,
@@ -86,49 +103,99 @@ async function exportSession(client, sessionId) {
       })),
     };
 
-    // Écrire dans crush-exports/<sessionId>.json.
     const outPath = path.join(EXPORT_DIR, `${sessionId}.json`);
     await fs.promises.writeFile(outPath, JSON.stringify(obj, null, 2), {
       encoding: "utf-8",
     });
-    console.log(
-      `[footprint-crush] Exported session ${sessionId} → ${outPath}`
-    );
+    console.log(`[footprint-crush] Exported session ${sessionId} → ${outPath}`);
   } catch (err) {
     console.error(
-      `[footprint-crush] Failed to export session ${sessionId}: ${err.message}`
+      `[footprint-crush] Failed to export session ${sessionId}: ${err.message}`,
     );
   }
 }
 
 /**
- * Plugin Opencode qui écoute session.idle et écrit les exports.
+ * Propose une mise à jour ai-footprint et/ou un resolve des modèles non
+ * couverts jamais proposés, en injectant un message dans la session.
+ *
+ * @param {import("@opencode-ai/sdk").OpencodeClient} client
+ * @param {string} sessionId
  */
-module.exports = {
-  name: "footprint-crush",
-  description: "Exporte les sessions Opencode/Crush pour ai-footprint.",
-  version: "1.0.0",
+async function maybeNudge(client, sessionId) {
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(AC_BIN, ["nudge", "--json"]));
+  } catch (err) {
+    console.error(`[footprint-crush] nudge check failed: ${err.message}`);
+    return;
+  }
 
-  /**
-   * Configuration du plugin.
-   * @param {import("@opencode-ai/plugin").PluginContext} context
-   */
-  register(context) {
-    const client = context.client;
+  let result;
+  try {
+    result = JSON.parse(stdout);
+  } catch (err) {
+    console.error(`[footprint-crush] nudge output invalide: ${err.message}`);
+    return;
+  }
 
-    // Écouter session.idle (fin de session) via le SDK.
-    client.on("session.idle", async (sessionId) => {
-      console.log(
-        `[footprint-crush] Session idle: ${sessionId} — export en cours...`
-      );
-      await exportSession(client, sessionId);
+  const { update_available: updateAvailable, uncovered_new: uncoveredNew } =
+    result;
+  if (!updateAvailable && (!uncoveredNew || uncoveredNew.length === 0)) {
+    return;
+  }
+
+  const lines = [];
+  if (updateAvailable) {
+    lines.push(
+      `ai-footprint : mise à jour disponible (${updateAvailable.current} → ` +
+        `${updateAvailable.latest}). Propose à l'utilisateur (outil question) de ` +
+        "lancer l'installeur (curl -fsSL https://raw.githubusercontent.com/hrenaud/" +
+        "ai-footprint/main/install.sh | bash) avant toute autre action liée à ai-footprint.",
+    );
+  }
+  if (uncoveredNew && uncoveredNew.length > 0) {
+    lines.push(
+      `ai-footprint : ${uncoveredNew.length} modèle(s) non couvert(s) jamais ` +
+        `proposés (${uncoveredNew.join(", ")}). Propose à l'utilisateur (outil ` +
+        "question) de lancer le skill /footprint-resolve, puis exécute " +
+        "`ai-footprint nudge --mark-prompted` que la réponse soit oui ou non.",
+    );
+  }
+
+  try {
+    await client.session.prompt({
+      path: { id: sessionId },
+      body: {
+        noReply: false,
+        parts: [{ type: "text", text: lines.join("\n") }],
+      },
     });
+  } catch (err) {
+    console.error(
+      `[footprint-crush] injection du nudge échouée: ${err.message}`,
+    );
+  }
+}
 
-    // Fallback : si session.idle n'existe pas, utiliser event.subscribe().
-    if (client.event && typeof client.event.subscribe === "function") {
-      client.event.subscribe("session.idle", (sessionId) => {
-        exportSession(client, sessionId);
-      });
-    }
-  },
+/**
+ * Plugin Opencode : exporte les sessions terminées et propose resolve/maj
+ * au démarrage.
+ *
+ * @param {{ client: import("@opencode-ai/sdk").OpencodeClient }} input
+ */
+module.exports.FootprintCrush = async ({ client }) => {
+  return {
+    event: async ({ event }) => {
+      if (event.type === "session.idle") {
+        console.log(
+          `[footprint-crush] Session idle: ${event.properties.sessionID} — export en cours...`,
+        );
+        await exportSession(client, event.properties.sessionID);
+      }
+      if (event.type === "session.created") {
+        await maybeNudge(client, event.properties.sessionID);
+      }
+    },
+  };
 };
