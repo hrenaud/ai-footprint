@@ -1,11 +1,15 @@
 import json
+import logging
 import re
 import time
+import urllib.error
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from ecologits.model_repository import ParametersMoE, models
 from ecologits.utils.range_value import RangeValue
+
+logger = logging.getLogger(__name__)
 
 # TTL du cache négatif persisté : au-delà, on retente la résolution HF
 # (le modèle a pu être publié/renommé entre-temps).
@@ -99,11 +103,13 @@ def _fetch_safetensors_index_bytes(repo: str) -> int | None:
                 resp = urllib.request.urlopen(req, timeout=10)
                 size = int(resp.headers.get("Content-Length", 0))
                 total_bytes += size
-            except Exception:
+            except (urllib.error.URLError, OSError, ValueError) as exc:
+                logger.debug("HEAD request failed for %s: %s", repo, exc)
                 continue
 
         return total_bytes if total_bytes > 0 else None
-    except Exception:
+    except (urllib.error.URLError, OSError, ValueError, json.JSONDecodeError) as exc:
+        logger.debug("Failed to fetch safetensors index for %s: %s", repo, exc)
         return None
 
 
@@ -189,8 +195,8 @@ def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | 
                 total = float(info.safetensors.total) / 1e9
                 if total > 0:
                     return total, []
-        except Exception:
-            pass
+        except (OSError, ValueError, AttributeError) as exc:
+            logger.debug("huggingface_hub.model_info failed for %s: %s", repo, exc)
 
     bpp = _detect_bytes_per_param(repo)
 
