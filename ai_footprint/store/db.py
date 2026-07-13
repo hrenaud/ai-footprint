@@ -191,34 +191,49 @@ class SQLiteStore:
             params.append(session_id)
         return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
 
+    def _criteria_rows(self, group_col, select_toks="SUM(e.output_tokens) AS toks",
+                        extra_where="", since=None):
+        where = "WHERE i.error IS NULL" + extra_where
+        params: list = []
+        if since:
+            where += " AND e.timestamp >= ?"
+            params.append(since)
+        query = f"""
+            SELECT {group_col} AS grp,
+                   SUM(e.active_seconds) AS sec,
+                   {select_toks},
+                   SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax,
+                   SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax,
+                   SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax,
+                   SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax,
+                   SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax
+            FROM events e JOIN impacts i
+            ON e.session_id=i.session_id AND e.msg_id=i.msg_id
+            {where}
+            GROUP BY grp
+        """
+        return self.conn.execute(query, params).fetchall()
+
+    def _criteria_row_dict(self, r) -> dict:
+        result = {"active_seconds": r["sec"] or 0, "output_tokens": r["toks"] or 0}
+        for name, (min_col, max_col) in _CRIT_COLS.items():
+            result[name] = {"min": r[min_col] or 0, "max": r[max_col] or 0}
+        return result
+
     def intensity_by_model(self, since: str | None = None) -> list[dict]:
         """Par modèle, sur les seuls messages à temps actif mesuré (>0) et
         impact estimé : heures actives, tokens de sortie, et valeur centrale
         des 5 critères. Permet de calculer tok/h et impact/h. ``since`` filtre
         la plage (cohérent avec les autres sections du rapport)."""
-        sql = (
-            "SELECT e.model AS model, SUM(e.active_seconds) AS sec, "
-            "SUM(e.output_tokens) AS toks, "
-            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
-            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
-            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
-            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
-            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
-            "FROM events e JOIN impacts i "
-            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL AND e.active_seconds > 0"
-        )
-        params: list = []
-        if since:
-            sql += " AND e.timestamp >= ?"
-            params.append(since)
-        sql += " GROUP BY e.model"
+        rows = self._criteria_rows(group_col="e.model",
+                                   extra_where=" AND e.active_seconds > 0",
+                                   since=since)
         out = []
-        for r in self.conn.execute(sql, tuple(params)):
+        for r in rows:
             hours = (r["sec"] or 0) / 3600.0
             if hours <= 0:
                 continue
-            row = {"model": r["model"], "hours": hours, "tokens": r["toks"]}
+            row = {"model": r["grp"], "hours": hours, "tokens": r["toks"]}
             for c, (lo, hi) in _CRIT_COLS.items():
                 row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
                 row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
@@ -231,29 +246,15 @@ class SQLiteStore:
         sortie, et valeur centrale des 5 critères. Permet de comparer, à débit
         égal, quel outil consomme le plus de tokens et a les impacts les plus
         forts. ``since`` filtre la plage (cohérent avec les autres sections)."""
-        sql = (
-            "SELECT e.client AS client, SUM(e.active_seconds) AS sec, "
-            "SUM(e.output_tokens) AS toks, "
-            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
-            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
-            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
-            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
-            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
-            "FROM events e JOIN impacts i "
-            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL AND e.active_seconds > 0"
-        )
-        params: list = []
-        if since:
-            sql += " AND e.timestamp >= ?"
-            params.append(since)
-        sql += " GROUP BY e.client"
+        rows = self._criteria_rows(group_col="e.client",
+                                   extra_where=" AND e.active_seconds > 0",
+                                   since=since)
         out = []
-        for r in self.conn.execute(sql, tuple(params)):
+        for r in rows:
             hours = (r["sec"] or 0) / 3600.0
             if hours <= 0:
                 continue
-            row = {"client": r["client"] or "claude-code", "hours": hours, "tokens": r["toks"]}
+            row = {"client": r["grp"] or "claude-code", "hours": hours, "tokens": r["toks"]}
             for c, (lo, hi) in _CRIT_COLS.items():
                 row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
                 row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
@@ -264,27 +265,14 @@ class SQLiteStore:
         """Par modèle, sur la plage (``since`` optionnel) : tokens totaux
         utilisés (entrée + sortie + cache) et valeur centrale des 5 critères
         d'impact. Seuls les messages à impact estimé (error IS NULL) comptent."""
-        sql = (
-            "SELECT e.model AS model, "
-            "SUM(e.input_tokens + e.output_tokens "
-            "+ e.cache_creation_tokens + e.cache_read_tokens) AS toks, "
-            "SUM(i.energy_min) AS emin, SUM(i.energy_max) AS emax, "
-            "SUM(i.gwp_min) AS gmin, SUM(i.gwp_max) AS gmax, "
-            "SUM(i.adpe_min) AS amin, SUM(i.adpe_max) AS amax, "
-            "SUM(i.pe_min) AS pmin, SUM(i.pe_max) AS pmax, "
-            "SUM(i.wcf_min) AS wmin, SUM(i.wcf_max) AS wmax "
-            "FROM events e JOIN impacts i "
-            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL"
-        )
-        params: list = []
-        if since:
-            sql += " AND e.timestamp >= ?"
-            params.append(since)
-        sql += " GROUP BY e.model"
+        rows = self._criteria_rows(
+            group_col="e.model",
+            select_toks="SUM(e.input_tokens + e.output_tokens "
+                       "+ e.cache_creation_tokens + e.cache_read_tokens) AS toks",
+            since=since)
         out = []
-        for r in self.conn.execute(sql, tuple(params)):
-            row = {"model": r["model"], "tokens": r["toks"] or 0}
+        for r in rows:
+            row = {"model": r["grp"], "tokens": r["toks"] or 0}
             for c, (lo, hi) in _CRIT_COLS.items():
                 row[c] = (r[lo] + r[hi]) / 2           # centrale (vue compacte)
                 row[f"{c}_min"], row[f"{c}_max"] = r[lo], r[hi]   # bornes (vue détaillée)
@@ -309,39 +297,37 @@ class SQLiteStore:
         return [{"model": r["model"], "tokens": r["toks"] or 0, "events": r["n"]}
                 for r in self.conn.execute(sql, tuple(params))]
 
+    def _param_models_with_warning(self, warning_clause: str, since=None) -> list[str]:
+        where = f"WHERE {warning_clause}"
+        params: list = []
+        if since:
+            where += " AND e.timestamp >= ?"
+            params.append(since)
+        query = f"""
+            SELECT DISTINCT e.model
+            FROM events e JOIN impacts i ON e.session_id=i.session_id AND e.msg_id=i.msg_id
+            {where}
+            ORDER BY e.model
+        """
+        return [r["model"] for r in self.conn.execute(query, params).fetchall()]
+
     def estimated_param_models(self, since: str | None = None) -> list[str]:
         """Modèles mesurés dont les params viennent d'une estimation par taille
         de fichiers (dtype supposé ou fourchette) — signalés dans le rapport."""
-        sql = (
-            "SELECT DISTINCT e.model FROM events e JOIN impacts i "
-            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL AND ("
+        return self._param_models_with_warning(
+            "i.error IS NULL AND ("
             "i.warnings LIKE '%params-bytes-per-param%' "
             "OR i.warnings LIKE '%params-range-unknown-dtype%' "
-            "OR i.warnings LIKE '%params-from-cli-used_storage%')"
-        )
-        params: list = []
-        if since:
-            sql += " AND e.timestamp >= ?"
-            params.append(since)
-        sql += " ORDER BY e.model"
-        return [r["model"] for r in self.conn.execute(sql, tuple(params))]
+            "OR i.warnings LIKE '%params-from-cli-used_storage%')",
+            since=since)
 
     def extrapolated_param_models(self, since: str | None = None) -> list[str]:
         """Modèles trop récents pour le registre EcoLogits, dont l'impact repose
         sur un stand-in extrapolé (params d'une version sœur connue) — signalés
         séparément des estimations HF dans le rapport."""
-        sql = (
-            "SELECT DISTINCT e.model FROM events e JOIN impacts i "
-            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-            "WHERE i.error IS NULL AND i.warnings LIKE '%params-extrapolated-%'"
-        )
-        params: list = []
-        if since:
-            sql += " AND e.timestamp >= ?"
-            params.append(since)
-        sql += " ORDER BY e.model"
-        return [r["model"] for r in self.conn.execute(sql, tuple(params))]
+        return self._param_models_with_warning(
+            "i.error IS NULL AND i.warnings LIKE '%params-extrapolated-%'",
+            since=since)
 
     def mark_model_events_error(self, provider: str, model: str, error: str) -> None:
         """Marque en erreur les impacts des events d'un (provider, model) donné,
