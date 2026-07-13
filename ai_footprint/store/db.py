@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import os
 import sqlite3
 from collections.abc import Iterable
 from datetime import datetime, timezone
@@ -435,3 +436,9 @@ class SQLiteStore:
             if a and b:
                 total += (b - a).total_seconds()
         return total
+
+
+def open_store(db_path: str) -> SQLiteStore:
+    """Ouvre ou crée le store SQLite, en créant le répertoire parent si nécessaire."""
+    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    return SQLiteStore(db_path)

@@ -1,7 +1,7 @@
 import logging
 
-from ai_footprint.__main__ import _ingest_summary
 from ai_footprint.config import Config
+from ai_footprint.ingest.cli import ingest_summary
 from ai_footprint.impact.engine import EcoLogitsEngine
 from ai_footprint.impact.resolver import ModelResolver
 from ai_footprint.models import InferenceEvent
@@ -33,9 +33,9 @@ def test_coverage_counts_measured_and_uncovered(tmp_path):
     assert cov["uncovered"] == 1
 
 
-def test_ingest_summary_wording_is_reassuring():
+def testingest_summary_wording_is_reassuring():
     # Avec des non-couverts : message calme, sans "erreur"/"warning".
-    msg = _ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
+    msg = ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
     assert "2 events ingérés" in msg
     assert "93/100 mesurés" in msg
     assert "non couverts" in msg
@@ -43,17 +43,17 @@ def test_ingest_summary_wording_is_reassuring():
     assert "warning" not in msg.lower()
 
 
-def test_ingest_summary_no_uncovered_clause_when_full_coverage():
-    msg = _ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
+def testingest_summary_no_uncovered_clause_when_full_coverage():
+    msg = ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
     assert "2 events ingérés" in msg
     assert "non couverts" not in msg
 
 
-def test_ingest_summary_suggests_resolve_skill_when_uncovered():
-    msg = _ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
+def testingest_summary_suggests_resolve_skill_when_uncovered():
+    msg = ingest_summary(2, {"total": 100, "measured": 93, "uncovered": 7})
     assert "/footprint-resolve" in msg
 
 
-def test_ingest_summary_no_resolve_hint_when_full_coverage():
-    msg = _ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
+def testingest_summary_no_resolve_hint_when_full_coverage():
+    msg = ingest_summary(2, {"total": 2, "measured": 2, "uncovered": 0})
     assert "/footprint-resolve" not in msg
