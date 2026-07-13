@@ -47,13 +47,14 @@ def _no_update(monkeypatch):
 
 def test_nudge_json_reports_new_uncovered(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))
     _no_update(monkeypatch)
     _ingest_uncovered_event(db)
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = cli.main(["nudge", "--db", db, "--json"])
+        rc = cli.main(["nudge", "--db", db, "--cache", cache, "--json"])
 
     assert rc == 0
     data = json.loads(buf.getvalue())
@@ -62,13 +63,14 @@ def test_nudge_json_reports_new_uncovered(tmp_path, monkeypatch):
 
 def test_nudge_json_empty_lists_when_nothing_uncovered(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))
     _no_update(monkeypatch)
     SQLiteStore(db)
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = cli.main(["nudge", "--db", db, "--json"])
+        rc = cli.main(["nudge", "--db", db, "--cache", cache, "--json"])
 
     assert rc == 0
     assert json.loads(buf.getvalue()) == {"update_available": None, "uncovered_new": []}
@@ -76,6 +78,7 @@ def test_nudge_json_empty_lists_when_nothing_uncovered(tmp_path, monkeypatch):
 
 def test_nudge_mark_prompted_closes_batch(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     config_path = str(tmp_path / "config.json")
     _patch_config(monkeypatch, config_path)
     _no_update(monkeypatch)
@@ -88,12 +91,13 @@ def test_nudge_mark_prompted_closes_batch(tmp_path, monkeypatch):
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        cli.main(["nudge", "--db", db, "--json"])
+        cli.main(["nudge", "--db", db, "--cache", cache, "--json"])
     assert json.loads(buf.getvalue())["uncovered_new"] == []
 
 
 def test_nudge_reset_prompted_clears_batch(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     config_path = str(tmp_path / "config.json")
     _patch_config(monkeypatch, config_path)
     _no_update(monkeypatch)
@@ -111,19 +115,20 @@ def test_nudge_reset_prompted_clears_batch(tmp_path, monkeypatch):
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        cli.main(["nudge", "--db", db, "--json"])
+        cli.main(["nudge", "--db", db, "--cache", cache, "--json"])
     assert json.loads(buf.getvalue())["uncovered_new"] == ["ollama/x:y"]
 
 
 def test_nudge_claude_hook_empty_stdout_when_nothing_to_report(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))
     _no_update(monkeypatch)
     SQLiteStore(db)
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = cli.main(["nudge", "--db", db, "--claude-hook"])
+        rc = cli.main(["nudge", "--db", db, "--cache", cache, "--claude-hook"])
 
     assert rc == 0
     assert buf.getvalue() == ""
@@ -131,15 +136,37 @@ def test_nudge_claude_hook_empty_stdout_when_nothing_to_report(tmp_path, monkeyp
 
 def test_nudge_claude_hook_reports_uncovered(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))
     _no_update(monkeypatch)
     _ingest_uncovered_event(db)
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = cli.main(["nudge", "--db", db, "--claude-hook"])
+        rc = cli.main(["nudge", "--db", db, "--cache", cache, "--claude-hook"])
 
     assert rc == 0
     envelope = json.loads(buf.getvalue())
     assert envelope["hookSpecificOutput"]["hookEventName"] == "SessionStart"
     assert "ollama/x:y" in envelope["hookSpecificOutput"]["additionalContext"]
+
+
+def test_nudge_claude_hook_throttled_within_a_week_even_without_mark_prompted(
+    tmp_path, monkeypatch
+):
+    db = str(tmp_path / "c.db")
+    cache = str(tmp_path / "nudge-cache.json")
+    _patch_config(monkeypatch, str(tmp_path / "config.json"))
+    _no_update(monkeypatch)
+    _ingest_uncovered_event(db)
+
+    buf1 = io.StringIO()
+    with redirect_stdout(buf1):
+        cli.main(["nudge", "--db", db, "--cache", cache, "--claude-hook"])
+    assert "ollama/x:y" in buf1.getvalue()
+
+    buf2 = io.StringIO()
+    with redirect_stdout(buf2):
+        rc = cli.main(["nudge", "--db", db, "--cache", cache, "--claude-hook"])
+    assert rc == 0
+    assert buf2.getvalue() == ""

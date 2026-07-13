@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
+from ai_footprint.cache import save_json_cache
 from ai_footprint.config import Config
 from ai_footprint.impact.engine import EcoLogitsEngine
 from ai_footprint.impact.resolver import ModelResolver
 from ai_footprint.models import InferenceEvent
 from ai_footprint.nudge import (
+    RESOLVE_NUDGE_TTL,
     build_claude_hook_output,
     check_self_update,
     check_uncovered_batch,
@@ -95,6 +97,46 @@ def test_check_uncovered_batch_reproposes_new_model_not_in_batch(tmp_path):
     )
     config = Config(resolve_prompt_state={"prompted_keys": ["ollama/x:y"]})
     assert check_uncovered_batch(store, config) == ["ollama/z:w"]
+
+
+def test_check_uncovered_batch_not_throttled_when_no_cache_path(tmp_path):
+    store = _store_with_uncovered(str(tmp_path / "c.db"), [("ollama", "x:y")])
+    assert check_uncovered_batch(store, Config()) == ["ollama/x:y"]
+    assert check_uncovered_batch(store, Config()) == ["ollama/x:y"]
+
+
+def test_check_uncovered_batch_throttled_when_recently_shown(tmp_path):
+    store = _store_with_uncovered(str(tmp_path / "c.db"), [("ollama", "x:y")])
+    cache_path = tmp_path / "nudge-cache.json"
+    now = datetime.now(timezone.utc)
+    save_json_cache(cache_path, resolve_nudge_shown_at=now.isoformat())
+    assert check_uncovered_batch(store, Config(), cache_path=cache_path, now=now) == []
+
+
+def test_check_uncovered_batch_shows_again_after_ttl(tmp_path):
+    store = _store_with_uncovered(str(tmp_path / "c.db"), [("ollama", "x:y")])
+    cache_path = tmp_path / "nudge-cache.json"
+    stale = (datetime.now(timezone.utc) - RESOLVE_NUDGE_TTL - timedelta(hours=1)).isoformat()
+    save_json_cache(cache_path, resolve_nudge_shown_at=stale)
+    assert check_uncovered_batch(store, Config(), cache_path=cache_path) == ["ollama/x:y"]
+
+
+def test_check_uncovered_batch_records_shown_at_on_success(tmp_path):
+    store = _store_with_uncovered(str(tmp_path / "c.db"), [("ollama", "x:y")])
+    cache_path = tmp_path / "nudge-cache.json"
+    now = datetime.now(timezone.utc)
+    check_uncovered_batch(store, Config(), cache_path=cache_path, now=now)
+    from ai_footprint.cache import load_json_cache
+    assert load_json_cache(cache_path)["resolve_nudge_shown_at"] == now.isoformat()
+
+
+def test_check_uncovered_batch_no_throttle_write_when_nothing_new(tmp_path):
+    store = _store_with_uncovered(str(tmp_path / "c.db"), [("ollama", "x:y")])
+    cache_path = tmp_path / "nudge-cache.json"
+    config = Config(resolve_prompt_state={"prompted_keys": ["ollama/x:y"]})
+    assert check_uncovered_batch(store, config, cache_path=cache_path) == []
+    from ai_footprint.cache import load_json_cache
+    assert load_json_cache(cache_path) == {}
 
 
 # --- mark_batch_prompted ---

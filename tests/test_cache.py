@@ -19,6 +19,23 @@ def test_save_json_cache_roundtrips_arbitrary_fields(tmp_path):
     assert load_json_cache(p) == {"checked_at": "2026-07-12T00:00:00+00:00", "latest": "1.3.0"}
 
 
+def test_save_json_cache_merges_with_existing_fields(tmp_path):
+    p = tmp_path / "cache.json"
+    save_json_cache(p, self_update_checked_at="2026-07-12T00:00:00+00:00")
+    save_json_cache(p, resolve_nudge_shown_at="2026-07-12T01:00:00+00:00")
+    assert load_json_cache(p) == {
+        "self_update_checked_at": "2026-07-12T00:00:00+00:00",
+        "resolve_nudge_shown_at": "2026-07-12T01:00:00+00:00",
+    }
+
+
+def test_save_json_cache_overwrites_shared_key(tmp_path):
+    p = tmp_path / "cache.json"
+    save_json_cache(p, checked_at="2026-07-12T00:00:00+00:00")
+    save_json_cache(p, checked_at="2026-07-13T00:00:00+00:00")
+    assert load_json_cache(p) == {"checked_at": "2026-07-13T00:00:00+00:00"}
+
+
 def test_should_refresh_true_when_cache_missing():
     assert should_refresh({}, now=datetime.now(timezone.utc), ttl=timedelta(hours=24)) is True
 

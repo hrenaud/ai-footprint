@@ -16,6 +16,11 @@ from ai_footprint.tool_updates import parse_version
 
 GITHUB_REPO_URL = "https://github.com/hrenaud/ai-footprint"
 CACHE_TTL = timedelta(hours=24)
+# Filet de sécurité si l'agent oublie d'exécuter `nudge --mark-prompted` (bug
+# observé le 2026-07-12/13 : re-proposition du même modèle à quelques minutes
+# d'intervalle) : même sans mark-prompted, on ne resurface pas le lot plus
+# d'une fois par semaine.
+RESOLVE_NUDGE_TTL = timedelta(days=7)
 
 
 def _latest_github_tag(repo_url: str = GITHUB_REPO_URL) -> str | None:
@@ -63,12 +68,30 @@ def check_self_update(config: Config, *, cache_path: Path,
     return None
 
 
-def check_uncovered_batch(store: SQLiteStore, config: Config) -> list[str]:
+def check_uncovered_batch(
+    store: SQLiteStore,
+    config: Config,
+    *,
+    cache_path: Path | None = None,
+    now: datetime | None = None,
+) -> list[str]:
     """Clés `provider/model` non couvertes (hors `<synthetic>`) jamais
-    proposées à l'utilisateur."""
+    proposées à l'utilisateur, throttlées à `RESOLVE_NUDGE_TTL` (cf. plus
+    haut) quand `cache_path` est fourni — indépendamment de
+    `prompted_keys`, qui reste la source de vérité une fois `mark_batch_prompted`
+    appelé."""
     prompted = set(config.resolve_prompt_state.get("prompted_keys", []))
     keys = [f"{provider}/{model}" for provider, model in store.uncovered_keys()]
-    return [k for k in keys if k not in prompted]
+    new_keys = [k for k in keys if k not in prompted]
+    if not new_keys:
+        return []
+    if cache_path is not None:
+        now = now or datetime.now(timezone.utc)
+        cache = load_json_cache(cache_path)
+        if not should_refresh(cache, now=now, ttl=RESOLVE_NUDGE_TTL, key="resolve_nudge_shown_at"):
+            return []
+        save_json_cache(cache_path, resolve_nudge_shown_at=now.isoformat())
+    return new_keys
 
 
 def mark_batch_prompted(config: Config, store: SQLiteStore) -> None:

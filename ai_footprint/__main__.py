@@ -201,7 +201,7 @@ def _cmd_nudge(args) -> int:
         return 0
 
     update_available = check_self_update(config, cache_path=Path(args.cache))
-    uncovered_new = check_uncovered_batch(store, config)
+    uncovered_new = check_uncovered_batch(store, config, cache_path=Path(args.cache))
 
     if args.claude_hook:
         output = build_claude_hook_output(update_available, uncovered_new)

@@ -16,8 +16,13 @@ def load_json_cache(cache_path: Path) -> dict:
 
 
 def save_json_cache(cache_path: Path, **fields) -> None:
+    """Fusionne `fields` avec le contenu existant (plusieurs appelants
+    partagent le même fichier, ex. self_update_* et resolve_nudge_* dans
+    nudge-cache.json)."""
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(fields), encoding="utf-8")
+    merged = load_json_cache(cache_path)
+    merged.update(fields)
+    cache_path.write_text(json.dumps(merged), encoding="utf-8")
 
 
 def should_refresh(cache: dict, *, now: datetime, ttl: timedelta, key: str = "checked_at") -> bool:
