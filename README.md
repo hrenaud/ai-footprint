@@ -1,5 +1,8 @@
 # AI Footprint
 
+🌐 **[Site officiel](https://hrenaud.github.io/ai-footprint/)** — présentation,
+installation et [documentation en ligne](https://hrenaud.github.io/ai-footprint/guide/).
+
 **Connaître l'empreinte environnementale de tes sessions d'IA.** AI Footprint (`ai-footprint`) lit les
 transcripts de Claude Code, Opencode et Pi, estime l'impact de chaque réponse
 générée, et te le restitue sous forme de rapport et de suivi en temps réel —
