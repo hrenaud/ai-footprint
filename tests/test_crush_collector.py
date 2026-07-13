@@ -614,3 +614,16 @@ def _make_crush_data(msg_ids: list[str], *, directory: str = "/tmp/proj", role: 
         "directory": directory,
         "messages": messages,
     }
+
+
+def test_malformed_export_json_is_logged(caplog):
+    import logging
+    fd, path = tempfile.mkstemp(suffix=".json")
+    os.write(fd, b"{not valid json")
+    os.close(fd)
+    try:
+        with caplog.at_level(logging.DEBUG, logger="ai_footprint.collectors.crush"):
+            list(CrushCollector(root=os.path.dirname(path)).collect())
+        assert "JSON" in caplog.text or os.path.basename(path) in caplog.text
+    finally:
+        os.remove(path)

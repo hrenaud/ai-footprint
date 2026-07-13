@@ -3,6 +3,7 @@
 import glob
 import hashlib
 import json
+import logging
 import os
 import sqlite3
 from collections.abc import Iterator
@@ -15,6 +16,8 @@ from ai_footprint.collectors.claude_code import (
 )
 from ai_footprint.dates import ts_from_epoch_ms as _parse_ts_utc_ms
 from ai_footprint.models import InferenceEvent
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_int(value: int | float | None) -> int:
@@ -71,7 +74,8 @@ class CrushCollector(Collector):
         with open(path, encoding="utf-8") as fh:
             try:
                 obj = json.load(fh)
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.debug("Skipping unreadable/malformed export %s: %s", path, exc)
                 return
 
         messages = obj.get("messages")
