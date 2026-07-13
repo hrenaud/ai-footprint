@@ -5,6 +5,9 @@ import sys
 
 from ai_footprint.card.cli import cmd_card
 from ai_footprint.collectors.claude_code import ClaudeCodeCollector
+from ai_footprint.ingest.cli import build_engine, cmd_ingest, ingest_and_save
+from ai_footprint.models_admin.cli import cmd_models
+from ai_footprint.store.db import open_store
 from ai_footprint.collectors.crush import CrushCollector
 from ai_footprint.collectors.pi import PiCollector
 from ai_footprint.config import Config, DEFAULT_CONFIG_PATH
@@ -67,13 +70,6 @@ def _engine(config: Config) -> EcoLogitsEngine:
     return EcoLogitsEngine(ModelResolver(config.model_aliases))
 
 
-def _config_snapshot(config: Config) -> str:
-    """Empreinte des champs mutés par la résolution (pour ne sauver que si changé)."""
-    return json.dumps(
-        {"model_params": config.model_params, "hf_unresolved": config.hf_unresolved},
-        sort_keys=True, default=str)
-
-
 def _maybe_detect_mix(config: Config) -> None:
     if config.electricity_mix_zone is not None or not sys.stdin.isatty():
         return
@@ -84,94 +80,6 @@ def _maybe_detect_mix(config: Config) -> None:
         config.electricity_mix_zone = answer
         config.save()
         print(f"Zone enregistrée : {answer}")
-
-
-def _cmd_models(args) -> int:
-    store = _store(args.db)
-    pending = store.list_pending()
-    if not pending:
-        print("Aucun modèle auto-hébergé en attente.")
-        return 0
-    for row in pending:
-        print(f"· {row['provider']}/{row['model']} "
-              f"({row['occurrences']} occurrences)")
-    if not sys.stdin.isatty():
-        return 0
-    config = Config.load()
-    accepted = []  # Collect (provider, model) to clear AFTER save
-    for row in pending:
-        # Étape 1 : type (dense/MoE)
-        ans = input(
-            f"Type pour {row['model']} (dense/MoE, vide = dense) : "
-        ).strip().lower()
-        if not ans or ans == "dense":
-            # Dense : seul total demandé
-            total_str = input(
-                f"Params totaux pour {row['model']} "
-                "en milliards (ex. 7 pour un modèle 7B, vide = ignorer) : "
-            ).strip()
-            if not total_str:
-                continue
-            try:
-                total = float(total_str)
-            except ValueError:
-                print("Format invalide, ignoré.")
-                continue
-            config.model_params[f"{row['provider']}/{row['model']}"] = {
-                "active": total, "total": total, "arch": "dense", "source": "user"}
-            accepted.append((row["provider"], row["model"]))
-        elif ans == "moe":
-            # MoE : actif demandé, total cherché dans cache, registry, HF
-            active_str = input(
-                f"Params actifs pour {row['model']} "
-                "en milliards (ex. 3,5 pour 3,5 Md) : "
-            ).strip()
-            if not active_str:
-                continue
-            try:
-                active = float(active_str)
-            except ValueError:
-                print("Format invalide, ignoré.")
-                continue
-            # 1) Chercher dans cache (peut-être dense)
-            key = f"{row['provider']}/{row['model']}"
-            cache_entry = config.model_params.get(key)
-            cache_total = None
-            if cache_entry is not None:
-                cached = _param_from_json(cache_entry.get("total", active))
-                cache_total = cached.max if hasattr(cached, "max") else float(cached)
-            # 2) Chercher dans registry via ModelParamsResolver
-            resolver = ModelParamsResolver(config)
-            res = resolver.resolve(row["provider"], row["model"])
-            # 3) Tenter fetch MoE depuis HF
-            hf_res = fetch_moe_params_from_hf(row["model"], active)
-            if hf_res is not None:
-                # HF trouvé → stocker comme MoE avec hf_repo
-                config.model_params[key] = {
-                    "active": _param_to_json(active), "total": _param_to_json(hf_res.total),
-                    "arch": "moe", "source": "user",
-                    "hf_repo": row["model"]}
-            elif cache_total is not None:
-                # Cache trouvé → utiliser son total, garder l'archi MoE du user
-                # Ne pas écraser l'archi du cache si c'est dense
-                # Laisser l'entry existante inchangée, juste stocker active si manquant
-                if key not in config.model_params:
-                    config.model_params[key] = {
-                        "active": _param_to_json(active), "total": _param_to_json(cache_total),
-                        "arch": "moe", "source": "user"}
-            else:
-                # 4) Fallback : ni cache ni HF → total = active, stocker pour résolution future
-                config.model_params[key] = {
-                    "active": _param_to_json(active), "total": _param_to_json(active),
-                    "arch": "moe", "source": "user"}
-            accepted.append((row["provider"], row["model"]))
-    # Save config durably BEFORE clearing any pending models
-    config.save()
-    # Now clear the accepted models from pending
-    for provider, model in accepted:
-        store.clear_pending(provider, model)
-    print("Paramètres enregistrés. Relancez `ai-footprint ingest`.")
-    return 0
 
 
 def _cmd_nudge(args) -> int:
@@ -238,36 +146,6 @@ def _read_stdin_json() -> dict | None:
         return json.loads(raw)
     except json.JSONDecodeError:
         return None
-
-
-def _ingest_summary(new_count: int, cov: dict, store=None) -> str:
-    line = f"{new_count} events ingérés · {cov['measured']}/{cov['total']} mesurés"
-    if cov["uncovered"]:
-        line += (
-            f" · {cov['uncovered']} non couverts "
-            "(inférence locale ou fournisseurs tiers non modélisés — conservés, impact non estimé)"
-        )
-        # Afficher les modèles non couverts (sauf <synthetic> à 0 token)
-        if store and cov["uncovered"] > 0:
-            rows = store.conn.execute(
-                "SELECT e.provider, e.model, COUNT(*) as cnt "
-                "FROM events e JOIN impacts i "
-                "ON e.session_id=i.session_id AND e.msg_id=i.msg_id "
-                "WHERE i.error IS NOT NULL "
-                "GROUP BY e.provider, e.model "
-                "ORDER BY cnt DESC"
-            ).fetchall()
-            # Filtrer les <synthetic> (0 token)
-            real_models = [r for r in rows if r["model"] != "<synthetic>"]
-            if real_models:
-                line += "\n  modèles concernés :"
-                for r in real_models:
-                    line += f"\n    - {r['model']} ({r['cnt']} events)"
-        line += (
-            "\n  → lance le skill `/footprint-resolve` pour tenter de les "
-            "résoudre via Hugging Face."
-        )
-    return line
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -368,23 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     config = Config.load()
 
     if args.cmd == "ingest":
-        store = _store(args.db)
-        if args.source_crush:
-            # Détection du mode : si le chemin pointe vers une DB SQLite, backfill.
-            if args.source_crush.endswith(".db"):
-                events = CrushCollector(backfill_db_path=args.source_crush).collect()
-            else:
-                events = CrushCollector(root=args.source_crush).collect()
-        elif args.source_pi:
-            events = PiCollector(root=args.source_pi).collect()
-        else:
-            events = ClaudeCodeCollector(args.source).collect()
-        before = _config_snapshot(config)
-        n = store.ingest(events, _engine(config), config)
-        if _config_snapshot(config) != before:
-            config.save()  # persiste caches positif/négatif résolus pendant l'ingest
-        print(_ingest_summary(n, store.coverage(), store))
-        return 0
+        return cmd_ingest(args)
 
     if args.cmd == "report":
         store = _store(args.db)
@@ -430,15 +292,12 @@ def main(argv: list[str] | None = None) -> int:
         # Ingestion à la volée du transcript courant (idempotent) → impact à
         # jour même en cours de session, sans attendre le hook Stop.
         if transcript and os.path.exists(transcript):
-            before = _config_snapshot(config)
-            store.ingest(ClaudeCodeCollector(transcript).collect(), _engine(config), config)
-            if _config_snapshot(config) != before:
-                config.save()
+            ingest_and_save(store, ClaudeCodeCollector(transcript).collect(), build_engine(config), config)
         print(render_statusline(store.rows_for_report(session_id=session_id)))
         return 0
 
     if args.cmd == "models":
-        return _cmd_models(args)
+        return cmd_models(args)
 
     if args.cmd == "resolve":
         return cmd_resolve(args)
