@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.0] — 2026-07-13
+
+### Features
+
+- (docs) — add bilingual MkDocs documentation site (FR/EN)
 ## [1.3.1] — 2026-07-13
 
 ### Features
