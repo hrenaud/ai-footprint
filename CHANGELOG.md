@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.6.0] — 2026-07-13
+
+### Features
+
+- (crush) — log malformed/unreadable export files at debug level
+- (claude_code) — log malformed JSON lines at debug level
+- (ingest) — extract ingest command module with safe config save
+- (dates) — add parse_iso_ts and ts_from_epoch_ms
+
+### Bug Fixes
+
+- (params) — close urlopen handle via context manager
+- (pi) — skip non-dict JSON lines instead of crashing
+- (crush) — skip non-dict message entries instead of crashing
+- (params) — catch specific exceptions and log HF resolution failures
+
+### Documentation
+
+- add quality review spec and implementation plan
+
+### Refactoring
+
+- (params) — name the registry fallback provider constant
+- (tests) — replace sys.modules patches with monkeypatch.setattr for huggingface_hub
+- (params) — hoist stdlib and huggingface_hub imports to module level
+- (cli) — extract ingest and models commands into dedicated modules
+- (store) — add open_store; point tests at ingest.cli.ingest_summary
+- (store) — dedupe SQL query construction across criteria methods
+- (dates) — dedupe timestamp parsing via ai_footprint.dates
 ## [1.5.0] — 2026-07-13
 
 ### Features
