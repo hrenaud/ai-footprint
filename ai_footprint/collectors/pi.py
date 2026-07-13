@@ -48,6 +48,9 @@ class PiCollector(Collector):
                 except json.JSONDecodeError:
                     continue
 
+                if not isinstance(obj, dict):
+                    continue
+
                 cur_ts = _parse_ts(obj.get("timestamp", ""))
                 entry_type = obj.get("type")
 

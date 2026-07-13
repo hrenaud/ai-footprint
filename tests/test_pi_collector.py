@@ -79,3 +79,17 @@ def test_missing_cwd_falls_back_to_unknown_project():
     assert len(events) == 1
     assert events[0].project == "unknown"
     os.unlink(f)
+
+
+def test_non_dict_json_lines_skipped_without_crashing():
+    fd, path = tempfile.mkstemp(suffix=".jsonl")
+    os.write(fd, b'[1, 2, 3]\n"just a string"\n')
+    os.close(fd)
+    try:
+        events = PiCollector(root=path).collect()
+        assert isinstance(events, list) or hasattr(events, '__iter__')
+        # Vérifier que la collection complète sans crash
+        result = list(events)
+        assert result == []
+    finally:
+        os.remove(path)
