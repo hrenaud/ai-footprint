@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.1] — 2026-07-13
+
+### Features
+
+- (statusline) — mise à l'échelle auto des unités et ligne à 0
 ## [1.6.0] — 2026-07-13
 
 ### Features
