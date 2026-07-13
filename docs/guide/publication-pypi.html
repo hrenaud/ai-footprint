@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/publication-pypi.html" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Publication PyPI - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Publication PyPI";
+        var mkdocs_page_input_path = "publication-pypi.md";
+        var mkdocs_page_url = "/ai-footprint/guide/publication-pypi.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE.html">Guide utilisateur</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="METHODOLOGY.html">Méthodologie</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="comparaison-donnees-outils.html">Comparaison des outils</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Publication PyPI</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-declarer-le-trusted-publisher-pour-ai-footprint">1. Déclarer le Trusted Publisher pour ai-footprint</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-publier-agent-footprint-paquet-coquille">2. Publier agent-footprint (paquet coquille)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-ordre-recommande">3. Ordre recommandé</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="checklist-nouvel-outil.html">Checklist nouvel outil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contribuer</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Publication PyPI</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/publication-pypi.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="publication-pypi-actions-manuelles-restantes">Publication PyPI — actions manuelles restantes</h1>
+<p>Ce document couvre les deux actions qui ne peuvent être faites que par le
+titulaire du compte PyPI (<code>renaud.heluin@novagaia.fr</code> ou équivalent), donc pas
+automatisables par l'agent. Tout le reste (workflow CI, paquet coquille) est
+déjà en place — voir <a href="../.github/workflows/publish-pypi.yml"><code>.github/workflows/publish-pypi.yml</code></a>
+et <a href="../packaging/agent-footprint/"><code>packaging/agent-footprint/</code></a>.</p>
+<h2 id="1-declarer-le-trusted-publisher-pour-ai-footprint">1. Déclarer le Trusted Publisher pour <code>ai-footprint</code></h2>
+<p>Le workflow <code>publish-pypi.yml</code> publie automatiquement sur PyPI à chaque tag
+<code>v*</code> (créé par <code>ai-footprint release bump</code>), via <strong>Trusted Publishing (OIDC)</strong> :
+aucun token/secret stocké, l'authentification se fait par la confiance
+déclarée entre le projet PyPI et le repo GitHub + workflow.</p>
+<p><strong>Prérequis</strong> : le projet <code>ai-footprint</code> doit exister sur PyPI. S'il n'existe
+pas encore, la première publication doit être faite manuellement avant de
+pouvoir configurer le Trusted Publisher (PyPI exige que le projet existe déjà,
+sauf à utiliser un "pending publisher", cf. § 3 ci-dessous).</p>
+<p><strong>Étapes</strong> (une fois le projet créé) :</p>
+<ol>
+<li>Se connecter sur <a href="https://pypi.org">pypi.org</a> avec le compte propriétaire.</li>
+<li>Aller sur la page du projet → <strong>Manage</strong> → <strong>Publishing</strong>.</li>
+<li>Dans la section <strong>Trusted Publishers</strong>, cliquer <strong>Add a new publisher</strong> →
+   choisir <strong>GitHub</strong>.</li>
+<li>Renseigner :</li>
+<li><strong>Owner</strong> : <code>hrenaud</code></li>
+<li><strong>Repository name</strong> : <code>ai-footprint</code></li>
+<li><strong>Workflow name</strong> : <code>publish-pypi.yml</code></li>
+<li><strong>Environment name</strong> : <code>pypi</code> (correspond à <code>environment: pypi</code> déclaré
+     dans le workflow)</li>
+<li>Valider. Aucune autre configuration côté GitHub n'est nécessaire — le
+   workflow est déjà écrit pour ce flux (<code>permissions: id-token: write</code>).</li>
+</ol>
+<p><strong>Vérification</strong> : pousser un tag <code>v*</code> (via <code>.venv/bin/ai-footprint release
+bump &lt;patch|minor|major&gt;</code>) et vérifier que le job <code>publish</code> du workflow
+<code>publish-pypi.yml</code> passe au vert dans l'onglet Actions du repo.</p>
+<h2 id="2-publier-agent-footprint-paquet-coquille">2. Publier <code>agent-footprint</code> (paquet coquille)</h2>
+<p>Le paquet <a href="../packaging/agent-footprint/"><code>packaging/agent-footprint/</code></a>
+redirige <code>pip install agent-footprint</code> vers <code>ai-footprint</code>, pour qui cherche
+l'ancien nom du projet. Il n'est pas couvert par le workflow CI (celui-ci ne
+publie que <code>ai-footprint</code>) : sa publication est un geste ponctuel, à refaire
+seulement en cas de changement de version.</p>
+<p><strong>Étapes</strong> :</p>
+<pre><code class="language-bash">cd packaging/agent-footprint
+python -m pip install --upgrade build twine
+python -m build
+python -m twine upload dist/*
+</code></pre>
+<p><code>twine upload</code> demande un identifiant PyPI — utiliser soit un token API
+PyPI (<code>__token__</code> comme nom d'utilisateur, le token comme mot de passe),
+généré depuis <strong>Account settings → API tokens</strong> sur pypi.org, soit configurer
+un Trusted Publisher dédié à ce second paquet si des publications répétées
+sont prévues (mêmes étapes que § 1, avec un repo/workflow séparé, puisque
+Trusted Publishing est lié à un repo GitHub précis — or <code>agent-footprint</code>
+n'a pas de repo ni de workflow CI propre pour l'instant).</p>
+<p>Nettoyer ensuite les artefacts de build locaux (<code>dist/</code>, <code>*.egg-info/</code>) avec
+<code>trash</code>.</p>
+<h2 id="3-ordre-recommande">3. Ordre recommandé</h2>
+<ol>
+<li>Publier <code>ai-footprint</code> une première fois manuellement (<code>python -m build</code> +
+   <code>twine upload</code> depuis la racine du repo) — ou déclarer un <strong>pending
+   publisher</strong> sur PyPI (Trusted Publishers → "Add" avant même que le projet
+   existe) pour laisser la première publication passer directement par la CI.</li>
+<li>Configurer le Trusted Publisher (§ 1) si ce n'est pas déjà fait via le
+   pending publisher.</li>
+<li>Publier <code>agent-footprint</code> (§ 2), une fois <code>ai-footprint</code> disponible sur
+   PyPI (c'est sa dépendance).</li>
+</ol>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="comparaison-donnees-outils.html" class="btn btn-neutral float-left" title="Comparaison des outils"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="checklist-nouvel-outil.html" class="btn btn-neutral float-right" title="Checklist nouvel outil">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="comparaison-donnees-outils.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="checklist-nouvel-outil.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

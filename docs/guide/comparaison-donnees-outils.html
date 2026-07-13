@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/comparaison-donnees-outils.html" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Comparaison des outils - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Comparaison des outils";
+        var mkdocs_page_input_path = "comparaison-donnees-outils.md";
+        var mkdocs_page_url = "/ai-footprint/guide/comparaison-donnees-outils.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE.html">Guide utilisateur</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="METHODOLOGY.html">Méthodologie</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Comparaison des outils</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#legende">Légende</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tableau-comparatif">Tableau comparatif</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#details-par-outil">Détails par outil</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#claude-code">Claude Code</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#opencode">Opencode</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pi">Pi</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#notes-pour-les-futurs-outils">Notes pour les futurs outils</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="publication-pypi.html">Publication PyPI</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="checklist-nouvel-outil.html">Checklist nouvel outil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contribuer</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Comparaison des outils</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/comparaison-donnees-outils.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="comparaison-des-donnees-par-outil">Comparaison des données par outil</h1>
+<p><strong>Objectif</strong> : Comparer les données disponibles dans les JSON/transcripts de chaque outil supporté par ai-footprint.</p>
+<p><strong>Mise à jour</strong> : Ce document est mis à jour à chaque nouvel outil ajouté.</p>
+<hr />
+<h2 id="legende">Légende</h2>
+<table>
+<thead>
+<tr>
+<th>Symbole</th>
+<th>Signification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅</td>
+<td>Disponible dans cet outil</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>Non disponible</td>
+</tr>
+<tr>
+<td>⚠️</td>
+<td>Partiellement disponible (structure différente)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tableau-comparatif">Tableau comparatif</h2>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Claude Code (JSONL)</th>
+<th>Opencode (JSON)</th>
+<th>Pi (JSONL)</th>
+<th>Usage dans ai-footprint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Identifiants</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sessionId</code></td>
+<td>✅</td>
+<td>✅ <code>session_id</code></td>
+<td>✅ header <code>type:"session"</code>, <code>id</code></td>
+<td>Clé de jointure avec <code>sessions</code> table</td>
+</tr>
+<tr>
+<td><code>uuid</code> / <code>id</code></td>
+<td>✅ <code>msg_id</code></td>
+<td>✅ <code>message.id</code></td>
+<td>✅ <code>message.id</code> (entrée <code>type:"message"</code>)</td>
+<td>Clé unique par message</td>
+</tr>
+<tr>
+<td><strong>Modèle</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>model</code> (string)</td>
+<td>✅ <code>"claude-opus-4-8"</code></td>
+<td>⚠️ <code>{providerID, modelID}</code></td>
+<td>✅ <code>message.model</code></td>
+<td>Normalisé en <code>provider</code> + <code>model</code> dans <code>InferenceEvent</code></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td>❌ (déduit de <code>model</code>)</td>
+<td>✅ <code>model.providerID</code></td>
+<td>✅ <code>message.provider</code></td>
+<td>Permet le lookup EcoLogits</td>
+</tr>
+<tr>
+<td><strong>Tokens</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>input_tokens</code></td>
+<td>✅</td>
+<td>✅ <code>tokens.input</code></td>
+<td>✅ <code>message.usage.input</code></td>
+<td>Calcul d'impact</td>
+</tr>
+<tr>
+<td><code>output_tokens</code></td>
+<td>✅</td>
+<td>✅ <code>tokens.output</code></td>
+<td>✅ <code>message.usage.output</code></td>
+<td>Calcul d'impact</td>
+</tr>
+<tr>
+<td><code>cache_creation_input_tokens</code></td>
+<td>✅</td>
+<td>⚠️ <code>tokens.cache.write</code></td>
+<td>✅ <code>message.usage.cacheWrite</code></td>
+<td>Calcul d'impact (cache)</td>
+</tr>
+<tr>
+<td><code>cache_read_input_tokens</code></td>
+<td>✅</td>
+<td>⚠️ <code>tokens.cache.read</code></td>
+<td>✅ <code>message.usage.cacheRead</code></td>
+<td>Calcul d'impact (cache)</td>
+</tr>
+<tr>
+<td><code>reasoning_tokens</code></td>
+<td>❌</td>
+<td>✅ <code>tokens.reasoning</code></td>
+<td>❌</td>
+<td>À valider avec EcoLogits</td>
+</tr>
+<tr>
+<td><strong>Temps</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>timestamp</code> (ISO 8601)</td>
+<td>✅</td>
+<td>⚠️ Unix timestamp ms</td>
+<td>✅ ISO 8601 natif</td>
+<td>Converti en ISO 8601 UTC</td>
+</tr>
+<tr>
+<td><code>active_seconds</code> (delta)</td>
+<td>✅ Calculé</td>
+<td>✅ <code>time.completed - time.created</code></td>
+<td>✅ Calculé (delta entre timestamps successifs)</td>
+<td>Mesure du temps actif</td>
+</tr>
+<tr>
+<td><strong>Coût</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost</code> (USD)</td>
+<td>❌ (non lu par le collecteur)</td>
+<td>✅ <code>cost</code> (BD + exports)</td>
+<td>⚠️ <code>message.usage.cost.total</code> (présent mais non stocké)</td>
+<td><strong>Non stocké</strong> — pas de champ <code>cost</code> dans <code>InferenceEvent</code></td>
+</tr>
+<tr>
+<td><code>latency</code> (ms)</td>
+<td>❌ (non lu par le collecteur)</td>
+<td>❌</td>
+<td>❌</td>
+<td>Non exploité actuellement</td>
+</tr>
+<tr>
+<td><strong>Métadonnées session</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>❌</td>
+<td>✅ <code>session.title</code></td>
+<td>❌</td>
+<td><strong>Non stocké</strong> (note : à risquer)</td>
+</tr>
+<tr>
+<td><code>directory</code></td>
+<td>✅ <code>cwd</code></td>
+<td>✅ <code>session.directory</code></td>
+<td>✅ <code>session.cwd</code></td>
+<td>Utilisé pour <code>project</code> (basename)</td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td>❌</td>
+<td>✅ <code>session.slug</code></td>
+<td>❌</td>
+<td><strong>Non stocké</strong> (note : à risquer)</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>❌</td>
+<td>✅ <code>session.path</code></td>
+<td>❌</td>
+<td><strong>Non stocké</strong> (note : à risquer)</td>
+</tr>
+<tr>
+<td><strong>Statut</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>role</code> (user/assistant)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ <code>message.role</code></td>
+<td>Filtrage (seuls les assistant comptent)</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>❌</td>
+<td>✅ <code>error.name</code>, <code>error.data</code></td>
+<td>❌</td>
+<td><strong>Non stocké</strong> — pas de champ <code>error</code> dans <code>InferenceEvent</code></td>
+</tr>
+<tr>
+<td><code>archived</code></td>
+<td>❌</td>
+<td>✅ <code>time_archived</code></td>
+<td>❌</td>
+<td>Non exploité actuellement</td>
+</tr>
+<tr>
+<td><strong>Collecte</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Format de stockage</td>
+<td>JSONL (ligne par ligne)</td>
+<td>SQLite (BDD locale)</td>
+<td>JSONL (ligne par ligne)</td>
+<td>Collecteurs spécifiques par outil</td>
+</tr>
+<tr>
+<td>Déclencheur</td>
+<td><code>hooks.Stop</code> (fin de session)</td>
+<td><code>session.idle</code> (plugin)</td>
+<td><code>session_shutdown</code> (extension)</td>
+<td>Installation automatique</td>
+</tr>
+<tr>
+<td>Backfilling</td>
+<td>Lecture directe JSONL</td>
+<td>Lecture directe SQLite</td>
+<td>Lecture directe JSONL</td>
+<td>Scripts de backfilling spécifiques</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="details-par-outil">Détails par outil</h2>
+<h3 id="claude-code">Claude Code</h3>
+<p><strong>Sources disponibles</strong> :</p>
+<ol>
+<li><strong>Transcripts de session</strong> : <code>~/.claude/projects/**/*.jsonl</code> — seule source
+   effectivement lue par <code>ClaudeCodeCollector</code> (glob + parsing de tous les
+   <code>**/*.jsonl</code>).</li>
+</ol>
+<p><strong>Structure d'un event (transcript)</strong> :</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;assistant&quot;,
+  &quot;message&quot;: {
+    &quot;model&quot;: &quot;claude-opus-4-8&quot;,
+    &quot;usage&quot;: {
+      &quot;input_tokens&quot;: 8427,
+      &quot;output_tokens&quot;: 287,
+      &quot;cache_creation_input_tokens&quot;: 7052,
+      &quot;cache_read_input_tokens&quot;: 8020
+    }
+  },
+  &quot;sessionId&quot;: &quot;sess-A&quot;,
+  &quot;uuid&quot;: &quot;u1&quot;,
+  &quot;cwd&quot;: &quot;/Users/me/DEV/projA&quot;,
+  &quot;timestamp&quot;: &quot;2026-06-27T10:08:45.619Z&quot;
+}
+</code></pre>
+<p><strong>Collecteur</strong> : <code>ClaudeCodeCollector</code> (lecture directe JSONL)</p>
+<hr />
+<h3 id="opencode">Opencode</h3>
+<p><strong>Sources disponibles</strong> :</p>
+<ol>
+<li><strong>BDD locale</strong> : <code>~/.local/share/opencode/opencode.db</code> (SQLite)</li>
+<li><strong>Exports plugin</strong> : <code>~/.ai-footprint/crush-exports/&lt;sessionId&gt;.json</code></li>
+<li><strong>SDK SSE</strong> : <code>event.subscribe()</code> (temps réel)</li>
+</ol>
+<p><strong>Structure d'une session (table <code>session</code>)</strong> :</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;ses_120fa4dc7ffeSg6YofUeAPBX1P&quot;,
+  &quot;title&quot;: &quot;New session - 2026-06-19T08:35:53.016Z&quot;,
+  &quot;directory&quot;: &quot;/Users/renaudheluin/.agents&quot;,
+  &quot;model&quot;: &quot;{\&quot;id\&quot;:\&quot;Qwen3.6-35B-A3B-4bit\&quot;,\&quot;providerID\&quot;:\&quot;myprovider\&quot;}&quot;,
+  &quot;tokens_input&quot;: 145920,
+  &quot;tokens_output&quot;: 11950,
+  &quot;tokens_reasoning&quot;: 0,
+  &quot;tokens_cache_read&quot;: 0,
+  &quot;tokens_cache_write&quot;: 0,
+  &quot;time_created&quot;: 1781858206763,
+  &quot;time_updated&quot;: 1781858206763
+}
+</code></pre>
+<p><strong>Structure d'un message (table <code>message</code>)</strong> :</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;msg_edf05b24e001gD1yQMa8Rqwfpa&quot;,
+  &quot;session_id&quot;: &quot;ses_120fa4dc7ffeSg6YofUeAPBX1P&quot;,
+  &quot;data&quot;: &quot;{\&quot;role\&quot;:\&quot;assistant\&quot;,\&quot;time\&quot;:{\&quot;created\&quot;:1781858153054,\&quot;completed\&quot;:1781858153428},\&quot;model\&quot;:{\&quot;providerID\&quot;:\&quot;myprovider\&quot;,\&quot;modelID\&quot;:\&quot;Qwen3.6-35B-A3B-4bit\&quot;},\&quot;tokens\&quot;:{\&quot;input\&quot;:0,\&quot;output\&quot;:0,\&quot;reasoning\&quot;:0,\&quot;cache\&quot;:{\&quot;read\&quot;:0,\&quot;write\&quot;:0}},\&quot;cost\&quot;:0}&quot;
+}
+</code></pre>
+<p><strong>Structure d'un export (plugin)</strong> :</p>
+<pre><code class="language-json">{
+  &quot;info&quot;: {
+    &quot;id&quot;: &quot;sess-abc123&quot;,
+    &quot;slug&quot;: &quot;mon-projet&quot;,
+    &quot;directory&quot;: &quot;/home/user/project&quot;,
+    &quot;model&quot;: { &quot;id&quot;: &quot;claude-sonnet-4-20250514&quot;, &quot;providerID&quot;: &quot;anthropic&quot; },
+    &quot;tokens&quot;: {
+      &quot;input&quot;: 8427,
+      &quot;output&quot;: 287,
+      &quot;reasoning&quot;: 0,
+      &quot;cache&quot;: { &quot;read&quot;: 8020, &quot;write&quot;: 7052 }
+    },
+    &quot;time&quot;: { &quot;created&quot;: 1719741600000, &quot;updated&quot;: 1719742500000 }
+  },
+  &quot;messages&quot;: [
+    {
+      &quot;info&quot;: {
+        &quot;id&quot;: &quot;msg-1&quot;,
+        &quot;role&quot;: &quot;assistant&quot;,
+        &quot;time&quot;: { &quot;created&quot;: 1719741700000, &quot;completed&quot;: 1719741800000 },
+        &quot;model&quot;: {
+          &quot;id&quot;: &quot;claude-sonnet-4-20250514&quot;,
+          &quot;providerID&quot;: &quot;anthropic&quot;
+        },
+        &quot;tokens&quot;: {
+          &quot;input&quot;: 8427,
+          &quot;output&quot;: 287,
+          &quot;reasoning&quot;: 0,
+          &quot;cache&quot;: { &quot;read&quot;: 8020, &quot;write&quot;: 7052 }
+        },
+        &quot;cost&quot;: 0.00123
+      }
+    }
+  ]
+}
+</code></pre>
+<p><strong>Collecteur</strong> : <code>CrushCollector</code> (backfilling BDD + lecture exports plugin)</p>
+<hr />
+<h3 id="pi">Pi</h3>
+<p><strong>Sources disponibles</strong> :</p>
+<ol>
+<li><strong>Transcripts de session</strong> : <code>~/.pi/agent/sessions/--&lt;cwd&gt;--/&lt;timestamp&gt;_&lt;uuid&gt;.jsonl</code></li>
+</ol>
+<p><strong>Structure d'un fichier de session</strong> (une entrée d'en-tête <code>type:"session"</code> puis des entrées <code>type:"message"</code>) :</p>
+<pre><code class="language-json">{&quot;type&quot;:&quot;session&quot;,&quot;id&quot;:&quot;sess-A&quot;,&quot;timestamp&quot;:&quot;2026-06-27T10:00:00.000Z&quot;,&quot;cwd&quot;:&quot;/Users/me/DEV/projA&quot;}
+{&quot;type&quot;:&quot;message&quot;,&quot;id&quot;:&quot;u1&quot;,&quot;timestamp&quot;:&quot;2026-06-27T10:08:45.619Z&quot;,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;provider&quot;:&quot;anthropic&quot;,&quot;model&quot;:&quot;claude-opus-4-8&quot;,&quot;usage&quot;:{&quot;input&quot;:8427,&quot;output&quot;:287,&quot;cacheRead&quot;:8020,&quot;cacheWrite&quot;:7052,&quot;totalTokens&quot;:15786,&quot;cost&quot;:{&quot;total&quot;:0}}}}
+</code></pre>
+<p><strong>Collecteur</strong> : <code>PiCollector</code> (lecture directe JSONL, root = répertoire ou fichier unique)</p>
+<hr />
+<h2 id="notes-pour-les-futurs-outils">Notes pour les futurs outils</h2>
+<p>Quand un nouvel outil est ajouté, mettre à jour :</p>
+<ol>
+<li>Ce document (tableau comparatif)</li>
+<li>Le collecteur correspondant dans <code>ai_footprint/collectors/</code></li>
+<li>Les tests dans <code>tests/test_&lt;outil&gt;_collector.py</code></li>
+</ol>
+<p><strong>Champs obligatoires à mapper dans <code>InferenceEvent</code></strong> :</p>
+<ul>
+<li><code>provider</code> (string)</li>
+<li><code>model</code> (string)</li>
+<li><code>input_tokens</code> (int)</li>
+<li><code>output_tokens</code> (int)</li>
+<li><code>cache_creation_tokens</code> (int)</li>
+<li><code>cache_read_tokens</code> (int)</li>
+<li><code>timestamp</code> (ISO 8601 UTC)</li>
+<li><code>project</code> (string, basename du directory)</li>
+<li><code>session_id</code> (string)</li>
+<li><code>msg_id</code> (string)</li>
+</ul>
+<p><strong>Champs optionnels déjà mappés dans <code>InferenceEvent</code></strong> :</p>
+<ul>
+<li><code>active_seconds</code> (float)</li>
+<li><code>client</code> (string, identifie l'outil)</li>
+</ul>
+<p><strong>Champs pas encore mappés</strong> (présents chez au moins un outil, absents de
+<code>InferenceEvent</code> — à ajouter si un besoin produit apparaît) :</p>
+<ul>
+<li><code>reasoning_tokens</code> (int)</li>
+<li><code>cost</code> (float, USD)</li>
+<li><code>error</code> (string)</li>
+</ul>
+<hr />
+<p><em>Document créé le 2026-06-30, mis à jour le 2026-07-13. À mettre à jour à chaque nouvel outil ajouté.</em></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="METHODOLOGY.html" class="btn btn-neutral float-left" title="Méthodologie"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="publication-pypi.html" class="btn btn-neutral float-right" title="Publication PyPI">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="METHODOLOGY.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="publication-pypi.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

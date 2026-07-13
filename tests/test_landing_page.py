@@ -7,6 +7,7 @@ REQUIRED_IDS_IN_ORDER = [
     "nav",
     "hero",
     "multi-tools",
+    "models",
     "how-it-works",
     "criteria",
     "why-ranges",

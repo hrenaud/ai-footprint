@@ -1,0 +1,36 @@
+site_name: AI Footprint — Documentation
+site_url: https://hrenaud.github.io/ai-footprint/guide/
+repo_url: https://github.com/hrenaud/ai-footprint
+docs_dir: docs
+site_dir: .mkdocs-build
+use_directory_urls: false
+
+exclude_docs: |
+  index.html
+  fr/
+  assets/
+  guide/
+
+theme:
+  name: readthedocs
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: fr
+          default: true
+          name: Français
+        - locale: en
+          name: English
+
+nav:
+  - Accueil: index.md
+  - Guide utilisateur: GUIDE.md
+  - Guide avancé: GUIDE-AVANCE.md
+  - Méthodologie: METHODOLOGY.md
+  - Comparaison des outils: comparaison-donnees-outils.md
+  - Publication PyPI: publication-pypi.md
+  - Checklist nouvel outil: checklist-nouvel-outil.md
+  - Contribuer: CONTRIBUTING.md

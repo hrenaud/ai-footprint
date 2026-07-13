@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/en/GUIDE.html" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Guide utilisateur - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Guide utilisateur";
+        var mkdocs_page_input_path = "GUIDE.en.md";
+        var mkdocs_page_url = "/ai-footprint/guide/en/GUIDE.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Guide utilisateur</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#install">Install</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#update">Update</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uninstallation">Uninstallation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#using-the-skills">Using the skills</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#footprint-report-the-full-report">/footprint-report — the full report</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#footprint-card-export-as-an-image">/footprint-card — export as an image</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#footprint-resolve-resolve-uncovered-models">/footprint-resolve — resolve uncovered models</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#footprint-config-settings">/footprint-config — settings</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#footprint-help-help">/footprint-help — help</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#real-time-tracking">Real-time tracking</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#going-further">Going further</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="METHODOLOGY.html">Méthodologie</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="comparaison-donnees-outils.html">Comparaison des outils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="publication-pypi.html">Publication PyPI</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="checklist-nouvel-outil.html">Checklist nouvel outil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contribuer</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Guide utilisateur</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/GUIDE.en.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="user-guide">User guide</h1>
+<p>How to use <code>ai-footprint</code>: installation, uninstallation, and everyday use of
+the skills. For a quick overview of the product, see the
+<a href="https://github.com/hrenaud/ai-footprint#readme">README</a>; to understand how
+impacts are calculated, see <a href="METHODOLOGY.html">METHODOLOGY.md</a>.</p>
+<p><code>ai-footprint</code> works with <strong>Claude Code</strong>, <strong>Opencode</strong>, and <strong>Pi</strong>: the
+installer automatically detects the tools present on your machine and
+enables skills/tracking for each of them, with nothing to configure
+yourself.</p>
+<h2 id="installation">Installation</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python ≥ 3.10.</li>
+<li>Chrome or Chromium installed locally, only if you plan to use
+  <code>/footprint-card</code> (exporting your footprint as an image).</li>
+</ul>
+<h3 id="install">Install</h3>
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+</code></pre>
+<p>This command installs <code>ai-footprint</code>, enables it for all compatible tools
+detected on your machine (Claude Code, Opencode, Pi), and backfills your
+past session history. <strong>Restart your tool</strong> (Claude Code, Opencode, or Pi)
+once the installation is done to activate the skills.</p>
+<h3 id="update">Update</h3>
+<p>Simply rerun the install command above: it updates <code>ai-footprint</code> without
+losing your history. An available update is also proposed to you
+automatically at the start of a session.</p>
+<h2 id="uninstallation">Uninstallation</h2>
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/uninstall.sh | bash
+</code></pre>
+<p>This command removes <code>ai-footprint</code> from every tool where it was active.
+<strong>Your impact history is kept by default</strong> — to delete it too, see the
+<a href="GUIDE-AVANCE.html#complete-uninstallation">advanced guide</a>.</p>
+<h2 id="using-the-skills">Using the skills</h2>
+<p>This is the recommended way to use ai-footprint: type the slash command, or
+simply ask in natural language (the skills also trigger on phrasing like
+"my impact" or "my CO₂ footprint").</p>
+<h3 id="footprint-report-the-full-report"><code>/footprint-report</code> — the full report</h3>
+<p>Displays the multi-criteria impact of your sessions:</p>
+<ul>
+<li><strong>Total impact</strong> — the five criteria (GWP, water, ADPe, energy, primary
+  energy), as a min–max range.</li>
+<li><strong>Most impactful projects</strong> — breakdown by working directory.</li>
+<li><strong>Tokens &amp; impact per model</strong> — which model consumes the most.</li>
+<li><strong>Uncovered models</strong> — models whose impact could not be estimated. See
+  <code>/footprint-resolve</code> below to resolve them.</li>
+<li><strong>Intensity per model</strong> — impact per hour of work (reveals that, at an
+  equal work rate, a bigger model like Opus emits far more than a lighter
+  model like Haiku).</li>
+<li><strong>Intensity per tool</strong> (as soon as your data covers several tools) —
+  which tool consumes the most, at an equal rate.</li>
+</ul>
+<p>You can filter on a period ("since June 27", for example), or ask for the
+detail per model/project.</p>
+<h3 id="footprint-card-export-as-an-image"><code>/footprint-card</code> — export as an image</h3>
+<p>Generates a shareable image summarizing your footprint: carbon as the hero
+figure, the other criteria (water, energy, metals, primary energy) as
+tiles, and the top 3 most impactful projects. Requires Chrome or Chromium.</p>
+<h3 id="footprint-resolve-resolve-uncovered-models"><code>/footprint-resolve</code> — resolve uncovered models</h3>
+<p>Some models (third-party, local, or too recent) are out of the calculation
+engine's scope: ai-footprint keeps the event but excludes its impact from
+the totals rather than displaying a made-up number. This skill proposes,
+for each uncovered model, a mapping to a known equivalent model, and
+recalculates the impacts after your confirmation.</p>
+<p>Triggers automatically as a proposal at the start of a session if relevant,
+or manually at any time.</p>
+<h3 id="footprint-config-settings"><code>/footprint-config</code> — settings</h3>
+<p>Adjusts the assumptions used for the calculation (electricity mix zone,
+datacenter efficiency…). Detected automatically on the first report if not
+already set.</p>
+<h3 id="footprint-help-help"><code>/footprint-help</code> — help</h3>
+<p>Displays ai-footprint's actual help: all available commands.</p>
+<h2 id="real-time-tracking">Real-time tracking</h2>
+<p>Once installation is complete, your tool continuously displays the impact
+of the <strong>current session</strong>, for example:</p>
+<pre><code>⚡ 18.9–33.5 kWh · 🌍 7.93–13.5 kgCO2e · 💧 61.3–134 L
+</code></pre>
+<p>A <code>≈</code> prefix signals that the session uses a model too recent to be
+precisely measured: the displayed impact is then a provisional reference —
+see
+<a href="METHODOLOGY.html#anthropic-models-too-recent-for-the-ecologits-registry">METHODOLOGY.md</a>.</p>
+<h2 id="going-further">Going further</h2>
+<ul>
+<li><strong><a href="GUIDE-AVANCE.html">Advanced guide</a></strong> — manual installation (Homebrew,
+  PyPI, from source), environment variables, and how ai-footprint works
+  under the hood.</li>
+<li><strong><a href="METHODOLOGY.html">METHODOLOGY.md</a></strong> — how impact is evaluated: the
+  exchanges with EcoLogits, methodological choices and their limits.</li>
+<li><strong><a href="CONTRIBUTING.html">CONTRIBUTING.md</a></strong> — the technical side: architecture,
+  data schema, dev setup, and how to extend the project.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="index.html" class="btn btn-neutral float-left" title="Accueil"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="GUIDE-AVANCE.html" class="btn btn-neutral float-right" title="Guide avancé">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="index.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="GUIDE-AVANCE.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

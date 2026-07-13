@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/checklist-nouvel-outil.html" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Checklist nouvel outil - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Checklist nouvel outil";
+        var mkdocs_page_input_path = "checklist-nouvel-outil.md";
+        var mkdocs_page_url = "/ai-footprint/guide/checklist-nouvel-outil.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE.html">Guide utilisateur</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="METHODOLOGY.html">Méthodologie</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="comparaison-donnees-outils.html">Comparaison des outils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="publication-pypi.html">Publication PyPI</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Checklist nouvel outil</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-collecteur-ai_footprintcollectors">1. Collecteur (ai_footprint/collectors/)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-tests-tdd-avant-limplementation">2. Tests (TDD — avant l'implémentation)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-cablage-cli-ai_footprint__main__py">3. Câblage CLI (ai_footprint/__main__.py)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-installsh">4. install.sh</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-skill-skills">5. Skill (skills/)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-documentation">6. Documentation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-verification-finale">7. Vérification finale</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contribuer</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Checklist nouvel outil</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/checklist-nouvel-outil.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="checklist-integrer-un-nouvel-outil-client-ia">Checklist : intégrer un nouvel outil (client IA)</h1>
+<p>À suivre à chaque ajout d'une source d'événements (Claude Code, Opencode/Crush,
+un futur client type Codex, etc.). Référence technique complète : voir
+<a href="CONTRIBUTING.html">CONTRIBUTING.md</a> (architecture, schéma DB, conventions).</p>
+<h2 id="1-collecteur-ai_footprintcollectors">1. Collecteur (<code>ai_footprint/collectors/</code>)</h2>
+<ul>
+<li>[ ] Implémenter une classe héritant de l'ABC <code>Collector</code> (<code>base.py</code>) :
+      attributs <code>provider</code> / <code>client</code>, méthode <code>collect() -&gt; Iterator[InferenceEvent]</code>.</li>
+<li>[ ] Choisir le modèle de référence le plus proche selon la source de données : - transcript fichier (JSONL…) → s'inspirer de <code>claude_code.py</code>. - export JSON + backfill SQLite → s'inspirer de <code>crush.py</code> (IDs
+      synthétiques déterministes via SHA1 pour éviter les collisions de clé
+      primaire).</li>
+<li>[ ] Dériver le <code>project</code> depuis le <code>cwd</code> si disponible ; estimer
+      <code>active_seconds</code> ; ignorer les events sans usage tokens.</li>
+<li>[ ] Ne jamais extraire de contenu de prompt/réponse — uniquement les
+      métadonnées nécessaires au calcul d'impact.</li>
+</ul>
+<h2 id="2-tests-tdd-avant-limplementation">2. Tests (TDD — avant l'implémentation)</h2>
+<ul>
+<li>[ ] Tests unitaires du collecteur (fixtures représentatives du format
+      source, cas limites : event sans usage, cwd absent, doublons/idempotence).</li>
+<li>[ ] Test d'ingestion bout-en-bout (<code>SQLiteStore.ingest</code>) si le format
+      d'entrée diffère significativement des collecteurs existants.</li>
+<li>[ ] <code>.venv/bin/python -m pytest -q</code> vert avant de continuer.</li>
+</ul>
+<h2 id="3-cablage-cli-ai_footprint__main__py">3. Câblage CLI (<code>ai_footprint/__main__.py</code>)</h2>
+<ul>
+<li>[ ] Enregistrer le nouveau collecteur (option <code>--source-&lt;outil&gt;</code> si
+      pertinent, cf. <code>--source-crush</code>).</li>
+</ul>
+<h2 id="4-installsh">4. <code>install.sh</code></h2>
+<ul>
+<li>[ ] Détecter l'outil (<code>command -v &lt;outil&gt;</code>).</li>
+<li>[ ] Backfill initial si une base/export local existe déjà.</li>
+<li>[ ] Câblage spécifique à l'outil (hook, plugin, config) si l'outil expose un
+      mécanisme d'extension — cf. section Opencode/Crush (plugin <code>.js</code> +
+      enregistrement dans <code>opencode.json</code>) pour un exemple.</li>
+<li>[ ] Ne jamais écraser une config/statusline déjà prise par un autre outil
+      (cf. logique existante pour <code>statusLine</code> dans le câblage Claude Code).</li>
+</ul>
+<h2 id="5-skill-skills">5. Skill (<code>skills/</code>)</h2>
+<ul>
+<li>[ ] Si l'outil a une UX conversationnelle propre, ajouter
+      <code>skills/ai-footprint-&lt;outil&gt;/SKILL.md</code> (frontmatter <code>name</code>/<code>description</code>).
+      L'installeur le déploie automatiquement par symlink.</li>
+</ul>
+<h2 id="6-documentation">6. Documentation</h2>
+<ul>
+<li>[ ] <code>README.md</code> : mentionner le nouvel outil s'il change l'usage utilisateur
+      (installation, détection automatique).</li>
+<li>[ ] <code>CONTRIBUTING.md</code> : mettre à jour le schéma d'architecture / la table
+      des modules si le nouveau collecteur introduit un pattern différent.</li>
+<li>[ ] <code>docs/comparaison-donnees-outils.md</code> : ajouter l'outil au comparatif des
+      formats/données disponibles.</li>
+<li>[ ] <code>docs/METHODOLOGY.md</code> : uniquement si l'outil introduit une nuance de
+      calcul d'impact (ex. modèles auto-hébergés, tokenisation différente).</li>
+</ul>
+<h2 id="7-verification-finale">7. Vérification finale</h2>
+<ul>
+<li>[ ] Suite de tests complète verte.</li>
+<li>[ ] Test manuel d'un <code>install.sh</code> de bout en bout (idéalement via
+      <code>AI_FOOTPRINT_REF=&lt;branche&gt;</code> sur un répertoire de test, cf.
+      CONTRIBUTING § Tester <code>install.sh</code> sur une branche) confirmant que la
+      détection, le backfill et le câblage fonctionnent sans toucher aux
+      configs d'un autre outil.</li>
+<li>[ ] Release (<code>ai-footprint release bump &lt;patch|minor&gt;</code>) une fois mergé sur
+      <code>main</code>, puis relancer le script d'install (cf. § Deux codebases, une
+      base dans AGENTS.md).</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="publication-pypi.html" class="btn btn-neutral float-left" title="Publication PyPI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="CONTRIBUTING.html" class="btn btn-neutral float-right" title="Contribuer">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="publication-pypi.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="CONTRIBUTING.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/METHODOLOGY.html" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Méthodologie - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "M\u00e9thodologie";
+        var mkdocs_page_input_path = "METHODOLOGY.md";
+        var mkdocs_page_url = "/ai-footprint/guide/METHODOLOGY.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE.html">Guide utilisateur</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Méthodologie</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#pourquoi-ecologits">Pourquoi EcoLogits</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#les-echanges-avec-ecologits">Les échanges avec EcoLogits</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ce-quon-envoie">Ce qu'on envoie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#ce-quon-recoit">Ce qu'on reçoit</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#les-deux-chemins-de-calcul">Les deux chemins de calcul</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#choix-methodologiques-et-pourquoi">Choix méthodologiques (et pourquoi)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modeles-auto-heberges-et-tiers">Modèles auto-hébergés et tiers</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#lire-les-chiffres-couverture">Lire les chiffres : couverture</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reproductibilite">Reproductibilité</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#estimation-des-parametres-des-modeles-auto-heberges">Estimation des paramètres des modèles auto-hébergés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modeles-anthropic-trop-recents-pour-le-registre-ecologits">Modèles Anthropic trop récents pour le registre EcoLogits</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limites-assumees">Limites assumées</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#references">Références</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="comparaison-donnees-outils.html">Comparaison des outils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="publication-pypi.html">Publication PyPI</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="checklist-nouvel-outil.html">Checklist nouvel outil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">Contribuer</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Méthodologie</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/METHODOLOGY.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="methodologie-comment-limpact-est-evalue">Méthodologie — comment l'impact est évalué</h1>
+<p>ai-footprint <strong>ne réécrit aucun modèle d'impact</strong>. Il collecte les métadonnées
+d'usage (tokens, modèle, horodatage) et délègue tout le calcul environnemental à
+<strong><a href="https://github.com/mlco2/ecologits">EcoLogits</a></strong> (moteur offline, multi-critères,
+multi-phases). Ce document décrit ce qu'on envoie à EcoLogits, ce qu'on en reçoit,
+et les choix de méthodologie (avec leurs limites).</p>
+<h2 id="pourquoi-ecologits">Pourquoi EcoLogits</h2>
+<p>L'audit de <code>claude-carbon</code> (mono-critère CO₂, facteurs dérivés du <strong>prix</strong>) a montré
+les limites d'une modélisation maison. ai-footprint s'appuie sur EcoLogits :</p>
+<ul>
+<li><strong>multi-critères</strong> (5 critères, pas seulement le CO₂) ;</li>
+<li><strong>multi-phases</strong> (usage + fabrication) ;</li>
+<li><strong>offline</strong> (aucune donnée envoyée sur le réseau pour le calcul) ;</li>
+<li><strong>maintenu et revu</strong> par une communauté spécialisée.</li>
+</ul>
+<h2 id="les-echanges-avec-ecologits">Les échanges avec EcoLogits</h2>
+<p>Pour <strong>chaque message d'inférence</strong> (un appel modèle dans un transcript), ai-footprint
+fait un calcul. Deux chemins selon que le modèle est connu d'EcoLogits ou non.</p>
+<h3 id="ce-quon-envoie">Ce qu'on envoie</h3>
+<table>
+<thead>
+<tr>
+<th>Donnée</th>
+<th>Source</th>
+<th>Remarque</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>provider</code></td>
+<td>transcript (défaut <code>anthropic</code>)</td>
+<td>identifie le fournisseur</td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td>transcript, après application des alias</td>
+<td>ex. <code>claude-opus-4-8</code></td>
+</tr>
+<tr>
+<td><code>output_token_count</code></td>
+<td>usage du message</td>
+<td><strong>seuls les tokens de sortie</strong> alimentent le calcul</td>
+</tr>
+<tr>
+<td><code>request_latency</code></td>
+<td><strong>estimée</strong> : <code>output_tokens / throughput_tok_s</code> (défaut 50 tok/s, min 0,5 s)</td>
+<td>influe sur la part « énergie au repos » du datacenter</td>
+</tr>
+<tr>
+<td><code>electricity_mix_zone</code></td>
+<td>config (défaut USA, configurable)</td>
+<td>mix électrique du datacenter</td>
+</tr>
+</tbody>
+</table>
+<p>Pour un <strong>modèle auto-hébergé / non reconnu</strong>, on fournit en plus les <strong>paramètres
+du modèle</strong> (actif/total, en milliards), le <strong>PUE</strong> (plage 1.1–1.5 par défaut) et le
+<strong>WUE</strong> du datacenter.</p>
+<h3 id="ce-quon-recoit">Ce qu'on reçoit</h3>
+<p>Pour chaque message, EcoLogits renvoie les <strong>5 critères</strong>, chacun en <strong>fourchette
+<code>(min, max)</code></strong>, répartis en deux <strong>phases</strong> :</p>
+<table>
+<thead>
+<tr>
+<th>Critère</th>
+<th>Unité</th>
+<th>Quoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>energy</code></td>
+<td>kWh</td>
+<td>énergie consommée</td>
+</tr>
+<tr>
+<td><code>gwp</code></td>
+<td>kg CO₂eq</td>
+<td>réchauffement global</td>
+</tr>
+<tr>
+<td><code>adpe</code></td>
+<td>kg Sbeq</td>
+<td>épuisement des ressources abiotiques (métaux)</td>
+</tr>
+<tr>
+<td><code>pe</code></td>
+<td>MJ</td>
+<td>énergie primaire</td>
+</tr>
+<tr>
+<td><code>wcf</code></td>
+<td>L</td>
+<td>empreinte eau</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>usage</strong> : l'inférence elle-même.</li>
+<li><strong>embodied</strong> : la fabrication/amortissement du matériel (gwp, adpe, pe).</li>
+</ul>
+<p>ai-footprint stocke ces fourchettes telles quelles (table <code>impacts</code>), avec la
+version de méthodologie utilisée. Le rapport agrège ensuite par total / projet /
+modèle, et affiche une <strong>valeur centrale <code>~</code></strong> (moyenne des bornes) accompagnée de la
+<strong>plage min–max</strong>.</p>
+<h3 id="les-deux-chemins-de-calcul">Les deux chemins de calcul</h3>
+<ol>
+<li><strong>Modèle reconnu EcoLogits</strong> → <code>llm_impacts()</code> (le registre EcoLogits porte déjà
+   l'architecture et les paramètres du modèle).</li>
+<li><strong>Modèle inconnu</strong> → on résout les paramètres (voir plus bas) puis on appelle
+   <code>compute_llm_impacts()</code> directement, avec le mix électrique de la zone et la plage
+   PUE. La plage PUE (min/max) génère la fourchette min/max des résultats.</li>
+</ol>
+<h2 id="choix-methodologiques-et-pourquoi">Choix méthodologiques (et pourquoi)</h2>
+<ul>
+<li><strong>Tokens de sortie uniquement.</strong> Le coût d'inférence dominant est la génération.
+  Les tokens d'entrée et de cache <strong>ne sont pas</strong> comptés dans l'impact (ils sont
+  toutefois affichés dans « tokens utilisés », pour la transparence). C'est une
+  approximation assumée, alignée sur EcoLogits.</li>
+<li><strong>Latence estimée.</strong> Le transcript ne donne pas la durée réelle de l'appel ; on
+  l'estime via un débit (<code>throughput_tok_s</code>). Approximation, configurable.</li>
+<li><strong>Fourchettes min–max, jamais un point.</strong> L'incertitude est <strong>irréductible</strong> :</li>
+<li>la <strong>région datacenter</strong> d'Anthropic (donc son mix électrique réel) est inconnue ;</li>
+<li>le <strong>PUE</strong> d'un datacenter varie (plage 1.1–1.5).
+    On documente cette incertitude plutôt que de la dissimuler derrière un chiffre
+    faussement précis. La valeur centrale <code>~</code> n'est qu'un repère.</li>
+<li><strong>Zone électrique configurable.</strong> Défaut USA ; réglable (ex. FRA) via
+  <code>/footprint-config</code>. Elle change fortement le GWP (le mix varie d'un facteur
+  ~10 entre pays).</li>
+</ul>
+<h2 id="modeles-auto-heberges-et-tiers">Modèles auto-hébergés et tiers</h2>
+<p>Beaucoup de modèles ne sont pas dans le registre EcoLogits (inférence locale, modèles
+open-weight, routeurs tiers). Pour estimer leur impact, il faut leurs <strong>paramètres</strong>.
+ai-footprint les résout en cascade :</p>
+<ol>
+<li><strong>Registre EcoLogits</strong> (si finalement reconnu) — gère dense et <strong>MoE</strong> (actif/total).</li>
+<li><strong>Cache config</strong> (<code>~/.ai-footprint/config.json</code>) — params déclarés ou résolus
+   précédemment, avec provenance (<code>source</code>, <code>hf_repo</code>).</li>
+<li><strong>Hugging Face</strong> — nombre de paramètres lu depuis les métadonnées safetensors
+   (<code>total ÷ 1e9</code>, en <strong>milliards</strong>). Offline-safe : tout échec ⇒ non résolu.</li>
+<li><strong>Sinon</strong> — le modèle reste <strong>non couvert</strong> (impact non estimé), mis en file
+   d'attente.</li>
+</ol>
+<p><strong>Actif vs total (MoE).</strong> Pour un Mixture-of-Experts, l'énergie dépend des paramètres
+<strong>actifs</strong> par token (≪ total). Confondre actif et total surestime fortement l'énergie
+(observé ~10× sur des modèles 120–225 Md). Le couple correct <code>(actif, total)</code> donne
+une estimation honnête. <em>(Limite actuelle : la résolution automatique via Hugging Face
+suppose « dense » ; un couple MoE se déclare à la main — cf. backlog.)</em></p>
+<blockquote>
+<p><strong>Unité (piège récurrent)</strong> : les paramètres EcoLogits sont <strong>en milliards</strong>
+partout. <code>safetensors.total</code> (compte brut) est divisé par <code>1e9</code>.</p>
+</blockquote>
+<h2 id="lire-les-chiffres-couverture">Lire les chiffres : couverture</h2>
+<p>La sortie d'<code>ingest</code> (et le rapport) distingue :</p>
+<ul>
+<li><strong>mesurés</strong> — impact estimé par EcoLogits.</li>
+<li><strong>non couverts</strong> — modèle hors périmètre : l'event est <strong>conservé</strong> mais son impact
+  n'est <strong>pas</strong> estimé (afficher un faux chiffre serait pire) et il est <strong>exclu des
+  totaux</strong>. Deux familles :</li>
+<li>les placeholders internes <code>&lt;synthetic&gt;</code> de Claude Code (0 token, aucune inférence
+    réelle) — non couvrables par nature, exclus du rapport ;</li>
+<li>les vrais modèles tiers/auto-hébergés non résolus — <strong>résolubles</strong> vers un repo
+    Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>).</li>
+</ul>
+<p>La résolution d'un modèle déclenche un <strong>recalcul</strong> des impacts déjà en base
+(<code>resolve --recompute</code>), sans re-parser les transcripts.</p>
+<h2 id="reproductibilite">Reproductibilité</h2>
+<p>Chaque impact stocke sa <code>methodology_version</code>
+(<code>engine=…;ecologits=…</code>). On peut ainsi recalculer après une mise à jour d'EcoLogits
+et comparer les résultats anciens/nouveaux.</p>
+<p>Ce recalcul (<code>ai-footprint resolve --retry-hf</code>) n'est plus seulement manuel :
+à chaque démarrage de session, <code>ai-footprint nudge</code> propose proactivement une
+mise à jour d'ai-footprint si elle existe, puis un <code>footprint-resolve</code> pour
+les modèles non couverts jamais proposés (silence par lot — un modèle décliné
+n'est reproposé qu'après une mise à jour d'ai-footprint, seul événement
+susceptible de faire évoluer sa couverture). Voir <code>ai_footprint/nudge.py</code> et
+<code>CONTRIBUTING.md</code> § Modules.</p>
+<h2 id="estimation-des-parametres-des-modeles-auto-heberges">Estimation des paramètres des modèles auto-hébergés</h2>
+<p>Quand un modèle n'est ni dans le registre EcoLogits ni doté de metadata
+safetensors, ses paramètres sont <strong>estimés depuis la taille des fichiers</strong> du
+repo Hugging Face. Le dtype (octets/param) est déduit du nom du repo
+(<code>-4bit</code> → 0.5, <code>-int8</code> → 1, <code>-fp16</code>/<code>-bf16</code> → 2, <code>-fp32</code> → 4) ; s'il est
+indétectable, on produit une <strong>fourchette</strong> (0.5–2 octets/param, soit un
+rapport 1:4 sur les params) plutôt qu'une valeur unique. Ces estimations
+portent un warning de provenance en base et les modèles concernés sont
+signalés dans le rapport (« Params estimés depuis la taille des fichiers »).</p>
+<h2 id="modeles-anthropic-trop-recents-pour-le-registre-ecologits">Modèles Anthropic trop récents pour le registre EcoLogits</h2>
+<p>Le registre EcoLogits porte ses propres estimations (extrapolées, <code>model-arch-not-
+released</code>) pour les modèles Anthropic fermés — mais un modèle tout juste sorti
+(ex. <code>claude-sonnet-5</code>, <code>claude-fable-5</code>) peut ne pas encore y figurer. Plutôt que de
+le laisser <strong>non couvert</strong>, ai-footprint réutilise en attendant les paramètres
+qu'EcoLogits déclare pour la version connue de la même lignée (ex. la famille
+Sonnet-4.x : MoE, 440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le
+débit <code>tps</code> change d'une version à l'autre). Ce stand-in est déclaré à la main dans
+<code>model_params</code> (<code>source: "extrapolated"</code>) et porte un warning dédié
+(<code>params-extrapolated-anthropic:…</code>).</p>
+<p>Ces modèles sont signalés séparément des estimations HF, dans le rapport (note
+« Params extrapolés d'une version sœur ») et dans la statusline (préfixe <code>≈</code>) : les
+chiffres affichés sont un <strong>repère provisoire</strong>, pas une mesure EcoLogits officielle
+pour ce modèle précis. Dès qu'une release EcoLogits couvre le modèle, l'entrée
+manuelle doit être retirée (<code>resolve --forget</code>) pour repasser sur le registre.</p>
+<h2 id="limites-assumees">Limites assumées</h2>
+<ul>
+<li>Impact piloté par les <strong>tokens de sortie</strong> (entrée/cache non comptés).</li>
+<li><strong>Région datacenter inconnue</strong> → fourchettes ; défaut mix USA (configurable).</li>
+<li><strong>Latence estimée</strong>, pas mesurée.</li>
+<li><strong>Inférence locale / énergie du poste de travail</strong> : hors périmètre (seule
+  l'inférence est modélisée, pas la consommation de la machine de l'utilisateur).</li>
+<li><strong>MoE auto-résolu en dense</strong> par le tier Hugging Face (le couple actif/total se
+  déclare manuellement pour l'instant).</li>
+</ul>
+<h2 id="references">Références</h2>
+<ul>
+<li>EcoLogits — https://github.com/mlco2/ecologits</li>
+<li>CodeCarbon — https://github.com/mlco2/codecarbon</li>
+<li>claude-carbon — audit d'origine et UX de reporting</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="GUIDE-AVANCE.html" class="btn btn-neutral float-left" title="Guide avancé"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="comparaison-donnees-outils.html" class="btn btn-neutral float-right" title="Comparaison des outils">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="GUIDE-AVANCE.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="comparaison-donnees-outils.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

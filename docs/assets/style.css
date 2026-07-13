@@ -328,6 +328,13 @@ section h2 {
   display: block;
 }
 
+.models-note {
+  text-align: center;
+  color: var(--color-text-muted);
+  max-width: 560px;
+  margin: 20px auto 0;
+}
+
 /* Footer */
 .footer {
   text-align: center;

@@ -3,7 +3,7 @@
 Guide technique : mise en place dev, conventions, architecture du code, schéma de
 données, et comment étendre le projet. Pour **comment l'impact est calculé** (les
 échanges avec EcoLogits, les choix de méthodologie), voir
-[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md).
+[`METHODOLOGY.md`](METHODOLOGY.md).
 
 ## Mise en place
 
@@ -166,13 +166,35 @@ planter.
 
 Lancer : `.venv/bin/python -m pytest -q`.
 
+## Site de documentation (docs/guide)
+
+Les Markdown de `docs/` (`METHODOLOGY.md`, `comparaison-donnees-outils.md`,
+`publication-pypi.md`, `checklist-nouvel-outil.md`) sont convertis en HTML via
+**MkDocs** (+ `mkdocs-static-i18n`), indépendamment des landing pages
+(`docs/index.html`, `docs/fr/index.html`) qui restent écrites à la main.
+
+- Config : `mkdocs.yml` (`docs_dir: docs`, `exclude_docs` exclut les landing
+  pages/assets pour que MkDocs ne touche qu'aux `.md`).
+- Bilingue : FR est la locale par défaut (contenu actuel), `/en/` est prêt à
+  accueillir des traductions (`fichier.en.md`) — tant qu'elles n'existent pas,
+  `/en/` affiche le contenu FR (fallback `mkdocs-static-i18n`).
+- GitHub Pages sert `docs/` tel quel (pas de build serveur) : après toute
+  modification d'un des Markdown, régénérer et **commiter** le résultat :
+
+  ```bash
+  .venv/bin/python scripts/build_docs.py
+  ```
+
+  Le script build dans un dossier temporaire puis remplace `docs/guide/`
+  (le dossier temporaire `.mkdocs-build/` est gitignore).
+
 ## Étendre
 
 - **Nouveau collecteur** (autre outil que Claude Code) : implémenter un collecteur qui
   émet des `InferenceEvent` (renseigner `provider`/`client`), sur le modèle de
   `ClaudeCodeCollector`. Le reste du pipeline est neutre vis-à-vis de la source.
   Checklist complète à suivre à chaque intégration :
-  [`docs/checklist-nouvel-outil.md`](docs/checklist-nouvel-outil.md).
+  [`checklist-nouvel-outil.md`](checklist-nouvel-outil.md).
 - **Nouveau skill** : ajouter `skills/<nom>/SKILL.md` (frontmatter `name`/`description`).
   L'installeur le déploie par symlink dans `~/.claude/skills/`.
 - **Résolution de modèles** : la cascade vit dans `impact/params.py` ; la CLI
@@ -186,7 +208,7 @@ Lancer : `.venv/bin/python -m pytest -q`.
 
 ## Backlog technique
 
-Voir [`.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md`](.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md) :
+Voir [`.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md`](../.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md) :
 correctifs qualité de la lecture des données et de la résolution des modèles
 (cache négatif HF, estimation 4-bit…), et l'évolution « étape WebSearch » dans la
 cascade de résolution. `resolve --set "P/M=repo:<actifs>"` gère les MoE.

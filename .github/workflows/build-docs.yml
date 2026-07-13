@@ -1,0 +1,36 @@
+name: build-docs
+
+# Régénère docs/guide/ (site MkDocs FR/EN) à chaque changement des Markdown
+# sources ou de leur config, et commite le résultat sur main. GitHub Pages
+# sert /docs de la branche main tel quel (build "legacy" côté GitHub) : ce
+# commit déclenche donc automatiquement la republication du site.
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/*.md"
+      - "mkdocs.yml"
+      - "scripts/build_docs.py"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Installer les dépendances (dont dev)
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+      - name: Générer docs/guide
+        run: python scripts/build_docs.py
+      - name: Commiter si changement
+        run: |
+          git config user.name "ai-footprint-bot"
+          git config user.email "actions@github.com"
+          git add docs/guide
+          git diff --cached --quiet || git commit -m "chore(docs): regenerate docs/guide"
+          git diff --cached --quiet || git push

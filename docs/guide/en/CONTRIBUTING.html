@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://hrenaud.github.io/ai-footprint/guide/en/CONTRIBUTING.html" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Contribuer - AI Footprint — Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Contribuer";
+        var mkdocs_page_input_path = "CONTRIBUTING.en.md";
+        var mkdocs_page_url = "/ai-footprint/guide/en/CONTRIBUTING.html";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="index.html" class="icon icon-home"> AI Footprint — Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="index.html">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE.html">Guide utilisateur</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="GUIDE-AVANCE.html">Guide avancé</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="METHODOLOGY.html">Méthodologie</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="comparaison-donnees-outils.html">Comparaison des outils</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="publication-pypi.html">Publication PyPI</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="checklist-nouvel-outil.html">Checklist nouvel outil</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Contribuer</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#testing-installsh-on-a-branch-before-merging-into-main">Testing install.sh on a branch (before merging into main)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#conventions">Conventions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#modules-ai_footprint">Modules (ai_footprint/)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#database-schema-ai-footprintai-footprintdb">Database schema (~/.ai-footprint/ai-footprint.db)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#separation-of-events-impacts">Separation of events / impacts</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#card-png-headless-chrome-rather-than-playwright">Card PNG: headless Chrome rather than Playwright</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation-site-docsguide">Documentation site (docs/guide)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extending">Extending</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#technical-backlog">Technical backlog</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#release">Release</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependency-watch-ecologits-huggingface_hub">Dependency watch (ecologits, huggingface_hub)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#out-of-current-scope-seams-laid-down">Out of current scope (seams laid down)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AI Footprint — Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Contribuer</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/hrenaud/ai-footprint/edit/master/docs/CONTRIBUTING.en.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="contributing-to-ai-footprint">Contributing to ai-footprint</h1>
+<p>Technical guide: dev setup, conventions, code architecture, data schema, and
+how to extend the project. For <strong>how impact is calculated</strong> (the exchanges
+with EcoLogits, the methodology choices), see
+<a href="METHODOLOGY.html"><code>METHODOLOGY.md</code></a>.</p>
+<h2 id="setup">Setup</h2>
+<pre><code class="language-bash">git clone https://github.com/hrenaud/ai-footprint
+cd ai-footprint
+python3 -m venv .venv
+.venv/bin/pip install -e .        # installs ai-footprint + EcoLogits (tag 0.11.0)
+.venv/bin/python -m pytest -q     # the suite must be green
+</code></pre>
+<p>Run the CLI in dev: <code>.venv/bin/python -m ai_footprint &lt;command&gt;</code>.</p>
+<h3 id="testing-installsh-on-a-branch-before-merging-into-main">Testing <code>install.sh</code> on a branch (before merging into <code>main</code>)</h3>
+<p><code>install.sh</code> installs <code>main</code> by default, but accepts <code>AI_FOOTPRINT_REF</code> to
+point at any branch or tag — useful to test a contribution under real
+conditions (clone + venv + Claude Code hook) before merging:</p>
+<pre><code class="language-bash">AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+</code></pre>
+<p><code>AI_FOOTPRINT_DIR</code> avoids overwriting the current installation in
+<code>~/.ai-footprint/src</code> during the test. See also <code>AI_FOOTPRINT_DB</code>,
+<code>AI_FOOTPRINT_NO_CLAUDE</code>, <code>AI_FOOTPRINT_NO_INGEST</code> at the top of
+<code>install.sh</code>.</p>
+<p>To clean up a test installation:
+<code>AI_FOOTPRINT_DIR=/tmp/ai-footprint-test AI_FOOTPRINT_PURGE_DB=1 bash uninstall.sh</code>
+(<code>uninstall.sh</code> undoes everything <code>install.sh</code> sets up; it uses the same
+<code>AI_FOOTPRINT_DIR</code> / <code>AI_FOOTPRINT_DB</code> variables, plus
+<code>AI_FOOTPRINT_PURGE_DB=1</code> to also delete the database).</p>
+<h2 id="conventions">Conventions</h2>
+<ul>
+<li><strong>French</strong> for code (comments, docstrings) and user-facing messages.</li>
+<li><strong>TDD</strong>: write the test, watch it fail, implement, watch it pass, commit.</li>
+<li><strong>Semantic commits</strong>: <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>refactor:</code>, <code>perf:</code>,
+  <code>test:</code>, <code>chore:</code>.</li>
+<li>Never delete a file with <code>rm</code> — use <code>trash</code>.</li>
+<li><strong>Simplicity first</strong> (YAGNI): the minimum code that solves the problem.</li>
+<li>EcoLogits parameters <strong>in billions</strong> everywhere (see METHODOLOGY).</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<pre><code>JSONL Claude Code (~/.claude/projects/**/*.jsonl)
+    ↓
+ClaudeCodeCollector (parse, normalize, active time, client)
+    ↓
+InferenceEvent[]  (provider, model, tokens, timestamp, session, project, active_seconds, client)
+    ↓
+EcoLogitsEngine (offline, EcoLogits 0.11.0)
+    ├─ recognized model → llm_impacts()
+    └─ otherwise → ModelParamsResolver + compute_llm_impacts()
+    ↓
+ImpactRecord (5 criteria min/max, usage/embodied phases, warnings, error)
+    ↓
+SQLiteStore (idempotent; events / impacts / sessions / pending_models)
+    ↓
+CLI: report · statusline · resolve · models   (read the DB, never the JSONL)
+</code></pre>
+<h3 id="modules-ai_footprint">Modules (<code>ai_footprint/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>collectors/claude_code.py</code></td>
+<td>parses JSONL → <code>InferenceEvent</code> (ignores non-<code>assistant</code>/without usage; derives project from <code>cwd</code>; estimates <code>active_seconds</code>; fills <code>client</code>). No prompt/response content is extracted.</td>
+</tr>
+<tr>
+<td><code>models.py</code></td>
+<td><code>InferenceEvent</code> dataclass.</td>
+</tr>
+<tr>
+<td><code>impact/engine.py</code></td>
+<td><code>EcoLogitsEngine.compute()</code>: registry path vs. self-hosted fallback; <code>_extract_impacts</code> (totals/usage/embodied as min/max).</td>
+</tr>
+<tr>
+<td><code>impact/resolver.py</code></td>
+<td><code>ModelResolver</code>: name aliases (<code>Config.model_aliases</code>).</td>
+</tr>
+<tr>
+<td><code>impact/params.py</code></td>
+<td><code>ModelParamsResolver</code> (cascade registry→cache→HF→file) + <code>fetch_hf_params(repo)</code> (safetensors ÷ 1e9, offline-safe).</td>
+</tr>
+<tr>
+<td><code>store/db.py</code></td>
+<td><code>SQLiteStore</code>: idempotent ingestion, aggregations, recompute.</td>
+</tr>
+<tr>
+<td><code>report/cli.py</code></td>
+<td>renders the report sections (5, plus a 6th, intensity per tool, if several tools are present). Also exposes <code>_central</code>/<code>_scale</code>/<code>_ranked_projects</code>, reused by <code>card/cli.py</code>.</td>
+</tr>
+<tr>
+<td><code>card/cli.py</code></td>
+<td><code>card</code> subcommand: aggregates the totals (<code>build_card_data</code>), generates the HTML (<code>render_card_html</code> + <code>card/template.html</code>), renders the PNG via a local headless Chrome/Chromium (<code>render_png</code>, <code>_find_chrome</code>).</td>
+</tr>
+<tr>
+<td><code>resolve/cli.py</code></td>
+<td><code>resolve</code> subcommand (list/set/recompute/forget).</td>
+</tr>
+<tr>
+<td><code>statusline/line.py</code></td>
+<td>compact line.</td>
+</tr>
+<tr>
+<td><code>dates.py</code></td>
+<td><code>parse_since()</code> (normalizes <code>--since</code> dates).</td>
+</tr>
+<tr>
+<td><code>config.py</code></td>
+<td><code>Config</code> dataclass (JSON <code>~/.ai-footprint/config.json</code>).</td>
+</tr>
+<tr>
+<td><code>cache.py</code></td>
+<td>generic JSON cache throttled by TTL (<code>load_json_cache</code>/<code>save_json_cache</code>/<code>should_refresh</code>), reused by <code>tool_updates.py</code> and <code>nudge.py</code>.</td>
+</tr>
+<tr>
+<td><code>nudge.py</code></td>
+<td>proactive proposals: <code>check_self_update</code> (ai-footprint update via GitHub tag), <code>check_uncovered_batch</code>/<code>mark_batch_prompted</code> (resolving uncovered models, batch silence).</td>
+</tr>
+<tr>
+<td><code>__main__.py</code></td>
+<td>argument parser + command dispatch.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="database-schema-ai-footprintai-footprintdb">Database schema (<code>~/.ai-footprint/ai-footprint.db</code>)</h3>
+<p><code>sqlite3</code>, <code>row_factory = Row</code>, additive migrations via <code>ALTER TABLE</code>.</p>
+<pre><code class="language-sql">CREATE TABLE events (
+  session_id TEXT, msg_id TEXT,
+  provider TEXT, model TEXT,
+  input_tokens INTEGER, output_tokens INTEGER,
+  cache_creation_tokens INTEGER, cache_read_tokens INTEGER,
+  timestamp TEXT,                  -- ISO 8601
+  project TEXT,                    -- derived from cwd
+  active_seconds REAL DEFAULT 0,   -- estimated active time (intensity)
+  client TEXT DEFAULT '',          -- source tool (claude-code…)
+  PRIMARY KEY (session_id, msg_id)
+);
+
+CREATE TABLE impacts (
+  session_id TEXT, msg_id TEXT,
+  model_resolved TEXT, zone TEXT, methodology_version TEXT,
+  energy_min REAL, energy_max REAL, gwp_min REAL, gwp_max REAL,
+  adpe_min REAL, adpe_max REAL, pe_min REAL, pe_max REAL,
+  wcf_min REAL, wcf_max REAL,
+  breakdown_json TEXT,             -- {&quot;usage&quot;: {...}, &quot;embodied&quot;: {...}}
+  warnings TEXT, error TEXT,       -- non-NULL error = uncovered
+  PRIMARY KEY (session_id, msg_id)
+);
+
+CREATE TABLE sessions (session_id TEXT PRIMARY KEY, project TEXT, started_at TEXT, ended_at TEXT);
+CREATE TABLE pending_models (provider TEXT, model TEXT, first_seen TEXT, occurrences INTEGER DEFAULT 0,
+                             PRIMARY KEY (provider, model));
+</code></pre>
+<p><strong>Idempotence</strong>: <code>INSERT OR IGNORE</code> on <code>(session_id, msg_id)</code>; re-ingestion
+does not recompute the impact but backfills missing <code>active_seconds</code>/<code>client</code>.</p>
+<p><strong>Key <code>SQLiteStore</code> methods</strong> (readable filtered by <code>since</code>, lexicographic
+comparison on <code>timestamp</code>):</p>
+<ul>
+<li><code>rows_for_report(since, session_id)</code> — total / projects.</li>
+<li><code>tokens_by_model(since)</code> — total tokens + central value &amp; min/max bounds
+  per criterion.</li>
+<li><code>session_count(since)</code>, <code>first_session_started_at()</code>,
+  <code>clients_covered(since)</code> — used by the card (sub-hero, period label,
+  covered tools).</li>
+<li><code>intensity_by_model(since)</code> — active hours, tok/h, impact/h (events with
+  time &gt; 0).</li>
+<li><code>uncovered_by_model(since)</code> — uncovered models (excluding <code>&lt;synthetic&gt;</code>).</li>
+<li><code>uncovered_keys()</code> — uncovered <code>(provider, model)</code> pairs (excluding
+  <code>&lt;synthetic&gt;</code>), without a <code>since</code> filter; used by <code>resolve --retry-hf</code> and
+  by <code>ai_footprint/nudge.py</code>.</li>
+<li><code>coverage()</code> — <code>{total, measured, uncovered}</code>.</li>
+<li><code>recompute_errors(engine, config)</code> — recomputes events in <code>error</code> →
+  <code>{before, after}</code>.</li>
+<li><code>mark_model_events_error(provider, model, error)</code> — puts a model back into
+  error state (matching <code>(session_id, msg_id)</code>) to revert a mapping.</li>
+</ul>
+<h3 id="separation-of-events-impacts">Separation of events / impacts</h3>
+<p><code>events</code> = normalized raw source (immutable). <code>impacts</code> = calculation
+result (depends on the engine + zone + params). This allows
+<strong>recalculating</strong> without re-parsing the JSONL.</p>
+<h3 id="card-png-headless-chrome-rather-than-playwright">Card PNG: headless Chrome rather than Playwright</h3>
+<p>The HTML → PNG rendering of <code>ai-footprint card</code> drives an <strong>already
+installed local Chrome/Chromium</strong> as a subprocess (<code>--headless=new
+--screenshot=...</code>), not Playwright: zero new Python dependency, doesn't add
+weight to the default installation (the statusline's <code>Stop</code> hook doesn't
+need a browser). <code>card/cli.py::_find_chrome()</code> detects the binary
+(<code>CHROME_BIN</code>, common macOS paths, then <code>PATH</code>); if absent, the command
+fails cleanly with install instructions rather than crashing.</p>
+<h2 id="tests">Tests</h2>
+<p><code>tests/</code> (pytest). Useful conventions:</p>
+<ul>
+<li><strong>Deterministic offline</strong>: to force a Hugging Face lookup to fail without
+  network, use a model name containing <code>:</code> (rejected by HF validation
+  before any network call). For the success path, <strong>mock</strong>
+  <code>huggingface_hub.model_info</code> via
+  <code>monkeypatch.setitem(sys.modules, "huggingface_hub", fake)</code> (see
+  <code>test_params_huggingface.py</code>).</li>
+<li><strong>Temporary config</strong> in CLI tests: monkeypatch <code>Config.load</code>/<code>Config.save</code>
+  to a <code>tmp_path</code> path (see <code>test_cli_models.py</code>).</li>
+</ul>
+<p>Run: <code>.venv/bin/python -m pytest -q</code>.</p>
+<h2 id="documentation-site-docsguide">Documentation site (docs/guide)</h2>
+<p>The Markdown files in <code>docs/</code> (<code>METHODOLOGY.md</code>,
+<code>comparaison-donnees-outils.md</code>, <code>publication-pypi.md</code>,
+<code>checklist-nouvel-outil.md</code>) are converted to HTML via <strong>MkDocs</strong> (+
+<code>mkdocs-static-i18n</code>), independently of the landing pages
+(<code>docs/index.html</code>, <code>docs/fr/index.html</code>) which remain hand-written.</p>
+<ul>
+<li>Config: <code>mkdocs.yml</code> (<code>docs_dir: docs</code>, <code>exclude_docs</code> excludes the
+  landing pages/assets so MkDocs only touches the <code>.md</code> files).</li>
+<li>Bilingual: FR is the default locale (current content), <code>/en/</code> is ready to
+  host translations (<code>file.en.md</code>) — as long as they don't exist, <code>/en/</code>
+  shows the FR content (<code>mkdocs-static-i18n</code> fallback).</li>
+<li>GitHub Pages serves <code>docs/</code> as-is (no server-side build): after any
+  change to one of the Markdown files, regenerate and <strong>commit</strong> the
+  result:</li>
+</ul>
+<p><code>bash
+  .venv/bin/python scripts/build_docs.py</code></p>
+<p>The script builds into a temporary folder then replaces <code>docs/guide/</code>
+  (the temporary <code>.mkdocs-build/</code> folder is gitignored).</p>
+<h2 id="extending">Extending</h2>
+<ul>
+<li><strong>New collector</strong> (a tool other than Claude Code): implement a collector
+  that emits <code>InferenceEvent</code>s (filling in <code>provider</code>/<code>client</code>), on the
+  model of <code>ClaudeCodeCollector</code>. The rest of the pipeline is neutral with
+  respect to the source. Full checklist to follow for each integration:
+  <a href="checklist-nouvel-outil.html"><code>checklist-nouvel-outil.md</code></a>.</li>
+<li><strong>New skill</strong>: add <code>skills/&lt;name&gt;/SKILL.md</code> (frontmatter
+  <code>name</code>/<code>description</code>). The installer deploys it via a symlink into
+  <code>~/.claude/skills/</code>.</li>
+<li><strong>Model resolution</strong>: the cascade lives in <code>impact/params.py</code>; the
+  deterministic <code>resolve</code> CLI (HF + recompute) in <code>resolve/cli.py</code>; the
+  name→repo mapping (judgment call) in the <code>/footprint-resolve</code> skill. HF
+  failures are memoized (in-memory negative cache + persisted in
+  <code>config.json</code>, 7-day TTL); <code>resolve --retry-hf</code> purges this cache and
+  retries the cascade on the uncovered models. Params estimated from file
+  size carry provenance warnings (<code>params-bytes-per-param:&lt;n&gt;</code>,
+  <code>params-range-unknown-dtype</code>) and are flagged in the report.</li>
+</ul>
+<h2 id="technical-backlog">Technical backlog</h2>
+<p>See
+<a href="../.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md"><code>.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md</code></a>:
+data-reading and model-resolution quality fixes (HF negative cache, 4-bit
+estimation…), and the "WebSearch step" evolution in the resolution
+cascade. <code>resolve --set "P/M=repo:&lt;active&gt;"</code> handles MoE models.</p>
+<h2 id="release">Release</h2>
+<p>A release bumps the semantic version, generates the CHANGELOG, and creates
+the tag.</p>
+<p><strong>Always with the local venv binary</strong> (<code>.venv/bin/ai-footprint</code>), never the
+global <code>ai-footprint</code> command: the latter runs the code of the installed
+clone (<code>~/.ai-footprint/src</code>) and would commit/tag there instead of the dev
+repo you're working in.</p>
+<pre><code class="language-bash">.venv/bin/ai-footprint release bump &lt;patch|minor|major&gt; [--no-push]
+</code></pre>
+<ul>
+<li><code>patch</code>: backward-compatible fixes</li>
+<li><code>minor</code>: backward-compatible new features</li>
+<li><code>major</code>: incompatible changes</li>
+</ul>
+<p>The process:</p>
+<ol>
+<li>Checks that the tree is clean, that we're on <code>main</code>, and that the target
+   tag doesn't already exist.</li>
+<li>Computes the new version (e.g. <code>0.1.0</code> → <code>0.2.0</code>).</li>
+<li>Generates the CHANGELOG between the last <code>v*</code> tag and HEAD from the
+   conventional commits (<code>feat:</code>, <code>fix:</code>, etc.).</li>
+<li>Bumps <code>pyproject.toml</code> + <code>ai_footprint/__init__.py</code>.</li>
+<li>Prepends the new block into <code>CHANGELOG.md</code>.</li>
+<li>Commits <code>chore(release): X.Y.Z</code> + tags <code>vX.Y.Z</code>.</li>
+<li><strong>Pushes <code>origin main --tags</code> by default</strong> (<code>--no-push</code> option to skip
+   it).</li>
+</ol>
+<p>Evidence: the <code>tests/test_release.py</code> tests (31 tests) cover the full
+cycle.</p>
+<blockquote>
+<p><strong>Note</strong>: before the first <code>v*</code> tag, the CHANGELOG is maintained manually
+(the "Pre-versioning" section). After the first release, it is entirely
+auto-generated.</p>
+</blockquote>
+<h2 id="dependency-watch-ecologits-huggingface_hub">Dependency watch (ecologits, huggingface_hub)</h2>
+<p>A GitHub Actions workflow (<code>.github/workflows/check-tool-updates.yml</code>,
+weekly cron + manual trigger) compares the versions pinned in
+<code>pyproject.toml</code> (ecologits pinned exactly, huggingface_hub) against the
+latest versions published on PyPI (via <code>ai_footprint/tool_updates.py</code>) and
+opens an issue if a new version exists.</p>
+<p><strong>No automatic bump</strong>: ecologits is pinned to an exact PyPI version because
+a minor <code>0.x</code> bump can break the calculation cascade, and the installed
+tool shares its database with the dev repo (see § Two codebases, one
+base) — a silent bump would be risky. The issue is just a reminder; the
+bump is done by hand in <code>pyproject.toml</code> after testing.</p>
+<p>In addition to the weekly cron, a <strong><code>SessionStart</code> hook local to the dev
+repo</strong> (<code>.claude/settings.json</code>, <em>not</em> the global <code>~/.claude/settings.json</code>
+installed by <code>install.sh</code>) runs <code>ai-footprint tool-updates-check</code> on every
+Claude Code session start in this project, and displays a message if an
+ecologits/huggingface_hub update is available. The network check is cached
+for 24h (<code>.claude/tool-updates-cache.json</code>, gitignored) so it doesn't slow
+down every session start. This logic is tested in
+<code>tests/test_tool_updates.py</code> (<code>session_start_notice</code>, <code>should_refresh</code>,
+<code>load_cache</code>).</p>
+<blockquote>
+<p><strong>Not to be confused with the global <code>SessionStart</code> hook</strong> added by
+<code>install.sh</code> for end-user nudges (<code>ai-footprint nudge --claude-hook</code>, see
+<code>ai_footprint/nudge.py</code>): that one is <strong>internal to the dev repo</strong>
+(<code>.claude/settings.json</code>, not installed for end users) and is used to
+alert ai-footprint maintainers about new ecologits/huggingface_hub
+releases — an entirely different topic from the nudges aimed at
+ai-footprint's end users.</p>
+</blockquote>
+<h2 id="out-of-current-scope-seams-laid-down">Out of current scope (seams laid down)</h2>
+<p>Third-party collectors (Codex, local inference) as stubs; <code>compute_live()</code>
+(real-time instrumentation) and <code>import_legacy()</code> not implemented; CSV/JSON
+export and workstation energy are out of scope.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="checklist-nouvel-outil.html" class="btn btn-neutral float-left" title="Checklist nouvel outil"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/hrenaud/ai-footprint" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="checklist-nouvel-outil.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

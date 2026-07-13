@@ -2,7 +2,7 @@
 
 À suivre à chaque ajout d'une source d'événements (Claude Code, Opencode/Crush,
 un futur client type Codex, etc.). Référence technique complète : voir
-[CONTRIBUTING.md](../CONTRIBUTING.md) (architecture, schéma DB, conventions).
+[CONTRIBUTING.md](CONTRIBUTING.md) (architecture, schéma DB, conventions).
 
 ## 1. Collecteur (`ai_footprint/collectors/`)
 

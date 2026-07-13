@@ -1,9 +1,9 @@
 # AI Footprint
 
 **Connaître l'empreinte environnementale de tes sessions d'IA.** AI Footprint (`ai-footprint`) lit les
-transcripts de Claude Code, Opencode/CRUSH et Pi, estime l'impact de chaque réponse
-générée, et te le restitue sous forme de rapport et de statusline — directement dans
-Claude Code.
+transcripts de Claude Code, Opencode et Pi, estime l'impact de chaque réponse
+générée, et te le restitue sous forme de rapport et de suivi en temps réel —
+directement dans l'outil que tu utilises déjà.
 
 Le calcul n'est pas réinventé : il est délégué à **[EcoLogits](https://github.com/mlco2/ecologits)**,
 un moteur reconnu, **offline** et **multi-critères**.
@@ -35,20 +35,35 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.s
 ```
 
 L'installeur détecte Python ≥ 3.10, installe ai-footprint + EcoLogits, expose la
-commande `ai-footprint`, déploie les skills, et câble la statusline + un hook
-d'ingestion dans `~/.claude/settings.json` (sans toucher à une statusline déjà prise
-par un autre outil). Il détecte aussi Opencode/CRUSH (plugin) et Pi (extension) s'ils
-sont installés, et fait un backfill initial de leurs sessions locales. **Redémarre
-Claude Code** ensuite pour activer les skills.
+commande `ai-footprint`, déploie les skills et câble le suivi (statusline +
+ingestion) pour chaque outil détecté sur ta machine — Claude Code, Opencode
+(plugin) et Pi (extension) — et fait un backfill initial de leurs sessions
+locales. **Redémarre ton outil** ensuite pour activer les skills.
 
-Variables optionnelles : `AI_FOOTPRINT_DIR`, `AI_FOOTPRINT_DB`,
-`AI_FOOTPRINT_NO_CLAUDE=1` (ne pas modifier `settings.json`), `AI_FOOTPRINT_NO_INGEST=1`.
-(Contributeurs : voir `AI_FOOTPRINT_REF` dans [CONTRIBUTING.md](CONTRIBUTING.md) pour
-tester une branche.)
+Options d'installation (variables d'environnement) et détails complets : voir le
+[guide avancé](docs/GUIDE-AVANCE.md).
 
-### Manuelle
+### Via Homebrew (macOS/Linux)
 
-Python ≥ 3.10, puis `pip install -e .`.
+```bash
+brew install hrenaud/tap/ai-footprint
+```
+
+### Via PyPI
+
+```bash
+pip install ai-footprint
+```
+
+> **Homebrew et PyPI n'installent que la CLI** (`ai-footprint`), sans câblage
+> automatique dans ton outil (pas de statusline, pas d'ingestion, pas de
+> skills). Pour l'intégration complète, utilise l'installeur rapide
+> ci-dessus, ou câble-la toi-même — voir le
+> [guide avancé](docs/GUIDE-AVANCE.md).
+
+### Manuelle (dev)
+
+Python ≥ 3.10, puis depuis un clone du dépôt : `pip install -e .`.
 
 ### Désinstallation
 
@@ -56,14 +71,16 @@ Python ≥ 3.10, puis `pip install -e .`.
 curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/uninstall.sh | bash
 ```
 
-Retire le binaire, les skills, le câblage `~/.claude/settings.json` (statusline + hook
-d'ingestion), le plugin Opencode/CRUSH, l'extension Pi et le répertoire source. **La
-base `ai-footprint.db` (historique d'impact) est conservée par défaut** — ajoute
-`AI_FOOTPRINT_PURGE_DB=1` avant la commande pour la supprimer aussi.
+Retire le binaire, les skills, le câblage dans chaque outil (statusline + hook
+d'ingestion Claude Code, plugin Opencode, extension Pi) et le répertoire source.
+**La base `ai-footprint.db` (historique d'impact) est conservée par défaut** —
+ajoute `AI_FOOTPRINT_PURGE_DB=1` avant la commande pour la supprimer aussi.
 
 ## Utilisation — via les skills (recommandé)
 
-Dans Claude Code, tape la commande, ou demande en langage naturel :
+C'est la façon recommandée d'utiliser ai-footprint : tape la commande slash,
+ou demande simplement en langage naturel (les skills se déclenchent aussi sur
+des formulations comme « mon impact » ou « mon empreinte CO₂ ») :
 
 | Skill                    | À quoi ça sert                                                                                | Exemple                                             |
 | ------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -77,7 +94,7 @@ Le rapport a cinq sections : **impact total**, **projets les plus impactants**,
 **tokens & impact par modèle**, **modèles non couverts**, et **intensité par modèle**
 (impact par heure de travail — révèle qu'à débit égal, Opus émet bien plus que Haiku).
 Une sixième section, **intensité par outil**, apparaît automatiquement dès que tes
-données couvrent plusieurs outils (Claude Code, Opencode/CRUSH, Pi…) — elle révèle
+données couvrent plusieurs outils (Claude Code, Opencode, Pi…) — elle révèle
 quel outil consomme le plus de tokens et a les impacts les plus forts, à débit égal.
 
 Options utiles du rapport : `--since 2026-06-27` (ou `27/06/26`) pour une période,
@@ -97,24 +114,25 @@ aucune dépendance Python supplémentaire). Options : `--since`, `--theme
 light|dark|both` (défaut `light`), `--lang fr|en|both` (défaut `both`), `--out`
 (défaut `~/.ai-footprint/exports/`).
 
-## Statusline dans Claude Code
+## Suivi en temps réel
 
-La statusline affiche l'impact de la **session en cours** (Claude Code transmet la
-session ; ai-footprint ingère le transcript courant et filtre dessus). En lancement
-manuel, elle retombe sur le **total global**.
+Une fois l'installation terminée, ton outil affiche en continu l'impact de la
+**session en cours** (l'outil transmet la session ; ai-footprint ingère le
+transcript courant et filtre dessus). En lancement manuel, hors session, ça
+retombe sur le **total global** :
 
 ```bash
 ~/.ai-footprint/src/scripts/statusline.sh   # ⚡ 18.9–33.5 kWh · 🌍 7.93–13.5 kgCO2e · 💧 61.3–134 L
 ```
 
-L'installeur la câble dans `~/.claude/settings.json` (et ne remplace pas une
-statusline appartenant à un autre outil — il affiche alors la commande pour basculer).
+L'installeur ne remplace jamais une statusline déjà utilisée par un autre
+outil — il affiche alors la commande pour basculer manuellement.
 
 Un préfixe `≈` (suivi d'un rappel entre parenthèses, ex. `sonnet-5 inconnu, params
 sonnet-4`) signale que la session utilise un modèle trop récent pour le registre
 EcoLogits : l'impact affiché est un **repère provisoire**, extrapolé des paramètres
 officiels de la version sœur nommée — voir
-[docs/METHODOLOGY.md](docs/METHODOLOGY.md#modèles-anthropic-trop-récents-pour-le-registre-ecologits).
+[docs/METHODOLOGY.md](docs/METHODOLOGY.md#modeles-anthropic-trop-recents-pour-le-registre-ecologits).
 
 ## En ligne de commande (sous le capot)
 
@@ -141,9 +159,13 @@ avec `/footprint-resolve`. Voir [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Pour aller plus loin
 
+- **[docs/GUIDE.md](docs/GUIDE.md)** — mode d'emploi détaillé : installation,
+  désinstallation, usage complet des skills et de la CLI.
+- **[docs/GUIDE-AVANCE.md](docs/GUIDE-AVANCE.md)** — installation manuelle
+  (Homebrew, PyPI, sources), variables d'environnement, fonctionnement interne.
 - **[docs/METHODOLOGY.md](docs/METHODOLOGY.md)** — comment l'impact est évalué : les
   échanges avec EcoLogits, les choix de méthodologie et leurs limites.
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — côté technique : architecture, schéma de
+- **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** — côté technique : architecture, schéma de
   données, mise en place dev et comment étendre le projet.
 
 ## Sources d'inspiration
