@@ -79,6 +79,8 @@ class CrushCollector(Collector):
             return
 
         for msg in messages:
+            if not isinstance(msg, dict):
+                continue
             info = msg.get("data") or msg.get("info")
             if not isinstance(info, dict):
                 continue

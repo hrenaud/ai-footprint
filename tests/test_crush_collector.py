@@ -574,6 +574,29 @@ def _write_json(path: str, data: dict) -> None:
         json.dump(data, fh)
 
 
+def test_non_dict_message_entries_skipped_without_crashing():
+    fd, path = tempfile.mkstemp(suffix=".json")
+    data = {"messages": ["not-a-dict", None, {"data": {"role": "user",
+                                                        "content": "hi",
+                                                        "time": {"created": 1752400800000}}}]}
+    os.write(fd, json.dumps(data).encode())
+    os.close(fd)
+    try:
+        # Passer le fichier unique, pas le répertoire
+        events = CrushCollector(root=path).collect()
+        assert isinstance(events, list) or hasattr(events, '__iter__')
+        # Vérifier que la collection complète sans crash
+        result = list(events)
+        assert result == []  # un message user est ignoré
+    finally:
+        os.remove(path)
+
+
+def _write_json(path: str, data: dict) -> None:
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
+
+
 def _make_crush_data(msg_ids: list[str], *, directory: str = "/tmp/proj", role: str = "assistant") -> dict:
     messages = []
     for mid in msg_ids:
