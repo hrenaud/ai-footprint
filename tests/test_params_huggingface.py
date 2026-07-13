@@ -305,3 +305,26 @@ def test_index_with_too_many_files_aborts(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
     assert _fetch_safetensors_index_bytes("org/gros-modele") is None
     assert head_calls == []  # aucun HEAD lancé au-delà du plafond
+
+
+def test_urlopen_handle_is_closed_even_on_json_error(monkeypatch):
+    import ai_footprint.impact.params as params_mod
+
+    closed = {"value": False}
+
+    class _Resp:
+        def read(self):
+            return b"not valid json"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            closed["value"] = True
+            return False
+
+    monkeypatch.setattr(params_mod.urllib.request, "urlopen",
+                         lambda req, timeout=15: _Resp())
+
+    params_mod._fetch_safetensors_index_bytes("org/model")
+    assert closed["value"] is True

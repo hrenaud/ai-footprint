@@ -89,8 +89,8 @@ def _fetch_safetensors_index_bytes(repo: str) -> int | None:
     try:
         index_url = f"https://huggingface.co/{repo}/resolve/main/model.safetensors.index.json"
         req = urllib.request.Request(index_url, headers={"Accept": "application/json"})
-        resp = urllib.request.urlopen(req, timeout=15)
-        index_data = json.loads(resp.read())
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            index_data = json.loads(resp.read())
 
         # Extraire les noms de fichiers uniques du weight_map
         weight_map = index_data.get("weight_map", {})
