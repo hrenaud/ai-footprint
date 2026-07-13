@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.0] — 2026-07-13
+
+### Features
+
+- (landing) — add favicon to landing pages and doc site
+- (docs) — switch to mkdocs-material theme with FR/EN language switcher
+
+### Bug Fixes
+
+- (landing) — clarify one-command wording for model resolution
+
+### Documentation
+
+- highlight official site link in README
 ## [1.4.0] — 2026-07-13
 
 ### Features
