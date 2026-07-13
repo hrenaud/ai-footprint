@@ -42,3 +42,12 @@ def test_collect_from_single_file():
 def test_stub_collector_raises():
     with pytest.raises(NotImplementedError):
         list(CodexCollector().collect())
+
+
+def test_malformed_json_line_is_logged(tmp_path, caplog):
+    import logging
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text('{"not": "valid json"\nnot json at all\n')
+    with caplog.at_level(logging.DEBUG, logger="ai_footprint.collectors.claude_code"):
+        list(ClaudeCodeCollector(str(transcript)).collect())
+    assert "session.jsonl" in caplog.text or "JSON" in caplog.text

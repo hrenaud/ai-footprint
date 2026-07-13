@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import os
 from collections.abc import Iterator
 from datetime import datetime
@@ -7,6 +8,8 @@ from datetime import datetime
 from ai_footprint.collectors.base import Collector
 from ai_footprint.dates import parse_iso_ts as _parse_ts
 from ai_footprint.models import InferenceEvent
+
+logger = logging.getLogger(__name__)
 
 # Plafond du temps actif par message : au-delà, le delta reflète un temps mort
 # (session reprise, pause de lecture) et non du travail → ignoré (0).
@@ -50,7 +53,8 @@ class ClaudeCodeCollector(Collector):
                     continue
                 try:
                     obj = json.loads(line)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as exc:
+                    logger.debug("Skipping malformed JSON line in %s: %s", path, exc)
                     continue
                 cur_ts = _parse_ts(obj.get("timestamp", ""))
                 if obj.get("type") == "assistant":
