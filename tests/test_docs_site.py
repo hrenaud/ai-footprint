@@ -48,13 +48,23 @@ def test_mkdocs_config_excludes_landing_pages_and_their_assets():
     # dir): the material theme also writes its own CSS/JS under an "assets/"
     # dir in the output, and excluding the directory wholesale drops those
     # theme files too, leaving the built site unstyled.
+    # favicon.svg is the one exception: it must stay out of exclude_docs so
+    # mkdocs-material can actually find and copy it as the site favicon.
     config = _mkdocs_config()
     excluded = config["exclude_docs"].splitlines()
     for entry in ["index.html", "fr/", "guide/"]:
         assert entry in excluded
     assert "assets/" not in excluded
+    assert "assets/favicon.svg" not in excluded
     for asset in (DOCS_DIR / "assets").iterdir():
+        if asset.name == "favicon.svg":
+            continue
         assert f"assets/{asset.name}" in excluded
+
+
+def test_mkdocs_config_declares_favicon():
+    config = _mkdocs_config()
+    assert config["theme"]["favicon"] == "assets/favicon.svg"
 
 
 def test_mkdocs_config_uses_material_theme_for_language_switcher():
@@ -110,6 +120,30 @@ def test_build_produces_translated_titles_and_homepage_for_en_locale(tmp_path):
     homepage_html = (site_dir / "en" / "index.html").read_text(encoding="utf-8")
     assert "<title>Home - AI Footprint — Documentation</title>" in homepage_html
     assert "Documentation ai-footprint" not in homepage_html
+
+
+def test_build_copies_favicon_into_site(tmp_path):
+    site_dir = tmp_path / "site"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "mkdocs",
+            "build",
+            "-f",
+            str(MKDOCS_CONFIG),
+            "-d",
+            str(site_dir),
+        ],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+    )
+
+    assert (site_dir / "assets" / "favicon.svg").is_file()
+    assert 'href="assets/favicon.svg"' in (site_dir / "index.html").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_build_produces_html_for_each_source_doc_in_both_locales(tmp_path):

@@ -21,6 +21,7 @@ exclude_docs: |
 theme:
   name: material
   language: fr
+  favicon: assets/favicon.svg
   features:
     - content.code.copy
 

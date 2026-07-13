@@ -108,6 +108,23 @@ def test_script_asset_exists():
     assert (DOCS_DIR / "assets" / "script.js").is_file()
 
 
+def test_favicon_asset_exists():
+    assert (DOCS_DIR / "assets" / "favicon.svg").is_file()
+
+
+def test_en_page_references_favicon():
+    text = (DOCS_DIR / "index.html").read_text(encoding="utf-8")
+    assert '<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />' in text
+
+
+def test_fr_page_references_favicon():
+    text = (DOCS_DIR / "fr" / "index.html").read_text(encoding="utf-8")
+    assert (
+        '<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />'
+        in text
+    )
+
+
 def test_en_page_has_clickable_install_command_before_steps():
     text = (DOCS_DIR / "index.html").read_text(encoding="utf-8")
     assert 'src="assets/script.js"' in text
