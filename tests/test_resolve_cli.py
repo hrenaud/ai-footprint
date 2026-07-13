@@ -16,10 +16,11 @@ def _engine():
 
 
 def _fake_hf(total, monkeypatch):
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     info = types.SimpleNamespace(safetensors=types.SimpleNamespace(total=total))
     mod.model_info = lambda repo_id, **kw: info
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
 
 
 def _patch_config(monkeypatch, path):
@@ -72,6 +73,7 @@ def test_resolve_set_recompute_covers_model(tmp_path, monkeypatch):
 
 
 def test_resolve_forget_reverts(tmp_path, monkeypatch):
+    import ai_footprint.impact.params as params_mod
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     Config(electricity_mix_zone="FRA").save(config_path)
@@ -82,7 +84,7 @@ def test_resolve_forget_reverts(tmp_path, monkeypatch):
         cli.main(["resolve", "--db", db, "--set", "ollama/x:y=Org/Repo"])
     assert SQLiteStore(db).coverage()["uncovered"] == 0
     # HF indisponible → le recompute du forget ne peut pas re-résoudre x:y
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)
     with redirect_stdout(io.StringIO()):
         rc = cli.main(["resolve", "--db", db, "--forget", "ollama/x:y"])
     assert rc == 0
@@ -93,6 +95,7 @@ def test_resolve_forget_reverts(tmp_path, monkeypatch):
 def test_resolve_forget_only_affects_target_model(tmp_path, monkeypatch):
     """Teste que --forget n'affecte que le modèle oublié, même quand deux
     modèles coexistent et partagent des (session_id, msg_id) de manière croisée."""
+    import ai_footprint.impact.params as params_mod
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     Config(electricity_mix_zone="FRA").save(config_path)
@@ -121,7 +124,7 @@ def test_resolve_forget_only_affects_target_model(tmp_path, monkeypatch):
     assert SQLiteStore(db).coverage()["uncovered"] == 0
 
     # Forget ModelA, mais HF est now unavailable pour recompute
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)
     with redirect_stdout(io.StringIO()):
         cli.main(["resolve", "--db", db, "--forget", "ollama/ModelA"])
 

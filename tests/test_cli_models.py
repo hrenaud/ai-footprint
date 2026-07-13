@@ -21,10 +21,11 @@ def _patch_config(monkeypatch, path):
 
 def _fake_hf(total, monkeypatch):
     """Mock huggingface_hub qui retourne un safetensors.total."""
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     info = types.SimpleNamespace(safetensors=types.SimpleNamespace(total=total))
     mod.model_info = lambda repo_id, **kw: info
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
 
 
 def test_models_command_lists_pending(tmp_path, monkeypatch):
@@ -242,13 +243,14 @@ def test_models_moe_with_hf(tmp_path, monkeypatch):
 
 def test_models_moe_no_cache_no_hf(tmp_path, monkeypatch):
     """Teste MoE : ni cache ni HF → fallback (active=total)."""
+    import ai_footprint.impact.params as params_mod
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     cfg = Config()
     cfg.save(config_path)
     _patch_config(monkeypatch, config_path)
     # HF non disponible (module inexistant)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)
 
     s = SQLiteStore(db)
     s.add_pending("ollama", "unknown:moe-model", "2026-06-29T10:00:00Z")

@@ -15,7 +15,7 @@ def test_hf_total_params_model_info_failure_is_logged(monkeypatch, caplog):
         raise OSError("boom")
 
     mod.model_info = fake_model_info
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(
         params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
 

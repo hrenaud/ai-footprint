@@ -5,10 +5,11 @@ from ai_footprint.resolve.cli import parse_mapping, set_mappings, forget, _print
 
 
 def _fake_hf(total, monkeypatch):
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     info = types.SimpleNamespace(safetensors=types.SimpleNamespace(total=total))
     mod.model_info = lambda repo_id, **kw: info
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
 
 
 def test_parse_mapping_splits_on_first_equals():
@@ -75,7 +76,8 @@ def test_set_mappings_writes_params_with_provenance(monkeypatch):
 
 
 def test_set_mappings_reports_hf_failure(monkeypatch):
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)  # HF indisponible
+    import ai_footprint.impact.params as params_mod
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)  # HF indisponible
     cfg = Config()
     results = set_mappings(cfg, ["anthropic/foo=bar/baz"])
     assert results[0]["ok"] is False
