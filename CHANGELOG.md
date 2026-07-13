@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.3.1] — 2026-07-13
+
+### Features
+
+- (landing) — add tool logos, copy-to-clipboard install command, and light theme
+- add French landing page
+- (landing-page) — add English landing page and shared stylesheet
+
+### Bug Fixes
+
+- (nudge) — throttle resolve nudge to weekly independent of mark-prompted
+- (landing) — reformulate awkward FR subtitle wording
+
+### Documentation
+
+- (comparaison-outils) — corriger champs cost/error non stockés et source Claude Code
+- add landing page implementation plan
+- renforcer la mise en avant d'EcoLogits dans la spec landing page
+- spec de la landing page bilingue (design)
+
+### Chores
+
+- ignorer les mockups temporaires du compagnon visuel de brainstorming
+
+### Tests
+
+- add EN/FR structural parity contract for landing page
+
+### Autres
+
+- Merge branch 'worktree-landing-page'
 ## [1.3.0] — 2026-07-12
 
 ### Features
