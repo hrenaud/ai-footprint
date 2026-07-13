@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from datetime import datetime
 
 from ai_footprint.collectors.base import Collector
+from ai_footprint.dates import parse_iso_ts as _parse_ts
 from ai_footprint.models import InferenceEvent
 
 # Plafond du temps actif par message : au-delà, le delta reflète un temps mort
@@ -14,13 +15,6 @@ _ACTIVE_CAP_SECONDS = 300.0
 
 def _project_from_cwd(cwd: str) -> str:
     return os.path.basename(cwd.rstrip("/")) or "unknown"
-
-
-def _parse_ts(s: str) -> datetime | None:
-    try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
 
 
 def _active_seconds(prev: datetime | None, cur: datetime | None) -> float:

@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from datetime import datetime, timezone
 
 from ai_footprint.config import Config
+from ai_footprint.dates import parse_iso_ts as _parse_ts
 from ai_footprint.impact.engine import CRITERIA, EcoLogitsEngine
 from ai_footprint.models import InferenceEvent
 
@@ -42,13 +43,6 @@ CREATE TABLE IF NOT EXISTS pending_models (
 _CRIT_COLS = {"energy": ("emin", "emax"), "gwp": ("gmin", "gmax"),
               "adpe": ("amin", "amax"), "pe": ("pmin", "pmax"),
               "wcf": ("wmin", "wmax")}
-
-
-def _parse_ts(ts: str) -> datetime | None:
-    try:
-        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
 
 
 def _canonical_ts(ts: str) -> str:

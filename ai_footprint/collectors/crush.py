@@ -13,14 +13,8 @@ from ai_footprint.collectors.claude_code import (
     _project_from_cwd,
     _ACTIVE_CAP_SECONDS,
 )
+from ai_footprint.dates import ts_from_epoch_ms as _parse_ts_utc_ms
 from ai_footprint.models import InferenceEvent
-
-
-def _parse_ts_utc_ms(ms: int | float | None) -> str | None:
-    """Convertit un timestamp Unix en ms en ISO 8601 UTC."""
-    if ms is None:
-        return None
-    return datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc).isoformat()
 
 
 def _safe_int(value: int | float | None) -> int:
