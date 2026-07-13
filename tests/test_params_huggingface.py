@@ -328,3 +328,9 @@ def test_urlopen_handle_is_closed_even_on_json_error(monkeypatch):
 
     params_mod._fetch_safetensors_index_bytes("org/model")
     assert closed["value"] is True
+
+
+def test_registry_fallback_constant_includes_huggingface_hub():
+    import ai_footprint.impact.params as params_mod
+
+    assert "huggingface_hub" in params_mod._REGISTRY_FALLBACK_PROVIDERS

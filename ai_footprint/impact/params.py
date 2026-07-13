@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 # (le modèle a pu être publié/renommé entre-temps).
 HF_NEGATIVE_TTL_DAYS = 7
 
+# EcoLogits enregistre certains modèles sous le provider "huggingface_hub"
+# indépendamment du provider déclaré (ex. openai/gpt-oss), d'où ce repli
+# systématique lors de la résolution registre.
+_REGISTRY_FALLBACK_PROVIDERS = ("huggingface_hub",)
+
 # Noms de modèles MoE : motif « a<N>b » isolé (ex. -A3B, …120b-a12b).
 _MOE_NAME_RE = re.compile(r"(?:^|[^a-z0-9])a\d+b(?:[^a-z0-9]|$)", re.IGNORECASE)
 
@@ -269,7 +274,7 @@ class ModelParamsResolver:
         )
 
     def _from_registry(self, provider: str, model: str) -> ParamsResult | None:
-        for prov in (provider, "huggingface_hub"):
+        for prov in (provider, *_REGISTRY_FALLBACK_PROVIDERS):
             m = models.find_model(provider=prov, model_name=model)
             if m is not None:
                 p = m.architecture.parameters
