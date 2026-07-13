@@ -14,7 +14,7 @@ def test_huggingface_failure_not_retried_same_run(monkeypatch):
         call_count[0] += 1
         raise OSError("offline")
     mod.model_info = boom
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     # Neutraliser les méthodes 2 et 3 (CLI hf, index.json) : on ne compte que la cascade.
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info", lambda repo: None)
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
@@ -26,10 +26,11 @@ def test_huggingface_failure_not_retried_same_run(monkeypatch):
 
 def _fake_hf(total, monkeypatch):
     """Injecte un faux module huggingface_hub avec model_info()."""
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     info = types.SimpleNamespace(safetensors=types.SimpleNamespace(total=total))
     mod.model_info = lambda repo_id, **kw: info
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
 
 
 def test_huggingface_dense_sets_active_equals_total(monkeypatch):
@@ -46,17 +47,19 @@ def test_huggingface_dense_sets_active_equals_total(monkeypatch):
 
 
 def test_huggingface_network_error_returns_none(monkeypatch):
+    import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     def boom(repo_id, **kw):
         raise OSError("offline")
     mod.model_info = boom
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     r = ModelParamsResolver(Config())
     assert r.resolve("ollama", "whatever") is None
 
 
 def test_huggingface_missing_lib_returns_none(monkeypatch):
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    import ai_footprint.impact.params as params_mod
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)
     r = ModelParamsResolver(Config())
     assert r.resolve("ollama", "whatever") is None
 
@@ -65,6 +68,7 @@ def test_huggingface_cache_hit_avoids_second_call(monkeypatch):
     """Vérifie que après un premier resolve (cache + HF),
     un second resolve pour la même clé retourne le résultat en cache
     sans relancer l'appel HF."""
+    import ai_footprint.impact.params as params_mod
     call_count = [0]
 
     def model_info_callable(repo_id, **kw):
@@ -75,7 +79,7 @@ def test_huggingface_cache_hit_avoids_second_call(monkeypatch):
 
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = model_info_callable
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
 
     cfg = Config()
     r = ModelParamsResolver(cfg)
@@ -116,15 +120,17 @@ def test_fetch_hf_params_returns_billions(monkeypatch):
 
 
 def test_fetch_hf_params_missing_lib_returns_none(monkeypatch):
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    import ai_footprint.impact.params as params_mod
+    monkeypatch.setattr(params_mod, "huggingface_hub", None)
     assert fetch_hf_params("Org/Repo") is None
 
 
 def test_fetch_hf_params_no_safetensors_returns_none(monkeypatch):
+    import ai_footprint.impact.params as params_mod
     import types as _t
     mod = _t.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: _t.SimpleNamespace(safetensors=None)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     assert fetch_hf_params("Org/Repo") is None
 
 
@@ -137,7 +143,7 @@ def _hf_counting(monkeypatch):
         call_count[0] += 1
         raise OSError("offline")
     mod.model_info = boom
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info", lambda repo: None)
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
     return call_count
@@ -212,7 +218,7 @@ def test_used_storage_uses_detected_dtype(monkeypatch):
     import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
                         lambda repo: {"used_storage": 14_000_000_000})  # 14 Go
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
@@ -228,7 +234,7 @@ def test_unknown_dtype_yields_param_range(monkeypatch):
     import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
                         lambda repo: {"used_storage": 14_000_000_000})
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
@@ -246,7 +252,7 @@ def test_param_range_roundtrips_through_cache(monkeypatch):
     import ai_footprint.impact.params as params_mod
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: types.SimpleNamespace(safetensors=None)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
                         lambda repo: {"used_storage": 14_000_000_000})
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes", lambda repo: None)
@@ -267,7 +273,7 @@ def test_invalid_repo_format_short_circuits_without_network(monkeypatch):
     called = []
     mod = types.ModuleType("huggingface_hub")
     mod.model_info = lambda repo_id, **kw: called.append(repo_id)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", mod)
+    monkeypatch.setattr(params_mod, "huggingface_hub", mod)
     monkeypatch.setattr(params_mod, "_fetch_hf_cli_info",
                         lambda repo: called.append(repo))
     monkeypatch.setattr(params_mod, "_fetch_safetensors_index_bytes",

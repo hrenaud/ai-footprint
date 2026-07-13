@@ -1,13 +1,23 @@
 import json
 import logging
+import os
 import re
+import shutil
+import subprocess
+import sys
 import time
 import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from ecologits.model_repository import ParametersMoE, models
 from ecologits.utils.range_value import RangeValue
+
+try:
+    import huggingface_hub
+except ImportError:
+    huggingface_hub = None
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +87,6 @@ def _fetch_safetensors_index_bytes(repo: str) -> int | None:
     """Récupère la taille totale des fichiers safetensors d'un repo HF via le
     model.safetensors.index.json. Retourne None en cas d'échec."""
     try:
-        import urllib.request
         index_url = f"https://huggingface.co/{repo}/resolve/main/model.safetensors.index.json"
         req = urllib.request.Request(index_url, headers={"Accept": "application/json"})
         resp = urllib.request.urlopen(req, timeout=15)
@@ -127,11 +136,6 @@ def _fetch_hf_cli_info(repo: str) -> dict | None:
     la cascade continue) : 1) PATH, 2) venv actif (déduit de sys.executable),
     3) `.venv/bin/hf` du cwd puis de ~/.ai-footprint/src (clone installé)."""
     try:
-        import subprocess
-        import shutil
-        import os
-        import sys
-        
         hf_path = None
         
         # 1. Chercher dans le PATH
@@ -182,11 +186,6 @@ def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | 
         # traversal) : aucune requête réseau.
         return None
 
-    try:
-        import huggingface_hub
-    except ImportError:
-        huggingface_hub = None
-
     # Méthode 1 : metadata HF standard (safetensors.total)
     if huggingface_hub is not None:
         try:
@@ -195,7 +194,7 @@ def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | 
                 total = float(info.safetensors.total) / 1e9
                 if total > 0:
                     return total, []
-        except (OSError, ValueError, AttributeError) as exc:
+        except (OSError, ValueError, AttributeError, ModuleNotFoundError, ImportError) as exc:
             logger.debug("huggingface_hub.model_info failed for %s: %s", repo, exc)
 
     bpp = _detect_bytes_per_param(repo)
