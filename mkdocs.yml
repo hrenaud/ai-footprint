@@ -8,11 +8,21 @@ use_directory_urls: false
 exclude_docs: |
   index.html
   fr/
-  assets/
+  assets/logo-claude.svg
+  assets/logo-opencode.png
+  assets/logo-pi.svg
+  assets/report-en.png
+  assets/report-fr.png
+  assets/script.js
+  assets/statusline.png
+  assets/style.css
   guide/
 
 theme:
-  name: readthedocs
+  name: material
+  language: fr
+  features:
+    - content.code.copy
 
 plugins:
   - search
@@ -24,6 +34,15 @@ plugins:
           name: Français
         - locale: en
           name: English
+          nav_translations:
+            Accueil: Home
+            Guide utilisateur: User guide
+            Guide avancé: Advanced guide
+            Méthodologie: Methodology
+            Comparaison des outils: Tool comparison
+            Publication PyPI: PyPI Publication
+            Checklist nouvel outil: New tool checklist
+            Contribuer: Contributing
 
 nav:
   - Accueil: index.md

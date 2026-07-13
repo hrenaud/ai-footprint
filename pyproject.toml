@@ -17,7 +17,7 @@ Repository = "https://github.com/hrenaud/ai-footprint"
 Changelog = "https://github.com/hrenaud/ai-footprint/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pyyaml>=6", "mkdocs>=1.6", "mkdocs-static-i18n>=1.3"]
+dev = ["pytest>=8", "pyyaml>=6", "mkdocs>=1.6", "mkdocs-static-i18n>=1.3", "mkdocs-material>=9.5"]
 
 [project.scripts]
 ai-footprint = "ai_footprint.__main__:main"
