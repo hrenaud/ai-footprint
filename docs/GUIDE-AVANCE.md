@@ -147,6 +147,11 @@ le **total global** de l'historique :
 L'installeur ne remplace jamais une statusline déjà utilisée par un autre
 outil — il affiche alors la commande pour basculer manuellement.
 
+Chaque indicateur choisit automatiquement son unité (ex. eau en mL, cL ou L ;
+énergie en mWh, Wh ou kWh ; CO2 en mgCO2eq, gCO2eq ou kgCO2eq) pour éviter les
+« 0.000… » sur les petites sessions. Sans donnée, la statusline affiche une
+ligne à 0 (jamais une ligne vide) pour rester rafraîchie par l'outil hôte.
+
 ### Modèles non couverts et résolution
 
 Voir [METHODOLOGY.md](METHODOLOGY.md) pour le détail de ce qui est mesuré et

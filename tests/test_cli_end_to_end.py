@@ -54,7 +54,8 @@ def test_statusline_runs(tmp_path, capsys):
     capsys.readouterr()
     rc = main(["statusline", "--db", db])
     assert rc == 0
-    assert "kWh" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "🌍" in out and "💧" in out and "⚡" in out
 
 
 @pytest.mark.skipif(_find_chrome() is None, reason="Chrome/Chromium introuvable")

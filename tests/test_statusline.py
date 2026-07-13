@@ -17,15 +17,53 @@ def test_compact_line_sums_energy_gwp_and_water():
          "wcf_min": 1.0, "wcf_max": 2.0},
     ]
     line = render_statusline(rows)
-    assert "kWh" in line and "kgCO2eq" in line and "L" in line
-    assert "0.15" in line  # énergie min sommée
+    # énergie sommée (0.15-0.3 kWh) trop petite pour rester en kWh sans zéros
+    # => convertie automatiquement en Wh ; gwp et eau restent dans leur unité
+    # de base car déjà >= 1.
+    assert "Wh" in line and "kgCO2eq" in line and " L" in line
+    assert "150" in line  # énergie min sommée, convertie en Wh (0.15 kWh)
     assert "4" in line and "6" in line  # eau : min 4.0, max 6.0 sommés
     # ordre demandé : GWP (🌍), Eau (💧), Énergie (⚡)
     assert line.index("🌍") < line.index("💧") < line.index("⚡")
 
 
-def test_empty_when_no_rows():
-    assert render_statusline([]) == ""
+def test_scales_water_unit_down_to_avoid_leading_zeros():
+    """Une eau < 1 L doit basculer en cL puis mL plutôt que d'afficher des 0.000…"""
+    rows_cl = [{"energy_min": 1, "energy_max": 1, "gwp_min": 1, "gwp_max": 1,
+                "wcf_min": 0.02, "wcf_max": 0.05}]
+    line_cl = render_statusline(rows_cl)
+    assert "cL" in line_cl and "2" in line_cl and "5" in line_cl
+
+    rows_ml = [{"energy_min": 1, "energy_max": 1, "gwp_min": 1, "gwp_max": 1,
+                "wcf_min": 0.001, "wcf_max": 0.002}]
+    line_ml = render_statusline(rows_ml)
+    assert "mL" in line_ml
+
+
+def test_scales_gwp_and_energy_units_down_to_avoid_leading_zeros():
+    """gwp (kg) et énergie (kWh) suivent la même logique de mise à l'échelle
+    (kg→g→mg / kWh→Wh→mWh) que l'eau (L→cL→mL)."""
+    rows = [{"energy_min": 0.000002, "energy_max": 0.000003,
+             "gwp_min": 0.000002, "gwp_max": 0.000003,
+             "wcf_min": 1, "wcf_max": 1}]
+    line = render_statusline(rows)
+    assert "mWh" in line
+    assert "mgCO2eq" in line
+
+    rows_g = [{"energy_min": 1, "energy_max": 1,
+               "gwp_min": 0.01, "gwp_max": 0.02,
+               "wcf_min": 1, "wcf_max": 1}]
+    line_g = render_statusline(rows_g)
+    assert "gCO2eq" in line_g
+
+
+def test_zero_line_when_no_rows():
+    """Sans donnée, on affiche quand même une ligne à 0 (et pas une chaîne vide) :
+    une statusline vide n'est pas réaffichée/rafraîchie par Claude Code."""
+    line = render_statusline([])
+    assert line != ""
+    assert "🌍" in line and "💧" in line and "⚡" in line
+    assert "0" in line
 
 
 def test_marks_line_as_provisional_when_extrapolated_warning_present():
@@ -81,7 +119,7 @@ def test_statusline_scopes_to_current_session(tmp_path, monkeypatch, capsys):
     rc = main(["statusline", "--db", db])
     assert rc == 0
     session_line = capsys.readouterr().out.strip()
-    assert "kWh" in session_line
+    assert "🌍" in session_line and "💧" in session_line and "⚡" in session_line
 
     # la ligne de session (sess-A seule) doit différer du total global (A + B)
     store = SQLiteStore(db)
