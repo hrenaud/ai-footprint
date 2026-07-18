@@ -83,4 +83,15 @@ crée le commit `chore(release): X.Y.Z` + tag `vX.Y.Z`, puis push `origin main -
 - Prérequis : arbre propre, sur `main`, tag cible inexistant.
 - Après le push, **relancer le script d'install** (voir ci-dessus) pour aligner le
   clone installé.
+- **Vérifier `hrenaud/homebrew-tap`** : chaque release déclenche une PR
+  automatique `chore: bump ai-footprint to X.Y.Z` sur ce repo (diff
+  non cumulatif — chaque PR remplace `url`/`sha256` en entier). Après une
+  release, contrôler `gh pr list --repo hrenaud/homebrew-tap --state open` :
+  - merger la PR correspondant à la **nouvelle** version (`gh pr merge <n>
+--repo hrenaud/homebrew-tap --squash --delete-branch`) ;
+  - fermer toute PR de bump plus ancienne encore ouverte (supersédée,
+    jamais à merger — régresserait la formule) : `gh pr close <n> --repo
+hrenaud/homebrew-tap --delete-branch --comment "Supersédée par le bump
+vers X.Y.Z."`.
+    Ne pas laisser le backlog de PR s'accumuler d'une release à l'autre.
 - Détail complet du process : cf. CONTRIBUTING (§ Release).
