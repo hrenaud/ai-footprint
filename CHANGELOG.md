@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.8.0] — 2026-07-18
+
+### Features
+
+- (impact) — résoudre automatiquement les params des modèles trop récents pour EcoLogits
+
+### Documentation
+
+- (skills) — document Codex interactive questions
+- (skills) — plan Codex interactive questions
+
+### Chores
+
+- ignore local worktrees
+
+### Autres
+
+- Merge branch 'docs/codex-interactive-questions'
 ## [1.7.0] — 2026-07-18
 
 ### Features
