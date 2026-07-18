@@ -24,5 +24,8 @@ venv/
 # Mockups temporaires du compagnon visuel (brainstorming)
 .superpowers/brainstorm/
 
+# Worktrees locaux
+.worktrees/
+
 # Build temporaire de la doc mkdocs (le résultat commité est docs/guide/)
 .mkdocs-build/
