@@ -37,6 +37,7 @@ Ne jamais toucher `model_params` (cache des modèles auto-hébergés, géré par
 Cette skill peut tourner sous plusieurs agents (Claude Code, OpenCode, Pi…). Pose les questions avec le mécanisme interactif du runtime **s'il en a un**, sinon en texte :
 
 - **Claude Code** : outil `AskUserQuestion` (intitulé, `header`, options ; « Other » ajouté d'office).
+- **Codex** : utiliser `request_user_input` si l’outil est exposé par le runtime ; sinon, utiliser le repli texte numéroté ci-dessous et attendre la réponse avant de poursuivre.
 - **OpenCode** : outil `question` (header, intitulé, liste d'options, réponse libre).
 - **Pi** (earendil-works) : pas de tool natif (cœur = `read`/`bash`/`edit`/`write`) ; question structurée via extension (`pi-askuserquestion` / `pi-ask-user`), sinon repli texte ci-dessous.
 - **Serveur/plateforme MCP** : elicitation MCP (`elicitation/create` avec un JSON schema).
