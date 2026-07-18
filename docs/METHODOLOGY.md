@@ -92,7 +92,9 @@ ai-footprint les résout en cascade :
    précédemment, avec provenance (`source`, `hf_repo`).
 3. **Hugging Face** — nombre de paramètres lu depuis les métadonnées safetensors
    (`total ÷ 1e9`, en **milliards**). Offline-safe : tout échec ⇒ non résolu.
-4. **Sinon** — le modèle reste **non couvert** (impact non estimé), mis en file
+4. **Extrapolation d'une version sœur** — modèle propriétaire trop récent pour
+   le registre et introuvable sur Hugging Face (cf. section dédiée ci-dessous).
+5. **Sinon** — le modèle reste **non couvert** (impact non estimé), mis en file
    d'attente.
 
 **Actif vs total (MoE).** Pour un Mixture-of-Experts, l'énergie dépend des paramètres
@@ -145,23 +147,34 @@ rapport 1:4 sur les params) plutôt qu'une valeur unique. Ces estimations
 portent un warning de provenance en base et les modèles concernés sont
 signalés dans le rapport (« Params estimés depuis la taille des fichiers »).
 
-## Modèles Anthropic trop récents pour le registre EcoLogits
+## Modèles trop récents pour le registre EcoLogits (extrapolation automatique)
 
-Le registre EcoLogits porte ses propres estimations (extrapolées, `model-arch-not-
-released`) pour les modèles Anthropic fermés — mais un modèle tout juste sorti
-(ex. `claude-sonnet-5`, `claude-fable-5`) peut ne pas encore y figurer. Plutôt que de
-le laisser **non couvert**, ai-footprint réutilise en attendant les paramètres
-qu'EcoLogits déclare pour la version connue de la même lignée (ex. la famille
-Sonnet-4.x : MoE, 440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le
-débit `tps` change d'une version à l'autre). Ce stand-in est déclaré à la main dans
-`model_params` (`source: "extrapolated"`) et porte un warning dédié
-(`params-extrapolated-anthropic:…`).
+Un modèle propriétaire tout juste sorti (ex. `claude-sonnet-5`, `claude-fable-5`) peut
+n'être ni dans le registre EcoLogits, ni résoluble sur Hugging Face (fermé, pas de
+repo public). Plutôt que de le laisser **non couvert**, le tier 4
+(`ModelParamsResolver._from_sibling_extrapolation`, `ai_footprint/impact/params.py`)
+identifie automatiquement la **version sœur connue la plus proche** dans le registre
+(même provider, même famille — parsing générique du nom, versions à tiret façon
+Anthropic ex. `sonnet-5` → famille `sonnet`, version `(5,)`, comme à point façon
+OpenAI ex. `gpt-5.6` → famille `gpt`, version `(5.6,)`, comparées aux versions déjà
+enregistrées de la même famille) et
+réutilise ses paramètres comme stand-in temporaire (ex. la famille Sonnet-4.x : MoE,
+440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le débit `tps`
+change d'une version à l'autre). Le résultat est mis en cache dans `model_params`
+(`source: "extrapolated"`) avec un warning de provenance
+(`params-extrapolated-<provider>:<sibling>`).
+
+**Aucune intervention manuelle requise, dans un sens comme dans l'autre** : le tier 1
+(registre) reste consulté en premier à chaque résolution, donc dès qu'une release
+EcoLogits couvre réellement le modèle, elle prend automatiquement le pas sur l'entrée
+« extrapolated » en cache pour tout nouvel event — sans purge ni `resolve --forget`.
+Les impacts déjà calculés en base restent toutefois flagués « provisoires » jusqu'à
+un recalcul explicite (`ai-footprint resolve --retry-hf`).
 
 Ces modèles sont signalés séparément des estimations HF, dans le rapport (note
 « Params extrapolés d'une version sœur ») et dans la statusline (préfixe `≈`) : les
 chiffres affichés sont un **repère provisoire**, pas une mesure EcoLogits officielle
-pour ce modèle précis. Dès qu'une release EcoLogits couvre le modèle, l'entrée
-manuelle doit être retirée (`resolve --forget`) pour repasser sur le registre.
+pour ce modèle précis.
 
 ## Limites assumées
 
@@ -172,6 +185,9 @@ manuelle doit être retirée (`resolve --forget`) pour repasser sur le registre.
   l'inférence est modélisée, pas la consommation de la machine de l'utilisateur).
 - **MoE auto-résolu en dense** par le tier Hugging Face (le couple actif/total se
   déclare manuellement pour l'instant).
+- **Extrapolation sœur (tier 4)** : suppose que les paramètres restent stables au
+  sein d'une même lignée de modèles propriétaires — une approximation, pas une
+  mesure du modèle réel.
 
 ## Références
 

@@ -40,6 +40,11 @@ _INDEX_BUDGET_SECONDS = 60.0
 # Identifiant de repo HF valide : « org/name » (lettres, chiffres, . _ -).
 _REPO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+$")
 
+# Famille + version d'un nom de modèle : jetons alpha suivis d'une série de
+# jetons numériques courts, entiers (ex. "4", "6") ou décimaux (ex. "5.6",
+# convention OpenAI) — exclut les suffixes de date type -20250929 (8 chiffres).
+_VERSION_TOKEN_RE = re.compile(r"^\d{1,3}(?:\.\d{1,3})?$")
+
 
 def _looks_moe(repo: str) -> bool:
     """Vrai si le nom du repo suggère une architecture MoE (motif « aNb »)."""
@@ -256,6 +261,53 @@ def fetch_moe_params_from_hf(repo: str, active: float) -> ParamsResult | None:
                         source="huggingface", warnings=warnings)
 
 
+def _parse_family_version(model: str) -> tuple[str, tuple[float, ...]] | None:
+    """Découpe un nom de modèle en (famille, version) pour comparer des variantes
+    d'une même lignée (ex. « claude-sonnet-5 » → ("sonnet", (5,)), « gpt-5.6 »
+    → ("gpt", (5.6,))). Repère le premier jeton alpha suivi d'une série de
+    jetons numériques courts, entiers ou décimaux (<=3 chiffres par partie,
+    pour exclure les suffixes de date type -20250929). None si le nom ne suit
+    pas ce motif."""
+    tokens = re.split(r"[-_]", model.lower())
+    for i, tok in enumerate(tokens):
+        if tok.isalpha():
+            version: list[float] = []
+            for nxt in tokens[i + 1:]:
+                if _VERSION_TOKEN_RE.match(nxt):
+                    version.append(float(nxt))
+                else:
+                    break
+            if version:
+                return tok, tuple(version)
+    return None
+
+
+def _find_sibling(provider: str, model: str) -> str | None:
+    """Cherche dans le registre EcoLogits la version connue la plus proche
+    (strictement inférieure) d'un modèle absent du registre, même famille/
+    provider. None si le nom ne se parse pas ou si aucune version antérieure
+    n'est connue."""
+    target = _parse_family_version(model)
+    if target is None:
+        return None
+    target_family, target_version = target
+
+    best_name = None
+    best_version: tuple[float, ...] | None = None
+    for m in models.list_models():
+        if m.provider.value != provider:
+            continue
+        parsed = _parse_family_version(m.name)
+        if parsed is None:
+            continue
+        family, version = parsed
+        if family != target_family or version >= target_version:
+            continue
+        if best_version is None or version > best_version:
+            best_version, best_name = version, m.name
+    return best_name
+
+
 class ModelParamsResolver:
     """Résout (params actifs, totaux) pour un modèle, en cascade :
     registre EcoLogits → cache config → Hugging Face → None."""
@@ -271,6 +323,7 @@ class ModelParamsResolver:
             self._from_registry(provider, model)
             or self._from_cache(provider, model)
             or self._from_huggingface(provider, model)
+            or self._from_sibling_extrapolation(provider, model)
         )
 
     def _from_registry(self, provider: str, model: str) -> ParamsResult | None:
@@ -279,7 +332,11 @@ class ModelParamsResolver:
             if m is not None:
                 p = m.architecture.parameters
                 if isinstance(p, ParametersMoE):
-                    return ParamsResult(active=float(p.active), total=float(p.total),
+                    active = ((p.active.min + p.active.max) / 2.0
+                              if isinstance(p.active, RangeValue) else float(p.active))
+                    total = ((p.total.min + p.total.max) / 2.0
+                             if isinstance(p.total, RangeValue) else float(p.total))
+                    return ParamsResult(active=active, total=total,
                                         arch="moe", source="registry")
                 # Gérer RangeValue (min/max) en prenant la moyenne.
                 # EcoLogits expose parfois une plage de paramètres quand l'architecture
@@ -335,4 +392,27 @@ class ModelParamsResolver:
         self.config.model_params[key] = {
             "active": _param_to_json(res.active), "total": _param_to_json(res.total),
             "arch": res.arch, "source": res.source}
+        return res
+
+    def _from_sibling_extrapolation(self, provider: str, model: str) -> ParamsResult | None:
+        """Tier 4 : modèle trop récent pour le registre EcoLogits et introuvable
+        sur Hugging Face (souvent un modèle propriétaire) — reprend les params
+        de la version sœur connue la plus proche (même famille/provider) comme
+        stand-in temporaire. Marqué « extrapolated » et mis en cache : le tier 1
+        (registre) reprend automatiquement la main dès que le vrai modèle y
+        apparaît, sans purge manuelle nécessaire."""
+        sibling = _find_sibling(provider, model)
+        if sibling is None:
+            return None
+        base = self._from_registry(provider, sibling)
+        if base is None:
+            return None
+        res = ParamsResult(
+            active=base.active, total=base.total, arch=base.arch,
+            source="extrapolated",
+            warnings=[f"params-extrapolated-{provider}:{sibling}"])
+        key = f"{provider}/{model}"
+        self.config.model_params[key] = {
+            "active": _param_to_json(res.active), "total": _param_to_json(res.total),
+            "arch": res.arch, "source": res.source, "warnings": res.warnings}
         return res

@@ -50,3 +50,60 @@ def test_registry_range_value_resolved_as_mean():
     assert res.active == 95.0  # (70 + 120) / 2
     assert res.total == 95.0
     assert res.arch == "dense"
+
+
+def test_sibling_extrapolation_resolves_unknown_recent_model():
+    """claude-sonnet-5 est trop récent pour le registre EcoLogits : le palier 4
+    doit retrouver claude-sonnet-4-6 (version sœur connue la plus proche) et
+    reprendre ses params, avec un warning traçant la provenance."""
+    r = ModelParamsResolver(Config())
+    res = r.resolve("anthropic", "claude-sonnet-5")
+    assert isinstance(res, ParamsResult)
+    assert res.source == "extrapolated"
+    assert res.warnings == ["params-extrapolated-anthropic:claude-sonnet-4-6"]
+    assert res.active == 88.0
+    assert res.total == 440.0
+    assert res.arch == "moe"
+
+
+def test_sibling_extrapolation_caches_result():
+    """Le résultat extrapolé est mémorisé en cache config (rejoue via le palier
+    2 sans re-parcourir le registre), avec ses warnings préservés."""
+    cfg = Config()
+    r = ModelParamsResolver(cfg)
+    r.resolve("anthropic", "claude-sonnet-5")
+    entry = cfg.model_params["anthropic/claude-sonnet-5"]
+    assert entry["source"] == "extrapolated"
+    assert entry["warnings"] == ["params-extrapolated-anthropic:claude-sonnet-4-6"]
+    assert entry["active"] == 88.0
+    assert entry["total"] == 440.0
+
+
+def test_registry_supersedes_cached_extrapolation():
+    """Si le registre EcoLogits connaît désormais le vrai modèle, il l'emporte
+    sur une entrée « extrapolated » restée en cache (bascule automatique,
+    sans purge manuelle du cache)."""
+    cfg = Config(model_params={
+        "openai/gpt-4o-mini": {
+            "active": 1.0, "total": 1.0, "arch": "dense", "source": "extrapolated",
+            "warnings": ["params-extrapolated-openai:some-old-sibling"]}})
+    r = ModelParamsResolver(cfg)
+    res = r.resolve("openai", "gpt-4o-mini")
+    assert res.source == "registry"
+    assert res.warnings == []
+
+
+def test_sibling_extrapolation_no_sibling_returns_none():
+    r = ModelParamsResolver(Config())
+    assert r.resolve("anthropic", "claude-quantum-1") is None
+
+
+def test_sibling_extrapolation_handles_dotted_version():
+    """Convention OpenAI (versions à point, ex. gpt-5.5) : le parsing de
+    famille/version doit aussi reconnaître ce format, pas seulement les
+    versions à tiret façon Anthropic (sonnet-4-6)."""
+    r = ModelParamsResolver(Config())
+    res = r.resolve("openai", "gpt-5.6-terra")
+    assert isinstance(res, ParamsResult)
+    assert res.source == "extrapolated"
+    assert res.warnings[0].startswith("params-extrapolated-openai:gpt-5.5")
