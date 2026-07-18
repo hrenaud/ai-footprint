@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.0] — 2026-07-18
+
+### Features
+
+- (codex) — add Codex CLI as a supported event source
+
+### Chores
+
+- (codex) — track project-level Codex CLI hook config
 ## [1.6.1] — 2026-07-13
 
 ### Features
