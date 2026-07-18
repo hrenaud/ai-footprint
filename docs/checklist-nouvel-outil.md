@@ -55,6 +55,12 @@ un futur client type Codex, etc.). Référence technique complète : voir
       formats/données disponibles.
 - [ ] `docs/METHODOLOGY.md` : uniquement si l'outil introduit une nuance de
       calcul d'impact (ex. modèles auto-hébergés, tokenisation différente).
+- [ ] Landing page (`docs/index.html` + `docs/fr/index.html`) : récupérer le
+      logo officiel de l'outil (source vérifiée — pas de logo inventé/deviné)
+      et l'ajouter dans `docs/assets/` (`logo-<outil>.svg`/`.png`), puis
+      l'ajouter à la liste `#multi-tools` des deux pages (EN + FR) ainsi
+      qu'aux mentions de l'outil dans les autres sections (`hero`,
+      `how-it-works`, meta `description`).
 
 ## 7. Vérification finale
 

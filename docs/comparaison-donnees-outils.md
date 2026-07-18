@@ -18,39 +18,39 @@
 
 ## Tableau comparatif
 
-| Champ                         | Claude Code (JSONL)           | Opencode (JSON)                    | Pi (JSONL)                                              | Usage dans ai-footprint                                     |
-| ----------------------------- | ----------------------------- | ---------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
-| **Identifiants**              |                               |                                    |                                                         |                                                             |
-| `sessionId`                   | ✅                            | ✅ `session_id`                    | ✅ header `type:"session"`, `id`                        | Clé de jointure avec `sessions` table                       |
-| `uuid` / `id`                 | ✅ `msg_id`                   | ✅ `message.id`                    | ✅ `message.id` (entrée `type:"message"`)               | Clé unique par message                                      |
-| **Modèle**                    |                               |                                    |                                                         |                                                             |
-| `model` (string)              | ✅ `"claude-opus-4-8"`        | ⚠️ `{providerID, modelID}`         | ✅ `message.model`                                      | Normalisé en `provider` + `model` dans `InferenceEvent`     |
-| `provider`                    | ❌ (déduit de `model`)        | ✅ `model.providerID`              | ✅ `message.provider`                                   | Permet le lookup EcoLogits                                  |
-| **Tokens**                    |                               |                                    |                                                         |                                                             |
-| `input_tokens`                | ✅                            | ✅ `tokens.input`                  | ✅ `message.usage.input`                                | Calcul d'impact                                             |
-| `output_tokens`               | ✅                            | ✅ `tokens.output`                 | ✅ `message.usage.output`                               | Calcul d'impact                                             |
-| `cache_creation_input_tokens` | ✅                            | ⚠️ `tokens.cache.write`            | ✅ `message.usage.cacheWrite`                           | Calcul d'impact (cache)                                     |
-| `cache_read_input_tokens`     | ✅                            | ⚠️ `tokens.cache.read`             | ✅ `message.usage.cacheRead`                            | Calcul d'impact (cache)                                     |
-| `reasoning_tokens`            | ❌                            | ✅ `tokens.reasoning`              | ❌                                                      | À valider avec EcoLogits                                    |
-| **Temps**                     |                               |                                    |                                                         |                                                             |
-| `timestamp` (ISO 8601)        | ✅                            | ⚠️ Unix timestamp ms               | ✅ ISO 8601 natif                                       | Converti en ISO 8601 UTC                                    |
-| `active_seconds` (delta)      | ✅ Calculé                    | ✅ `time.completed - time.created` | ✅ Calculé (delta entre timestamps successifs)          | Mesure du temps actif                                       |
-| **Coût**                      |                               |                                    |                                                         |                                                             |
-| `cost` (USD)                  | ❌ (non lu par le collecteur) | ✅ `cost` (BD + exports)           | ⚠️ `message.usage.cost.total` (présent mais non stocké) | **Non stocké** — pas de champ `cost` dans `InferenceEvent`  |
-| `latency` (ms)                | ❌ (non lu par le collecteur) | ❌                                 | ❌                                                      | Non exploité actuellement                                   |
-| **Métadonnées session**       |                               |                                    |                                                         |                                                             |
-| `title`                       | ❌                            | ✅ `session.title`                 | ❌                                                      | **Non stocké** (note : à risquer)                           |
-| `directory`                   | ✅ `cwd`                      | ✅ `session.directory`             | ✅ `session.cwd`                                        | Utilisé pour `project` (basename)                           |
-| `slug`                        | ❌                            | ✅ `session.slug`                  | ❌                                                      | **Non stocké** (note : à risquer)                           |
-| `path`                        | ❌                            | ✅ `session.path`                  | ❌                                                      | **Non stocké** (note : à risquer)                           |
-| **Statut**                    |                               |                                    |                                                         |                                                             |
-| `role` (user/assistant)       | ✅                            | ✅                                 | ✅ `message.role`                                       | Filtrage (seuls les assistant comptent)                     |
-| `error`                       | ❌                            | ✅ `error.name`, `error.data`      | ❌                                                      | **Non stocké** — pas de champ `error` dans `InferenceEvent` |
-| `archived`                    | ❌                            | ✅ `time_archived`                 | ❌                                                      | Non exploité actuellement                                   |
-| **Collecte**                  |                               |                                    |                                                         |                                                             |
-| Format de stockage            | JSONL (ligne par ligne)       | SQLite (BDD locale)                | JSONL (ligne par ligne)                                 | Collecteurs spécifiques par outil                           |
-| Déclencheur                   | `hooks.Stop` (fin de session) | `session.idle` (plugin)            | `session_shutdown` (extension)                          | Installation automatique                                    |
-| Backfilling                   | Lecture directe JSONL         | Lecture directe SQLite             | Lecture directe JSONL                                   | Scripts de backfilling spécifiques                          |
+| Champ                         | Claude Code (JSONL)           | Opencode (JSON)                    | Pi (JSONL)                                              | Codex CLI (JSONL)                                          | Usage dans ai-footprint                                     |
+| ----------------------------- | ----------------------------- | ---------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
+| **Identifiants**              |                               |                                    |                                                         |                                                            |                                                             |
+| `sessionId`                   | ✅                            | ✅ `session_id`                    | ✅ header `type:"session"`, `id`                        | ✅ `session_meta.payload.id`                               | Clé de jointure avec `sessions` table                       |
+| `uuid` / `id`                 | ✅ `msg_id`                   | ✅ `message.id`                    | ✅ `message.id` (entrée `type:"message"`)               | ❌ (id synthétique `session_id:ligne`)                     | Clé unique par message                                      |
+| **Modèle**                    |                               |                                    |                                                         |                                                            |                                                             |
+| `model` (string)              | ✅ `"claude-opus-4-8"`        | ⚠️ `{providerID, modelID}`         | ✅ `message.model`                                      | ✅ `turn_context.payload.model` (par tour)                 | Normalisé en `provider` + `model` dans `InferenceEvent`     |
+| `provider`                    | ❌ (déduit de `model`)        | ✅ `model.providerID`              | ✅ `message.provider`                                   | ✅ `session_meta.payload.model_provider`                   | Permet le lookup EcoLogits                                  |
+| **Tokens**                    |                               |                                    |                                                         |                                                            |                                                             |
+| `input_tokens`                | ✅                            | ✅ `tokens.input`                  | ✅ `message.usage.input`                                | ⚠️ `last_token_usage.input_tokens` (inclut le cache)       | Calcul d'impact                                             |
+| `output_tokens`               | ✅                            | ✅ `tokens.output`                 | ✅ `message.usage.output`                               | ✅ `last_token_usage.output_tokens`                        | Calcul d'impact                                             |
+| `cache_creation_input_tokens` | ✅                            | ⚠️ `tokens.cache.write`            | ✅ `message.usage.cacheWrite`                           | ❌ (non distingué par l'API OpenAI)                        | Calcul d'impact (cache)                                     |
+| `cache_read_input_tokens`     | ✅                            | ⚠️ `tokens.cache.read`             | ✅ `message.usage.cacheRead`                            | ✅ `last_token_usage.cached_input_tokens`                  | Calcul d'impact (cache)                                     |
+| `reasoning_tokens`            | ❌                            | ✅ `tokens.reasoning`              | ❌                                                      | ⚠️ `last_token_usage.reasoning_output_tokens` (non stocké) | À valider avec EcoLogits                                    |
+| **Temps**                     |                               |                                    |                                                         |                                                            |                                                             |
+| `timestamp` (ISO 8601)        | ✅                            | ⚠️ Unix timestamp ms               | ✅ ISO 8601 natif                                       | ✅ ISO 8601 natif                                          | Converti en ISO 8601 UTC                                    |
+| `active_seconds` (delta)      | ✅ Calculé                    | ✅ `time.completed - time.created` | ✅ Calculé (delta entre timestamps successifs)          | ✅ Calculé (delta entre lignes successives)                | Mesure du temps actif                                       |
+| **Coût**                      |                               |                                    |                                                         |                                                            |                                                             |
+| `cost` (USD)                  | ❌ (non lu par le collecteur) | ✅ `cost` (BD + exports)           | ⚠️ `message.usage.cost.total` (présent mais non stocké) | ❌                                                         | **Non stocké** — pas de champ `cost` dans `InferenceEvent`  |
+| `latency` (ms)                | ❌ (non lu par le collecteur) | ❌                                 | ❌                                                      | ❌                                                         | Non exploité actuellement                                   |
+| **Métadonnées session**       |                               |                                    |                                                         |                                                            |                                                             |
+| `title`                       | ❌                            | ✅ `session.title`                 | ❌                                                      | ❌                                                         | **Non stocké** (note : à risquer)                           |
+| `directory`                   | ✅ `cwd`                      | ✅ `session.directory`             | ✅ `session.cwd`                                        | ✅ `session_meta.payload.cwd`                              | Utilisé pour `project` (basename)                           |
+| `slug`                        | ❌                            | ✅ `session.slug`                  | ❌                                                      | ❌                                                         | **Non stocké** (note : à risquer)                           |
+| `path`                        | ❌                            | ✅ `session.path`                  | ❌                                                      | ❌                                                         | **Non stocké** (note : à risquer)                           |
+| **Statut**                    |                               |                                    |                                                         |                                                            |                                                             |
+| `role` (user/assistant)       | ✅                            | ✅                                 | ✅ `message.role`                                       | ❌ (filtré via `event_msg`/`token_count`)                  | Filtrage (seuls les assistant comptent)                     |
+| `error`                       | ❌                            | ✅ `error.name`, `error.data`      | ❌                                                      | ❌                                                         | **Non stocké** — pas de champ `error` dans `InferenceEvent` |
+| `archived`                    | ❌                            | ✅ `time_archived`                 | ❌                                                      | ❌                                                         | Non exploité actuellement                                   |
+| **Collecte**                  |                               |                                    |                                                         |                                                            |                                                             |
+| Format de stockage            | JSONL (ligne par ligne)       | SQLite (BDD locale)                | JSONL (ligne par ligne)                                 | JSONL (ligne par ligne)                                    | Collecteurs spécifiques par outil                           |
+| Déclencheur                   | `hooks.Stop` (fin de session) | `session.idle` (plugin)            | `session_shutdown` (extension)                          | Aucun (backfill seul — slot `notify` non câblé)            | Installation automatique                                    |
+| Backfilling                   | Lecture directe JSONL         | Lecture directe SQLite             | Lecture directe JSONL                                   | Lecture directe JSONL                                      | Scripts de backfilling spécifiques                          |
 
 ---
 
@@ -186,6 +186,39 @@
 
 ---
 
+### Codex CLI
+
+**Sources disponibles** :
+
+1. **Transcripts de session (rollout)** : `$CODEX_HOME/sessions/**/*.jsonl`
+   (défaut `~/.codex/sessions` si `$CODEX_HOME` n'est pas positionné).
+
+**Structure d'un fichier de session** (une entrée `session_meta`, puis des
+entrées `turn_context` — modèle du tour courant — et `event_msg` de type
+`token_count` portant l'usage cumulé et le delta du tour) :
+
+```json
+{"type":"session_meta","payload":{"id":"sess-A","cwd":"/Users/me/DEV/projA","model_provider":"openai"}}
+{"type":"turn_context","payload":{"turn_id":"t1","model":"gpt-5.5"}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":17242,"cached_input_tokens":10496,"output_tokens":117,"reasoning_output_tokens":23,"total_tokens":17359}}}}
+```
+
+Particularité OpenAI : `cached_input_tokens` et `reasoning_output_tokens` sont
+des **sous-ensembles** de `input_tokens`/`output_tokens` (contrairement au
+schéma Anthropic où le cache est additif) — `input_tokens` stocké dans
+`InferenceEvent` est donc `last_token_usage.input_tokens - cached_input_tokens`.
+
+Aucun identifiant de message natif n'existe dans ce format : `msg_id` est
+synthétique (`session_id:numéro_de_ligne`). Les lignes `token_count` dont
+`last_token_usage` est `null` (pas de nouveau tour depuis le dernier calcul)
+sont ignorées.
+
+**Collecteur** : `CodexCollector` (lecture directe JSONL, root = répertoire ou
+fichier unique). Backfill uniquement — pas de hook temps réel (le slot
+`notify` de `config.toml` peut être pris par un autre outil).
+
+---
+
 ## Notes pour les futurs outils
 
 Quand un nouvel outil est ajouté, mettre à jour :
@@ -221,4 +254,4 @@ Quand un nouvel outil est ajouté, mettre à jour :
 
 ---
 
-_Document créé le 2026-06-30, mis à jour le 2026-07-13. À mettre à jour à chaque nouvel outil ajouté._
+_Document créé le 2026-06-30, mis à jour le 2026-07-18. À mettre à jour à chaque nouvel outil ajouté._

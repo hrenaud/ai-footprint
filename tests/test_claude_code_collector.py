@@ -1,7 +1,5 @@
 from pathlib import Path
 from ai_footprint.collectors.claude_code import ClaudeCodeCollector
-from ai_footprint.collectors.stubs import CodexCollector
-import pytest
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -37,11 +35,6 @@ def test_collect_from_single_file():
     f = FIXTURES / "sample.jsonl"
     events = list(ClaudeCodeCollector(str(f)).collect())
     assert len(events) == 2  # les 2 messages assistant du fichier
-
-
-def test_stub_collector_raises():
-    with pytest.raises(NotImplementedError):
-        list(CodexCollector().collect())
 
 
 def test_malformed_json_line_is_logged(tmp_path, caplog):

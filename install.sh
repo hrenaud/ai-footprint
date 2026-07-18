@@ -134,6 +134,7 @@ else
 fi
 
 # 5. Câblage Claude Code (statusline + hook d'ingestion) ---------------------
+SKILLS_SRC="$INSTALL_DIR/skills"
 if [ "${AI_FOOTPRINT_NO_CLAUDE:-0}" != "1" ]; then
   mkdir -p "$(dirname "$SETTINGS_FILE")"
   STATUSLINE_CMD="$INSTALL_DIR/scripts/statusline.sh $DB_PATH"
@@ -204,7 +205,6 @@ PY
   ok "Claude Code câblé ($SETTINGS_FILE)"
 
   # Skills (slash-skills) → ~/.claude/skills (symlinks, se mettent à jour avec le repo).
-  SKILLS_SRC="$INSTALL_DIR/skills"
   SKILLS_DST="$HOME/.claude/skills"
   if [ -d "$SKILLS_SRC" ]; then
     mkdir -p "$SKILLS_DST"
@@ -315,6 +315,35 @@ if command -v pi >/dev/null 2>&1; then
   fi
 else
   say "Pi non détecté — câblage ignoré."
+fi
+
+# 9. Câblage Codex CLI (skills + backfill) -------------------------------------
+if command -v codex >/dev/null 2>&1; then
+  CODEX_BASE="${CODEX_HOME:-$HOME/.codex}"
+  CODEX_SESSIONS_DIR="$CODEX_BASE/sessions"
+  CODEX_SKILLS_DIR="$CODEX_BASE/skills"
+
+  # Skills génériques (mêmes SKILL.md que Claude Code) → auto-découverte Codex.
+  if [ -d "$SKILLS_SRC" ]; then
+    mkdir -p "$CODEX_SKILLS_DIR"
+    for d in "$SKILLS_SRC"/*/; do
+      [ -d "$d" ] || continue
+      name="$(basename "$d")"
+      ln -sfn "$d" "$CODEX_SKILLS_DIR/$name"
+      ok "skill Codex: /$name"
+    done
+  fi
+
+  # Pas de hook live (le slot `notify` de config.toml peut être pris par un
+  # autre outil) — ingestion par backfill uniquement, comme pour Pi/Crush.
+  if [ -d "$CODEX_SESSIONS_DIR" ]; then
+    say "Backfill Codex en cours (lecture de $CODEX_SESSIONS_DIR) ..."
+    "$AC_BIN" ingest --db "$DB_PATH" --source-codex "$CODEX_SESSIONS_DIR" 2>/dev/null \
+      && ok "Backfill initial effectué." \
+      || warn "Backfill initial non abouti — relancez 'ai-footprint ingest --source-codex $CODEX_SESSIONS_DIR'."
+  fi
+else
+  say "Codex CLI non détecté — câblage ignoré."
 fi
 
 printf '\n'

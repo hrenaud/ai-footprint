@@ -39,6 +39,12 @@ To be followed with each addition of an event source (Claude Code, Opencode/Crus
 - [ ] `CONTRIBUTING.md`: update the architecture diagram / the module table if the new collector introduces a different pattern.
 - [ ] `docs/comparaison-donnees-outils.md`: add the tool to the comparison of available formats/data.
 - [ ] `docs/METHODOLOGY.md`: only if the tool introduces a nuance in impact calculation (e.g., self-hosted models, different tokenization).
+- [ ] Landing page (`docs/index.html` + `docs/fr/index.html`): fetch the tool's
+      official logo (verified source — never an invented/guessed logo) and add
+      it under `docs/assets/` (`logo-<tool>.svg`/`.png`), then add it to the
+      `#multi-tools` list on both pages (EN + FR) as well as the tool
+      mentions in the other sections (`hero`, `how-it-works`, meta
+      `description`).
 
 ## 7. Final Verification
 

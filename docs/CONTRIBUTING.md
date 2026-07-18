@@ -278,6 +278,6 @@ ralentir chaque démarrage de session. Logique testée dans
 
 ## Hors périmètre actuel (coutures posées)
 
-Collecteurs tiers (Codex, inférence locale) en stubs ; `compute_live()` (instrumentation
+Collecteur inférence locale en stub ; `compute_live()` (instrumentation
 temps réel) et `import_legacy()` non implémentés ; export CSV/JSON et énergie du poste
 de travail hors périmètre.

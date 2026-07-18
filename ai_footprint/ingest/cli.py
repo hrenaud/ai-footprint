@@ -62,6 +62,7 @@ def ingest_summary(new_count: int, cov: dict, store=None) -> str:
 def cmd_ingest(args) -> int:
     """Commande ingest : collecter les transcripts et ingérer les impacts."""
     from ai_footprint.collectors.claude_code import ClaudeCodeCollector
+    from ai_footprint.collectors.codex import CodexCollector
     from ai_footprint.collectors.crush import CrushCollector
     from ai_footprint.collectors.pi import PiCollector
     from ai_footprint.store.db import open_store
@@ -75,6 +76,8 @@ def cmd_ingest(args) -> int:
             events = CrushCollector(root=args.source_crush).collect()
     elif args.source_pi:
         events = PiCollector(root=args.source_pi).collect()
+    elif args.source_codex:
+        events = CodexCollector(root=args.source_codex).collect()
     else:
         events = ClaudeCodeCollector(args.source).collect()
     config = Config.load()

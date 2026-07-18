@@ -4,7 +4,7 @@
 installation et [documentation en ligne](https://hrenaud.github.io/ai-footprint/guide/).
 
 **Connaître l'empreinte environnementale de tes sessions d'IA.** AI Footprint (`ai-footprint`) lit les
-transcripts de Claude Code, Opencode et Pi, estime l'impact de chaque réponse
+transcripts de Claude Code, Opencode, Pi et Codex CLI, estime l'impact de chaque réponse
 générée, et te le restitue sous forme de rapport et de suivi en temps réel —
 directement dans l'outil que tu utilises déjà.
 
@@ -40,8 +40,8 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.s
 L'installeur détecte Python ≥ 3.10, installe ai-footprint + EcoLogits, expose la
 commande `ai-footprint`, déploie les skills et câble le suivi (statusline +
 ingestion) pour chaque outil détecté sur ta machine — Claude Code, Opencode
-(plugin) et Pi (extension) — et fait un backfill initial de leurs sessions
-locales. **Redémarre ton outil** ensuite pour activer les skills.
+(plugin), Pi (extension) et Codex CLI — et fait un backfill initial de leurs
+sessions locales. **Redémarre ton outil** ensuite pour activer les skills.
 
 Options d'installation (variables d'environnement) et détails complets : voir le
 [guide avancé](docs/GUIDE-AVANCE.md).
@@ -75,7 +75,8 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/uninstall
 ```
 
 Retire le binaire, les skills, le câblage dans chaque outil (statusline + hook
-d'ingestion Claude Code, plugin Opencode, extension Pi) et le répertoire source.
+d'ingestion Claude Code, plugin Opencode, extension Pi, backfill Codex CLI) et
+le répertoire source.
 **La base `ai-footprint.db` (historique d'impact) est conservée par défaut** —
 ajoute `AI_FOOTPRINT_PURGE_DB=1` avant la commande pour la supprimer aussi.
 
@@ -97,7 +98,7 @@ Le rapport a cinq sections : **impact total**, **projets les plus impactants**,
 **tokens & impact par modèle**, **modèles non couverts**, et **intensité par modèle**
 (impact par heure de travail — révèle qu'à débit égal, Opus émet bien plus que Haiku).
 Une sixième section, **intensité par outil**, apparaît automatiquement dès que tes
-données couvrent plusieurs outils (Claude Code, Opencode, Pi…) — elle révèle
+données couvrent plusieurs outils (Claude Code, Opencode, Pi, Codex CLI…) — elle révèle
 quel outil consomme le plus de tokens et a les impacts les plus forts, à débit égal.
 
 Options utiles du rapport : `--since 2026-06-27` (ou `27/06/26`) pour une période,

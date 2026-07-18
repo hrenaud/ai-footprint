@@ -158,6 +158,9 @@ def main(argv: list[str] | None = None) -> int:
                        help="directory d'exports JSON Opencode/Crush, ou chemin vers opencode.db (backfill SQLite)")
     p_ing.add_argument("--source-pi", default=None,
                        help="directory des sessions Pi (~/.pi/agent/sessions), ou fichier JSONL unique")
+    p_ing.add_argument("--source-codex", default=None,
+                       help="directory des sessions Codex CLI (rollout JSONL), ou fichier unique "
+                            "(défaut : $CODEX_HOME/sessions ou ~/.codex/sessions)")
     p_ing.add_argument("--db", default=_DEFAULT_DB)
 
     p_rep = sub.add_parser("report", help="afficher le rapport multi-critères")

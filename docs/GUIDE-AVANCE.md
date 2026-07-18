@@ -12,7 +12,7 @@ voir [CONTRIBUTING.md](CONTRIBUTING.md).
 L'installeur en une ligne (voir le [guide utilisateur](GUIDE.md#installer))
 reste la méthode recommandée : il détecte tes outils installés et câble tout
 automatiquement. Les méthodes ci-dessous n'installent que la **CLI**, sans
-câblage automatique dans Claude Code, Opencode ou Pi.
+câblage automatique dans Claude Code, Opencode, Pi ou Codex CLI.
 
 ### Via Homebrew (macOS/Linux)
 
@@ -122,7 +122,7 @@ avec `ai-footprint resolve` (ou `/footprint-resolve`). Détails complets :
 ### Ingestion multi-outils
 
 `ai-footprint ingest` lit les transcripts de session de chaque outil détecté
-(Claude Code, Opencode, Pi) et les convertit en events dans la base
+(Claude Code, Opencode, Pi, Codex CLI) et les convertit en events dans la base
 SQLite. L'ingestion est **idempotente** : rejouer un même transcript ne
 duplique rien. Chaque outil déclenche l'ingestion à sa façon :
 
@@ -132,6 +132,10 @@ duplique rien. Chaque outil déclenche l'ingestion à sa façon :
 - **Opencode** : un plugin déclenche l'ingestion sur les mêmes
   événements de cycle de vie de session.
 - **Pi** : une extension fait de même sur ses propres événements de session.
+- **Codex CLI** : pas de hook temps réel (le slot `notify` de `config.toml`
+  peut être pris par un autre outil) — l'ingestion se fait par backfill, au
+  moment de l'installation puis à chaque relance manuelle de
+  `ai-footprint ingest --source-codex`.
 
 ### Statusline
 

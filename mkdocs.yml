@@ -9,6 +9,7 @@ exclude_docs: |
   index.html
   fr/
   assets/logo-claude.svg
+  assets/logo-codex.svg
   assets/logo-opencode.png
   assets/logo-pi.svg
   assets/report-en.png

@@ -5,7 +5,7 @@ skills au quotidien. Pour une présentation rapide du produit, voir le
 [README](https://github.com/hrenaud/ai-footprint#readme) ; pour comprendre
 comment les impacts sont calculés, voir [METHODOLOGY.md](METHODOLOGY.md).
 
-`ai-footprint` fonctionne avec **Claude Code**, **Opencode** et **Pi** :
+`ai-footprint` fonctionne avec **Claude Code**, **Opencode**, **Pi** et **Codex CLI** :
 l'installeur détecte automatiquement les outils présents sur ta machine et
 active les skills/le suivi pour chacun d'eux, sans réglage à faire toi-même.
 
@@ -24,10 +24,10 @@ curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.s
 ```
 
 Cette commande installe `ai-footprint`, l'active pour tous les outils
-compatibles détectés sur ta machine (Claude Code, Opencode, Pi), et
+compatibles détectés sur ta machine (Claude Code, Opencode, Pi, Codex CLI), et
 reprend l'historique de tes sessions passées. **Redémarre ton outil** (Claude
-Code, Opencode ou Pi) une fois l'installation terminée pour activer les
-skills.
+Code, Opencode, Pi ou Codex CLI) une fois l'installation terminée pour activer
+les skills.
 
 ### Mettre à jour
 

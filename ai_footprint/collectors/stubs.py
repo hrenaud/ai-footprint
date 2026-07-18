@@ -4,15 +4,6 @@ from ai_footprint.collectors.base import Collector
 from ai_footprint.models import InferenceEvent
 
 
-class CodexCollector(Collector):
-    """Placeholder — à implémenter quand on ajoutera Codex."""
-
-    provider = "openai"
-
-    def collect(self) -> Iterator[InferenceEvent]:
-        raise NotImplementedError("CodexCollector pas encore implémenté")
-
-
 class LocalInferenceCollector(Collector):
     """Placeholder — inférence locale (Apple Silicon), hors MVP."""
 
