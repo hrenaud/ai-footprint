@@ -202,6 +202,7 @@ async function maybeNudge(client, sessionId) {
  * @param {{ client: import("@opencode-ai/sdk").OpencodeClient }} input
  */
 module.exports = {
+  id: "footprint-crush",
   server: async ({ client }) => {
     return {
       event: async ({ event }) => {

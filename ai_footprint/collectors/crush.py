@@ -85,7 +85,13 @@ class CrushCollector(Collector):
         for msg in messages:
             if not isinstance(msg, dict):
                 continue
-            info = msg.get("data") or msg.get("info")
+            data = msg.get("data")
+            if isinstance(data, str):
+                # server export format : data est le texte du message,
+                # metadata est dans info — fallback obligatoire.
+                info = msg.get("info")
+            else:
+                info = data or msg.get("info")
             if not isinstance(info, dict):
                 continue
 
