@@ -185,6 +185,30 @@ La carte affiche un titre (« AI Footprint ») et une ligne par indicateur
 étroit pour la ligne complète utilisée par les autres outils (elle s'y
 coupait au milieu d'une unité).
 
+Opencode ≥1.18.9 tourne sur un binaire compilé Bun. Sous Bun, l'interop
+CJS→ESM d'un module `module.exports = fonction` (fonction nue) fuite les
+propriétés intrinsèques de cette fonction (`.length`, `.name`) comme de faux
+exports nommés supplémentaires du module — contrairement à Node, où l'interop
+ne produit que `{default: fonction}`. Le chargeur de plugins d'Opencode lit
+d'abord `mod.default` en cherchant la forme V1 documentée `{server:
+fonction}` ; si ce n'est pas un objet de cette forme (cas d'une fonction nue),
+il retombe sur un chargement « legacy » qui itère _tous_ les exports du
+module et exige que chacun soit soit une fonction, soit un objet `{server:
+fonction}` — les faux exports `.length`/`.name` (un nombre et une chaîne) ne
+satisfont ni l'un ni l'autre, d'où l'erreur `Plugin export is not a
+function`. `footprint-crush.js` exporte donc directement la forme V1
+`module.exports = { server: async ({client}) => {...} }`, lue par `mod.default`
+sans jamais retomber sur le scan legacy — la fuite Bun devient sans effet.
+
+Par ailleurs, Opencode/Bun scanne tous les `.js` à la **racine** de son
+dossier plugins comme candidats plugin, même non déclarés dans
+`opencode.json`/`tui.json` (un sous-dossier n'est pas scanné). La logique
+testable (`ingestExport`) vit donc dans `lib/footprint-crush-lib.js` (et non à
+la racine), requis via `require()` par `footprint-crush.js` mais jamais
+lui-même un candidat plugin scanné — `install.sh` déploie
+`footprint-crush.js` à la racine de `~/.config/opencode/plugins/` et
+`footprint-crush-lib.js` dans son sous-dossier `lib/`.
+
 Le prop `session_id` que le slot `sidebar_content` d'Opencode transmet à la
 fonction enregistrée n'est pas toujours renseigné à l'exécution (constaté
 empiriquement) : sans repli, `fetchStatusline` n'envoie alors aucun id de

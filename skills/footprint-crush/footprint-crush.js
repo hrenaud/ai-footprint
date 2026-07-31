@@ -15,6 +15,8 @@ const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 
+const { ingestExport } = require("./lib/footprint-crush-lib.js");
+
 const execFileAsync = promisify(execFile);
 
 const EXPORT_DIR = path.join(
@@ -186,20 +188,39 @@ async function maybeNudge(client, sessionId) {
  * Plugin Opencode : exporte les sessions terminées et propose resolve/maj
  * au démarrage.
  *
+ * Format V1 documenté par Opencode ≥1.18.9 : `module.exports = { server:
+ * fonction }` (pas une fonction nue en export direct). Sous Bun (runtime
+ * d'Opencode), une fonction nue exportée directement fuite ses propriétés
+ * intrinsèques `.length`/`.name` comme faux exports nommés lors de l'interop
+ * CJS→ESM, ce qui fait échouer la validation du chargeur ("Plugin export is
+ * not a function") même quand le module ne contient par ailleurs aucun named
+ * export volontaire. Avec la forme objet `{server: fn}`, le chargeur lit et
+ * valide `mod.default` directement (V1) sans jamais retomber sur le scan
+ * "legacy" qui itère tous les exports du module — la fuite Bun devient sans
+ * effet.
+ *
  * @param {{ client: import("@opencode-ai/sdk").OpencodeClient }} input
  */
-module.exports.FootprintCrush = async ({ client }) => {
-  return {
-    event: async ({ event }) => {
-      if (event.type === "session.idle") {
-        console.log(
-          `[footprint-crush] Session idle: ${event.properties.sessionID} — export en cours...`,
-        );
-        await exportSession(client, event.properties.sessionID);
-      }
-      if (event.type === "session.created") {
-        await maybeNudge(client, event.properties.sessionID);
-      }
-    },
-  };
+module.exports = {
+  server: async ({ client }) => {
+    return {
+      event: async ({ event }) => {
+        if (event.type === "session.idle") {
+          console.log(
+            `[footprint-crush] Session idle: ${event.properties.sessionID} — export en cours...`,
+          );
+          await exportSession(client, event.properties.sessionID);
+          await ingestExport(
+            execFileAsync,
+            AC_BIN,
+            EXPORT_DIR,
+            event.properties.sessionID,
+          );
+        }
+        if (event.type === "session.created") {
+          await maybeNudge(client, event.properties.sessionID);
+        }
+      },
+    };
+  },
 };
