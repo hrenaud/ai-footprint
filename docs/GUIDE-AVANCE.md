@@ -156,6 +156,17 @@ Chaque indicateur choisit automatiquement son unité (ex. eau en mL, cL ou L ;
 « 0.000… » sur les petites sessions. Sans donnée, la statusline affiche une
 ligne à 0 (jamais une ligne vide) pour rester rafraîchie par l'outil hôte.
 
+Une ligne à 0 malgré des tokens réellement consommés a deux causes
+possibles : (1) aucune donnée n'a été ingérée pour cette session, ou (2) le
+modèle utilisé n'est pas couvert par EcoLogits — l'event est bien ingéré mais
+`rows_for_report` l'exclut des totaux (`WHERE i.error IS NULL`), afficher un
+faux chiffre étant pire qu'un trou de couverture. Pour distinguer ces deux cas,
+la statusline de session ajoute un suffixe `· 🔢 N tok` quand
+`tokens_for_session` (qui compte directement sur `events`, sans la jointure
+`impacts`) renvoie un total non nul — un `🔢` présent avec le reste de la
+ligne à 0 signale un modèle non couvert, son absence signale une absence
+d'ingestion.
+
 ### Statusline TUI Opencode
 
 Opencode affiche ses infos de statut dans le corps du panneau latéral de

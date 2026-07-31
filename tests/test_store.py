@@ -34,6 +34,22 @@ def test_session_duration_computed(tmp_path):
     assert store.total_duration_seconds() == 600.0  # 10 min entre u1 et u2
 
 
+def test_tokens_for_session_counts_uncovered_models_too(tmp_path):
+    """Un modèle non couvert par EcoLogits (ex. modèle local oMLX) est exclu
+    des totaux d'impact (i.error non NULL) mais ses tokens ont bien été
+    consommés : tokens_for_session doit les compter quand même, pour
+    permettre de distinguer « pas de données ingérées » de « modèle non
+    couvert »."""
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    events = [
+        InferenceEvent("omlx", "modele-local-non-couvert", 1000, 2000, 0, 0,
+                       "2026-07-30T10:00:00.000Z", "p", "sess-local", "u1"),
+    ]
+    store.ingest(events, _engine(), Config())
+    assert store.tokens_for_session("sess-local") == 3000
+    assert store.tokens_for_session("sess-inexistante") == 0
+
+
 def test_intensity_by_model(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     # 1 h de temps actif (3600 s), 600 tokens de sortie

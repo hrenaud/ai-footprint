@@ -296,7 +296,8 @@ def main(argv: list[str] | None = None) -> int:
         # jour même en cours de session, sans attendre le hook Stop.
         if transcript and os.path.exists(transcript):
             ingest_and_save(store, ClaudeCodeCollector(transcript).collect(), build_engine(config), config)
-        print(render_statusline(store.rows_for_report(session_id=session_id)))
+        tokens = store.tokens_for_session(session_id) if session_id else None
+        print(render_statusline(store.rows_for_report(session_id=session_id), tokens=tokens))
         return 0
 
     if args.cmd == "models":

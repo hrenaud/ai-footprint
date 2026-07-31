@@ -192,6 +192,18 @@ class SQLiteStore:
             params.append(session_id)
         return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
 
+    def tokens_for_session(self, session_id: str) -> int:
+        """Total de tokens (entrée+sortie) d'une session, sans jointure sur
+        impacts : compte aussi les modèles non couverts par EcoLogits (exclus
+        des totaux d'impact via `rows_for_report`), pour distinguer « pas de
+        données ingérées » de « modèle non couvert »."""
+        row = self.conn.execute(
+            "SELECT SUM(input_tokens + output_tokens) AS toks "
+            "FROM events WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+        return row["toks"] or 0
+
     def _criteria_rows(self, group_col, select_toks="SUM(e.output_tokens) AS toks",
                         extra_where="", since=None):
         where = "WHERE i.error IS NULL" + extra_where

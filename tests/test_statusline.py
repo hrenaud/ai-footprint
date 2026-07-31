@@ -125,3 +125,19 @@ def test_statusline_scopes_to_current_session(tmp_path, monkeypatch, capsys):
     store = SQLiteStore(db)
     global_line = render_statusline(store.rows_for_report())
     assert session_line != global_line
+
+
+def test_render_statusline_appends_token_count_when_given():
+    """Diagnostic demandé (2026-07-30) : un modèle non couvert par EcoLogits
+    (ex. modèle local via oMLX) donne 0 rows et donc une ligne à 0, même avec
+    de vrais tokens consommés. Afficher le nb de tokens mesurés permet de
+    distinguer « aucune donnée ingérée » de « modèle non couvert, exclu des
+    totaux »."""
+    line = render_statusline([], tokens=27211)
+    assert "27" in line and "211" in line or "27.2k" in line
+
+    line_none = render_statusline([], tokens=None)
+    assert "🔢" not in line_none
+
+    line_zero = render_statusline([], tokens=0)
+    assert "🔢" not in line_zero

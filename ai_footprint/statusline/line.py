@@ -26,11 +26,24 @@ def _scale(min_v: float, max_v: float, ladder: tuple) -> tuple[float, float, str
     return min_v / factor, max_v / factor, unit
 
 
-def render_statusline(rows: list[dict]) -> str:
+def _tokens_suffix(tokens: int | None) -> str:
+    # Diagnostic (cf. 2026-07-30) : distinguer « pas de données ingérées »
+    # (tokens absent/0) de « modèle non couvert par EcoLogits, exclu des
+    # totaux d'impact mais réellement consommé » (tokens > 0 malgré un 0
+    # partout ailleurs sur la ligne).
+    if not tokens:
+        return ""
+    return f" · 🔢 {tokens:,}".replace(",", " ") + " tok"
+
+
+def render_statusline(rows: list[dict], tokens: int | None = None) -> str:
     if not rows:
         # Ligne à 0 plutôt que vide : une statusline vide n'est pas
         # (ré)affichée par Claude Code.
-        return f"🌍 0 {_GWP_LADDER[0][0]} · 💧 0 {_WATER_LADDER[0][0]} · ⚡ 0 {_ENERGY_LADDER[0][0]}"
+        return (
+            f"🌍 0 {_GWP_LADDER[0][0]} · 💧 0 {_WATER_LADDER[0][0]} · "
+            f"⚡ 0 {_ENERGY_LADDER[0][0]}{_tokens_suffix(tokens)}"
+        )
     e_min = sum(r["energy_min"] for r in rows)
     e_max = sum(r["energy_max"] for r in rows)
     g_min = sum(r["gwp_min"] for r in rows)
@@ -57,5 +70,5 @@ def render_statusline(rows: list[dict]) -> str:
     return (
         f"{prefix}🌍 {g_min:.3g}–{g_max:.3g} {g_unit} · "
         f"💧 {w_min:.3g}–{w_max:.3g} {w_unit} · "
-        f"⚡ {e_min:.3g}–{e_max:.3g} {e_unit}{note}"
+        f"⚡ {e_min:.3g}–{e_max:.3g} {e_unit}{note}{_tokens_suffix(tokens)}"
     )
