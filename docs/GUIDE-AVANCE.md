@@ -156,6 +156,46 @@ Chaque indicateur choisit automatiquement son unité (ex. eau en mL, cL ou L ;
 « 0.000… » sur les petites sessions. Sans donnée, la statusline affiche une
 ligne à 0 (jamais une ligne vide) pour rester rafraîchie par l'outil hôte.
 
+### Statusline TUI Opencode
+
+Opencode affiche ses infos de statut dans le corps du panneau latéral de
+session (`sidebar_content`), pas en pied d'écran comme les autres outils. Un
+plugin dédié — `skills/footprint-crush/tui/` (sources), compilé en
+`skills/footprint-crush/footprint-crush-tui.js` (bundle committé) — s'y
+enregistre pour afficher la statusline ai-footprint à cet endroit.
+
+L'installeur :
+
+- copie le bundle dans `~/.config/opencode/plugins/footprint-crush-tui.js` et
+  l'enregistre dans `~/.config/opencode/tui.json` ;
+- installe un `node_modules` réel à côté (`~/.config/opencode/plugins/`) pour
+  `@opentui/core`, `@opentui/solid` et `solid-js` via `npm install`.
+
+Ce `node_modules` est nécessaire car ces trois librairies restent **external**
+au bundle esbuild (cf. `skills/footprint-crush/tui/build.mjs`) : le renderer
+universel Solid s'initialise par effet de bord au chargement du module et a
+besoin d'une instance unique de ces libs — les bundler en dur casse ce
+mécanisme (erreur `No renderer found` à l'exécution). Si `npm` est absent au
+moment de l'installation, la statusline TUI ne s'affichera pas tant que ce
+`node_modules` n'est pas créé manuellement (mêmes paquets/versions que
+`skills/footprint-crush/tui/package.json`).
+
+La carte affiche un titre (« AI Footprint ») et une ligne par indicateur
+(🌍/💧/⚡) plutôt qu'une seule ligne inline, le panneau latéral étant trop
+étroit pour la ligne complète utilisée par les autres outils (elle s'y
+coupait au milieu d'une unité).
+
+Le prop `session_id` que le slot `sidebar_content` d'Opencode transmet à la
+fonction enregistrée n'est pas toujours renseigné à l'exécution (constaté
+empiriquement) : sans repli, `fetchStatusline` n'envoie alors aucun id de
+session au binaire, qui calcule sur le **total global** de l'historique
+(tous outils/modèles confondus) au lieu de la session en cours — d'où des
+chiffres démesurés et un modèle affiché sans rapport avec celui réellement
+utilisé. Le plugin retombe donc sur `api.route.current.params.sessionID`
+(route de session courante) quand `session_id` est absent, comme le fait le
+plugin de référence `opencode-subagent-statusline`
+(`resolveSessionId` dans `skills/footprint-crush/tui/src/statusline-source.mjs`).
+
 ### Modèles non couverts et résolution
 
 Voir [METHODOLOGY.md](METHODOLOGY.md) pour le détail de ce qui est mesuré et

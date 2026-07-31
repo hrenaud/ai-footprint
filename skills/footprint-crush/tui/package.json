@@ -1,0 +1,16 @@
+{
+  "name": "footprint-crush-tui-build",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/statusline-source.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "esbuild-plugin-solid": "0.6.0",
+    "solid-js": "1.9.12",
+    "@opentui/core": "0.4.5",
+    "@opentui/solid": "0.4.5"
+  }
+}

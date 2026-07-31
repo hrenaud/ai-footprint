@@ -29,3 +29,6 @@ venv/
 
 # Build temporaire de la doc mkdocs (le résultat commité est docs/guide/)
 .mkdocs-build/
+
+# Dépendances de build du plugin TUI Opencode (résultat committé : footprint-crush-tui.js)
+skills/footprint-crush/tui/node_modules/

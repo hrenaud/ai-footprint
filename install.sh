@@ -239,13 +239,20 @@ if command -v opencode >/dev/null 2>&1 || command -v crush >/dev/null 2>&1; then
     OPENCODE_DB="$HOME/.local/share/crush/crush.db"
   fi
 
-  # 7a. Créer le plugin footprint-crush.js.
-  mkdir -p "$OPENCODE_PLUGIN_DIR"
+  # 7a. Créer le plugin footprint-crush.js (+ sa lib lib/footprint-crush-lib.js,
+  # requise via require() par le module principal). La lib va dans un
+  # sous-dossier lib/ car Opencode scanne tous les .js à la RACINE de son
+  # dossier plugins comme candidats plugin (même non déclarés dans
+  # opencode.json) — un sous-dossier n'est pas scanné.
+  mkdir -p "$OPENCODE_PLUGIN_DIR/lib"
   PLUGIN_SRC="$INSTALL_DIR/skills/footprint-crush/footprint-crush.js"
   PLUGIN_DST="$OPENCODE_PLUGIN_DIR/footprint-crush.js"
+  PLUGIN_LIB_SRC="$INSTALL_DIR/skills/footprint-crush/lib/footprint-crush-lib.js"
+  PLUGIN_LIB_DST="$OPENCODE_PLUGIN_DIR/lib/footprint-crush-lib.js"
 
   if [ -f "$PLUGIN_SRC" ]; then
     cp "$PLUGIN_SRC" "$PLUGIN_DST"
+    cp "$PLUGIN_LIB_SRC" "$PLUGIN_LIB_DST"
     ok "Plugin Opencode installé ($PLUGIN_DST)"
   else
     warn "Plugin Opencode introuvable dans $PLUGIN_SRC — omission."
@@ -278,6 +285,88 @@ PY
   else
     warn "opencode.json introuvable — le plugin ne sera pas chargé automatiquement."
     warn "  Pour charger manuellement : ajoutez « \"$PLUGIN_DST\" » à « plugin » dans $OPENCODE_CFG."
+  fi
+
+  # 7b-bis. Créer et enregistrer le plugin TUI footprint-crush-tui.js
+  # (statusline visible dans l'interface Opencode, cf. tui.json — surface
+  # distincte du plugin serveur enregistré dans opencode.json ci-dessus).
+  TUI_PLUGIN_SRC="$INSTALL_DIR/skills/footprint-crush/footprint-crush-tui.js"
+  TUI_PLUGIN_DST="$OPENCODE_PLUGIN_DIR/footprint-crush-tui.js"
+  TUI_CFG="$HOME/.config/opencode/tui.json"
+
+  if [ -f "$TUI_PLUGIN_SRC" ]; then
+    cp "$TUI_PLUGIN_SRC" "$TUI_PLUGIN_DST"
+    ok "Plugin TUI Opencode installé ($TUI_PLUGIN_DST)"
+
+    if [ -f "$TUI_CFG" ]; then
+      "$INSTALL_DIR/.venv/bin/python" - "$TUI_CFG" "$TUI_PLUGIN_DST" <<'PY'
+import json, sys
+cfg_path, plugin_path = sys.argv[1], sys.argv[2]
+try:
+    with open(cfg_path, encoding="utf-8") as fh:
+        cfg = json.load(fh)
+except (FileNotFoundError, json.JSONDecodeError):
+    cfg = {}
+
+plugins = cfg.setdefault("plugin", [])
+if plugin_path not in plugins:
+    plugins.append(plugin_path)
+    print(f"  Plugin enregistré dans tui.json: {plugin_path}")
+else:
+    print("  Plugin déjà enregistré dans tui.json")
+
+with open(cfg_path, "w", encoding="utf-8") as fh:
+    json.dump(cfg, fh, indent=2, ensure_ascii=False)
+    fh.write("\n")
+PY
+    else
+      cat > "$TUI_CFG" <<EOF
+{
+  "plugin": ["$TUI_PLUGIN_DST"]
+}
+EOF
+      ok "tui.json créé et plugin TUI enregistré."
+    fi
+    # 7b-ter. node_modules runtime pour le plugin TUI. @opentui/core,
+    # @opentui/solid et solid-js sont external au bundle (cf.
+    # skills/footprint-crush/tui/build.mjs) : le renderer universel Solid
+    # s'initialise par effet de bord au chargement du module et exige une
+    # instance unique de ces libs — les bundler en dur casse ce mécanisme
+    # ("No renderer found" à l'exécution, constaté empiriquement). Il faut
+    # donc un vrai node_modules à côté du plugin déployé pour que ces
+    # imports se résolvent normalement au chargement.
+    TUI_PKG_SRC="$INSTALL_DIR/skills/footprint-crush/tui/package.json"
+    if command -v npm >/dev/null 2>&1 && [ -f "$TUI_PKG_SRC" ]; then
+      "$INSTALL_DIR/.venv/bin/python" - "$TUI_PKG_SRC" "$OPENCODE_PLUGIN_DIR/package.json" <<'PY'
+import json, sys
+src_path, dst_path = sys.argv[1], sys.argv[2]
+with open(src_path, encoding="utf-8") as fh:
+    dev_deps = json.load(fh)["devDependencies"]
+deps = {
+    name: dev_deps[name]
+    for name in ("@opentui/core", "@opentui/solid", "solid-js")
+    if name in dev_deps
+}
+pkg = {
+    "name": "opencode-plugins-runtime-deps",
+    "private": True,
+    "dependencies": deps,
+}
+with open(dst_path, "w", encoding="utf-8") as fh:
+    json.dump(pkg, fh, indent=2, ensure_ascii=False)
+    fh.write("\n")
+PY
+      say "Installation des dépendances runtime du plugin TUI (npm install) ..."
+      if (cd "$OPENCODE_PLUGIN_DIR" && npm install --no-audit --no-fund --silent); then
+        ok "Dépendances runtime du plugin TUI installées ($OPENCODE_PLUGIN_DIR/node_modules)."
+      else
+        warn "Échec de « npm install » pour les dépendances runtime du plugin TUI — la statusline TUI risque de ne pas s'afficher."
+      fi
+    else
+      warn "npm introuvable ou $TUI_PKG_SRC manquant — dépendances runtime du plugin TUI non installées."
+    fi
+  else
+    warn "Plugin TUI introuvable dans $TUI_PLUGIN_SRC — omission."
   fi
 
   # 7c. Backfill initial si la BDD locale existe.
