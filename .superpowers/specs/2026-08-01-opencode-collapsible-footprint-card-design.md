@@ -13,7 +13,10 @@ session diagnostics readable.
   `▶ AI Footprint v<version>` when collapsed.
 - Clicking the header toggles the section.
 - When the header has focus, Enter and Space toggle it as well.
-- The collapse state is local to the current TUI instance and is not persisted.
+- The collapse state is persisted in OpenCode's TUI key-value store.
+- Clicking the header persists the new state and displays an informational toast
+  announcing whether AI Footprint was expanded or collapsed.
+- Keyboard state changes persist silently, without a toast.
 
 ## Content
 
@@ -35,6 +38,7 @@ it as its final line without TUI-specific parsing.
 The TUI queries the local ai-footprint binary for its version once when the
 component mounts. It renders the version in grey after `AI Footprint` and does
 not run this command during the five-second metric refresh cycle.
+The grey uses the active OpenCode theme's `textMuted` colour with `0.7` opacity.
 
 ## Model Attribution
 

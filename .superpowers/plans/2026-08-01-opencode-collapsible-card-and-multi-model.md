@@ -252,3 +252,48 @@ guides, retain the version and extrapolated-model warning documentation, then:
 git add skills/footprint-crush/tui docs/GUIDE-AVANCE.md docs/GUIDE-AVANCE.en.md
 git commit -m "refactor(opencode): hide token diagnostic"
 ```
+
+### Task 5: Match The Reference Header Behaviour
+
+**Files:**
+- Modify: `skills/footprint-crush/tui/src/tui.tsx`
+- Regenerate: `skills/footprint-crush/footprint-crush-tui.js`
+- Modify: `docs/GUIDE-AVANCE.md`
+- Modify: `docs/GUIDE-AVANCE.en.md`
+
+**Interfaces:**
+- Consumes: `ctx.theme.current.textMuted`, `api.kv.get/set`, and `api.ui.toast`.
+- Produces: a persisted `footprint.sidebar.expanded` preference and click-only
+  informational toast messages.
+
+- [ ] **Step 1: Write failing source-level tests for persisted header state helpers**
+
+Extract pure helpers if needed so tests assert the key
+`footprint.sidebar.expanded` and the messages `AI Footprint expanded` /
+`AI Footprint collapsed`.
+
+- [ ] **Step 2: Run the TUI test and verify it fails**
+
+Run: `npm test --prefix skills/footprint-crush/tui`
+
+Expected: FAIL because the persisted-header helpers do not exist.
+
+- [ ] **Step 3: Implement the reference behaviour**
+
+Initialize the expanded signal from `api.kv.get("footprint.sidebar.expanded", true) !== false`. On header click, update the signal, persist it with `api.kv.set`, and invoke `api.ui.toast({ variant: "info", message })`. Keep keyboard toggles persistent but silent. Forward `ctx.theme.current` from the `sidebar_content` slot to the footer. Render the version in a separate sibling `<text>` inside a row box with `fg={props.theme.textMuted}`, `opacity={0.7}`, and `selectable={false}`.
+
+- [ ] **Step 4: Run tests and rebuild the bundle**
+
+Run: `npm test --prefix skills/footprint-crush/tui && npm run build --prefix skills/footprint-crush/tui`
+
+Expected: tests pass and `skills/footprint-crush/footprint-crush-tui.js` is regenerated.
+
+- [ ] **Step 5: Update guides and commit**
+
+Document that the collapse state persists and a click displays a confirmation
+toast. Then:
+
+```bash
+git add skills/footprint-crush/tui docs/GUIDE-AVANCE.md docs/GUIDE-AVANCE.en.md
+git commit -m "feat(opencode): persist card state and notify toggles"
+```
