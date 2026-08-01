@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.9.0] — 2026-08-01
+
+### Features
+
+- (opencode) — persist card state and notify toggles
+- (opencode) — add collapsible footprint sidebar
+- (statusline) — expose version and fallback note
+- (statusline) — afficher le nb de tokens mesurés pour diagnostiquer les modèles non couverts
+- (opencode) — afficher la statusline ai-footprint dans le panneau latéral
+
+### Bug Fixes
+
+- (opencode) — pass sidebar session props
+- (opencode) — avoid nested header text
+- (statusline) — show OpenAI extrapolation warnings
+- (opencode) — resolve ancestor message models
+- (opencode) — preserve model changes per response
+- (opencode) — fall back to the session model
+- (opencode) — preserve SDK message metadata
+- server plugin id + CrushCollector handle data=str (server export format)
+- (opencode) — corriger le chargement du plugin footprint-crush sous Bun
+
+### Documentation
+
+- align footprint card with reference UI
+- refine OpenCode card diagnostics
+- plan OpenCode model attribution and card
+- specify the collapsible OpenCode footprint card
+- ajouter la vérification homebrew-tap au process de release
+
+### Chores
+
+- (codex) — configure read-only sandbox
+
+### Refactoring
+
+- (opencode) — hide token diagnostic
+
+### Tests
+
+- (crush) — verify model resolution by ancestor
+- (crush) — cover per-response ancestor models
 ## [1.8.0] — 2026-07-18
 
 ### Features
