@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   resolveBinPath,
   resolveDbPath,
@@ -12,6 +13,15 @@ import {
   isSidebarExpanded,
   sidebarToggleMessage,
 } from "../src/statusline-source.mjs";
+
+test("sidebar_content: utilise les props du slot pour l'id de session", () => {
+  const source = readFileSync(new URL("../src/tui.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    source,
+    /sidebar_content\(ctx, props\)[\s\S]*?sessionId=\{props\.session_id\}[\s\S]*?theme=\{ctx\.theme\.current\}/,
+  );
+});
 
 test("formatStatuslineLine: masque le diagnostic de tokens", () => {
   assert.equal(formatStatuslineLine("🔢 8 300 tok"), "");

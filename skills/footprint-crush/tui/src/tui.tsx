@@ -126,10 +126,10 @@ export const tui = async (api) => {
     api.slots.register({
       order: 90,
       slots: {
-        sidebar_content(ctx) {
+        sidebar_content(ctx, props) {
           return (
             <StatusFooter
-              sessionId={ctx.session_id}
+              sessionId={props.session_id}
               theme={ctx.theme.current}
               api={api}
             />

@@ -150,10 +150,10 @@ var tui = async (api) => {
     api.slots.register({
       order: 90,
       slots: {
-        sidebar_content(ctx) {
+        sidebar_content(ctx, props) {
           return _$createComponent(StatusFooter, {
             get sessionId() {
-              return ctx.session_id;
+              return props.session_id;
             },
             get theme() {
               return ctx.theme.current;
