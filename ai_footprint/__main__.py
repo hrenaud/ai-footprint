@@ -3,6 +3,7 @@ import json
 import os
 import sys
 
+from ai_footprint import __version__
 from ai_footprint.card.cli import cmd_card
 from ai_footprint.collectors.claude_code import ClaudeCodeCollector
 from ai_footprint.ingest.cli import build_engine, cmd_ingest, ingest_and_save
@@ -150,6 +151,7 @@ def _read_stdin_json() -> dict | None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="ai-footprint")
+    parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p_ing = sub.add_parser("ingest", help="parser les transcripts et calculer l'impact")

@@ -2,6 +2,9 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
+from ai_footprint import __version__
 from ai_footprint.__main__ import _read_stdin_json, main
 from ai_footprint.statusline.line import render_statusline
 from ai_footprint.store.db import SQLiteStore
@@ -77,8 +80,27 @@ def test_marks_line_as_provisional_when_extrapolated_warning_present():
          "warnings": '["params-extrapolated-anthropic:claude-sonnet-4-6"]'},
     ]
     line = render_statusline(rows)
-    assert line.startswith("≈ ")
+    assert "≈ sonnet-5 inconnu, params sonnet-4" in line
     assert "sonnet-5" in line and "inconnu" in line and "sonnet-4" in line
+
+
+def test_render_statusline_places_extrapolated_note_last():
+    rows = [
+        {"model": "claude-sonnet-5",
+         "energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
+         "wcf_min": 3.0, "wcf_max": 4.0,
+         "warnings": '["params-extrapolated-anthropic:claude-sonnet-4-6"]'},
+    ]
+    line = render_statusline(rows, tokens=42)
+    assert line.endswith("≈ sonnet-5 inconnu, params sonnet-4")
+
+
+def test_main_prints_version(capsys):
+    with pytest.raises(SystemExit) as result:
+        main(["--version"])
+
+    assert result.value.code == 0
+    assert capsys.readouterr().out.strip() == __version__
 
 
 def test_no_marker_when_no_extrapolated_warning():

@@ -21,6 +21,20 @@ export function resolveDbPath(env) {
 }
 
 /**
+ * @param {(bin: string, args: string[]) => Promise<{stdout: string}>} execFileImpl
+ * @param {string} bin
+ * @returns {Promise<string>} la version du binaire, ou "" en cas d'échec.
+ */
+export async function fetchVersion(execFileImpl, bin) {
+  try {
+    const { stdout } = await execFileImpl(bin, ["--version"]);
+    return stdout.trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Le prop `session_id` du slot `sidebar_content` d'Opencode n'est pas
  * toujours renseigné à l'exécution (constaté empiriquement) ; le plugin de
  * référence opencode-subagent-statusline retombe alors sur

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   resolveBinPath,
   resolveDbPath,
+  fetchVersion,
   fetchStatusline,
   resolveSessionId,
 } from "../src/statusline-source.mjs";
@@ -28,6 +29,25 @@ test("resolveDbPath: utilise AI_FOOTPRINT_DB si défini", () => {
 test("resolveDbPath: sinon retombe sur ~/.ai-footprint/ai-footprint.db", () => {
   const env = { HOME: "/home/x" };
   assert.equal(resolveDbPath(env), "/home/x/.ai-footprint/ai-footprint.db");
+});
+
+test("fetchVersion: retourne la version du binaire", async () => {
+  const version = await fetchVersion(
+    async (bin, args) => {
+      assert.equal(bin, "/bin/ai-footprint");
+      assert.deepEqual(args, ["--version"]);
+      return { stdout: "1.8.0\n" };
+    },
+    "/bin/ai-footprint",
+  );
+  assert.equal(version, "1.8.0");
+});
+
+test("fetchVersion: retourne une chaîne vide si le binaire échoue", async () => {
+  const version = await fetchVersion(async () => {
+    throw new Error("boom");
+  }, "/bin/ai-footprint");
+  assert.equal(version, "");
 });
 
 test("fetchStatusline: retourne le stdout du binaire (trimmé)", async () => {

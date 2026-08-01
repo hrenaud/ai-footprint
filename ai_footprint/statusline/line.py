@@ -51,8 +51,7 @@ def render_statusline(rows: list[dict], tokens: int | None = None) -> str:
     w_min = sum(r["wcf_min"] for r in rows)
     w_max = sum(r["wcf_max"] for r in rows)
     # Un modèle trop récent pour le registre EcoLogits (ex. claude-sonnet-5)
-    # utilise un stand-in extrapolé d'une version sœur — signalé par « ≈ » +
-    # un rappel court (modèle inconnu → params de la version de repli).
+    # utilise un stand-in extrapolé d'une version sœur, signalé en dernier.
     note = ""
     for r in rows:
         warnings = r.get("warnings") or ""
@@ -61,14 +60,13 @@ def render_statusline(rows: list[dict], tokens: int | None = None) -> str:
         if idx != -1:
             sibling = warnings[idx + len(marker):].split('"')[0]
             model = r.get("model", "")
-            note = f" ({_short_name(model)} inconnu, params {_short_name(sibling)})"
+            note = f" · ≈ {_short_name(model)} inconnu, params {_short_name(sibling)}"
             break
-    prefix = "≈ " if note else ""
     g_min, g_max, g_unit = _scale(g_min, g_max, _GWP_LADDER)
     w_min, w_max, w_unit = _scale(w_min, w_max, _WATER_LADDER)
     e_min, e_max, e_unit = _scale(e_min, e_max, _ENERGY_LADDER)
     return (
-        f"{prefix}🌍 {g_min:.3g}–{g_max:.3g} {g_unit} · "
+        f"🌍 {g_min:.3g}–{g_max:.3g} {g_unit} · "
         f"💧 {w_min:.3g}–{w_max:.3g} {w_unit} · "
-        f"⚡ {e_min:.3g}–{e_max:.3g} {e_unit}{note}{_tokens_suffix(tokens)}"
+        f"⚡ {e_min:.3g}–{e_max:.3g} {e_unit}{_tokens_suffix(tokens)}{note}"
     )
