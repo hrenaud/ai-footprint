@@ -324,7 +324,7 @@ def test_backfill_uses_each_assistant_top_level_model_metadata(tmp_path):
 
 
 def test_backfill_resolves_each_assistant_model_from_its_user_ancestor(tmp_path):
-    """Chaque reponse herite du modele de son propre parent utilisateur."""
+    """Chaque reponse herite du modele de son propre ancetre utilisateur."""
     db_path = tmp_path / "opencode.db"
     conn = sqlite3.connect(db_path)
     conn.executescript("""
@@ -343,13 +343,15 @@ def test_backfill_resolves_each_assistant_model_from_its_user_ancestor(tmp_path)
     for msg_id, data in (
         ("user-a", {"role": "user", "providerID": "provider-a", "modelID": "model-a"}),
         ("user-b", {"role": "user", "providerID": "provider-b", "modelID": "model-b"}),
+        ("parent-a", {"role": "tool", "parentID": "user-a"}),
+        ("parent-b", {"role": "tool", "parentID": "user-b"}),
         ("assistant-a", {
-            "role": "assistant", "parentID": "user-a",
+            "role": "assistant", "parentID": "parent-a",
             "tokens": {"input": 10, "output": 1},
             "time": {"created": 1000, "completed": 1100},
         }),
         ("assistant-b", {
-            "role": "assistant", "parentID": "user-b",
+            "role": "assistant", "parentID": "parent-b",
             "tokens": {"input": 20, "output": 2},
             "time": {"created": 1200, "completed": 1300},
         }),
@@ -360,10 +362,14 @@ def test_backfill_resolves_each_assistant_model_from_its_user_ancestor(tmp_path)
 
     events = list(CrushCollector(backfill_db_path=str(db_path)).collect())
 
-    assert {(event.provider, event.model) for event in events} == {
-        ("provider-a", "model-a"),
-        ("provider-b", "model-b"),
-    }
+    events_by_msg_id = {event.msg_id: event for event in events}
+    assert set(events_by_msg_id) == {"assistant-a", "assistant-b"}
+    assert (events_by_msg_id["assistant-a"].provider, events_by_msg_id["assistant-a"].model) == (
+        "provider-a", "model-a"
+    )
+    assert (events_by_msg_id["assistant-b"].provider, events_by_msg_id["assistant-b"].model) == (
+        "provider-b", "model-b"
+    )
 
 
 def test_backfill_ignores_user_messages():
