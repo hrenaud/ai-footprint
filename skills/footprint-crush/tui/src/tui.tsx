@@ -18,6 +18,7 @@ import { execFile } from "node:child_process";
 import { createRoot, createSignal, onCleanup, For } from "solid-js";
 import {
   formatStatuslineLine,
+  formatVersion,
   resolveBinPath,
   resolveDbPath,
   fetchStatusline,
@@ -78,7 +79,7 @@ function StatusFooter(props) {
           if (key.name === "return" || key.name === "space") toggle();
         }}
       >
-        <text>{expanded() ? "▼" : "▶"} AI Footprint{version() ? ` ${version()}` : ""}</text>
+        <text>{expanded() ? "▼" : "▶"} AI Footprint{version() ? ` ${formatVersion(version())}` : ""}</text>
       </box>
       {expanded() && (
         <For each={lines()}>

@@ -78,14 +78,31 @@ function toExportMessage(message, sessionId, model = toModel(message.info || mes
 
 function toExportMessages(messages, sessionId) {
   const models = new Map();
-  return messages.map((message) => {
+  const parents = new Map();
+  for (const message of messages) {
     const info = message.info || message;
     const model = toModel(info);
     if (model.id) models.set(info.id, model);
+    parents.set(info.id, info.parentID);
+  }
+
+  return messages.map((message) => {
+    const info = message.info || message;
+    const model = toModel(info);
+    if (model.id) return toExportMessage(message, sessionId, model);
+    let parentID = info.parentID;
+    const visited = new Set();
+    while (parentID && !visited.has(parentID)) {
+      visited.add(parentID);
+      if (models.has(parentID)) {
+        return toExportMessage(message, sessionId, models.get(parentID));
+      }
+      parentID = parents.get(parentID);
+    }
     return toExportMessage(
       message,
       sessionId,
-      model.id ? model : models.get(info.parentID),
+      model,
     );
   });
 }

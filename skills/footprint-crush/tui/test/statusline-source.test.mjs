@@ -4,6 +4,7 @@ import {
   resolveBinPath,
   resolveDbPath,
   formatStatuslineLine,
+  formatVersion,
   fetchVersion,
   fetchStatusline,
   resolveSessionId,
@@ -18,6 +19,10 @@ test("formatStatuslineLine: conserve la note de modele", () => {
     formatStatuslineLine("≈ sonnet-5 inconnu, params sonnet-4"),
     "≈ sonnet-5 inconnu, params sonnet-4",
   );
+});
+
+test("formatVersion: ajoute le prefixe v a la version semantique", () => {
+  assert.equal(formatVersion("1.8.0"), "v1.8.0");
 });
 
 test("resolveBinPath: utilise AI_FOOTPRINT_BIN si défini", () => {

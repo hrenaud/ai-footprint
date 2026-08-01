@@ -100,3 +100,15 @@ test("toExportMessages: conserve le modele de chaque reponse", () => {
   assert.deepEqual(result[1].info.model, { id: "model-a", providerID: "provider-a" });
   assert.deepEqual(result[3].info.model, { id: "model-b", providerID: "provider-b" });
 });
+
+test("toExportMessages: remonte toute la chaine parentID pour trouver le modele", () => {
+  const messages = [
+    { info: { id: "user_1", role: "user", model: { modelID: "model-a", providerID: "provider-a" } } },
+    { info: { id: "assistant_1", parentID: "user_1", role: "assistant" } },
+    { info: { id: "assistant_2", parentID: "assistant_1", role: "assistant", tokens: { input: 10, output: 1 } } },
+  ];
+
+  const result = toExportMessages(messages, "ses_123");
+
+  assert.deepEqual(result[2].info.model, { id: "model-a", providerID: "provider-a" });
+});

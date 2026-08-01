@@ -24,6 +24,10 @@ export function formatStatuslineLine(line) {
   return line.startsWith("🔢 ") ? `🔢 Tokens : ${line.slice(3)}` : line;
 }
 
+export function formatVersion(version) {
+  return version ? `v${version}` : "";
+}
+
 /**
  * @param {(bin: string, args: string[]) => Promise<{stdout: string}>} execFileImpl
  * @param {string} bin

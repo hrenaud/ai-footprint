@@ -22,6 +22,9 @@ function resolveDbPath(env) {
 function formatStatuslineLine(line) {
   return line.startsWith("\u{1F522} ") ? `\u{1F522} Tokens : ${line.slice(3)}` : line;
 }
+function formatVersion(version) {
+  return version ? `v${version}` : "";
+}
 async function fetchVersion(execFileImpl, bin) {
   try {
     const { stdout } = await execFileImpl(bin, ["--version"]);
@@ -98,7 +101,7 @@ function StatusFooter(props) {
     _$insert(_el$3, () => expanded() ? "\u25BC" : "\u25B6", _el$4);
     _$insert(_el$3, (() => {
       var _c$ = _$memo(() => !!version());
-      return () => _c$() ? ` ${version()}` : "";
+      return () => _c$() ? ` ${formatVersion(version())}` : "";
     })(), null);
     _$insert(_el$, (() => {
       var _c$2 = _$memo(() => !!expanded());
