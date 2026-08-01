@@ -21,7 +21,7 @@ export function resolveDbPath(env) {
 }
 
 export function formatStatuslineLine(line) {
-  return line.startsWith("🔢 ") ? `🔢 Tokens : ${line.slice(3)}` : line;
+  return line.startsWith("🔢 ") ? "" : line;
 }
 
 export function formatVersion(version) {

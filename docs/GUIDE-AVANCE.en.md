@@ -149,10 +149,10 @@ then displays the command to switch manually.
 
 OpenCode shows its session status in the sidebar. Its AI Footprint card is
 expanded by default and can be collapsed with a click or, once focused, Enter
-or Space. It shows the installed version and one line per indicator; the token
-count label is temporary, and an extrapolated-model warning may be shown.
-The warning names the recent model and its fallback version for any provider,
-for example `gpt-5.6-terra` using `gpt-5.5` parameters.
+or Space. It shows the installed version and one line per indicator; an
+extrapolated-model warning may be shown. The warning names the recent model and
+its fallback version for any provider, for example `gpt-5.6-terra` using
+`gpt-5.5` parameters.
 
 ### Uncovered models and resolution
 

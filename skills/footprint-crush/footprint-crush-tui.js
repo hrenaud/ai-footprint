@@ -20,7 +20,7 @@ function resolveDbPath(env) {
   return env.AI_FOOTPRINT_DB || path.join(home, ".ai-footprint", "ai-footprint.db");
 }
 function formatStatuslineLine(line) {
-  return line.startsWith("\u{1F522} ") ? `\u{1F522} Tokens : ${line.slice(3)}` : line;
+  return line.startsWith("\u{1F522} ") ? "" : line;
 }
 function formatVersion(version) {
   return version ? `v${version}` : "";
@@ -83,7 +83,7 @@ function StatusFooter(props) {
     const db = resolveDbPath(process.env);
     const sessionId = resolveSessionId(props.sessionId, props.api);
     const line = await fetchStatusline(execFileWithStdin, bin, db, sessionId);
-    setLines(line.split(" \xB7 ").filter(Boolean));
+    setLines(line.split(" \xB7 ").map(formatStatuslineLine).filter(Boolean));
   }
   refresh();
   const timer = setInterval(refresh, REFRESH_MS);
@@ -101,7 +101,13 @@ function StatusFooter(props) {
     _$insert(_el$3, () => expanded() ? "\u25BC" : "\u25B6", _el$4);
     _$insert(_el$3, (() => {
       var _c$ = _$memo(() => !!version());
-      return () => _c$() ? ` ${formatVersion(version())}` : "";
+      return () => _c$() && (() => {
+        var _el$5 = _$createElement("text"), _el$6 = _$createTextNode(` `);
+        _$insertNode(_el$5, _el$6);
+        _$setProp(_el$5, "fg", "gray");
+        _$insert(_el$5, () => formatVersion(version()), null);
+        return _el$5;
+      })();
     })(), null);
     _$insert(_el$, (() => {
       var _c$2 = _$memo(() => !!expanded());
@@ -110,9 +116,9 @@ function StatusFooter(props) {
           return lines();
         },
         children: (item) => (() => {
-          var _el$5 = _$createElement("text");
-          _$insert(_el$5, () => formatStatuslineLine(item));
-          return _el$5;
+          var _el$7 = _$createElement("text");
+          _$insert(_el$7, item);
+          return _el$7;
         })()
       });
     })(), null);

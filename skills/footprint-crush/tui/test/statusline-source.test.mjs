@@ -10,8 +10,8 @@ import {
   resolveSessionId,
 } from "../src/statusline-source.mjs";
 
-test("formatStatuslineLine: labelle temporairement les tokens", () => {
-  assert.equal(formatStatuslineLine("🔢 8 300 tok"), "🔢 Tokens : 8 300 tok");
+test("formatStatuslineLine: masque le diagnostic de tokens", () => {
+  assert.equal(formatStatuslineLine("🔢 8 300 tok"), "");
 });
 
 test("formatStatuslineLine: conserve la note de modele", () => {

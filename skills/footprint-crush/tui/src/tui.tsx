@@ -63,7 +63,12 @@ function StatusFooter(props) {
     // Une ligne par indicateur (🌍/💧/⚡…) plutôt qu'une seule chaîne inline :
     // le panneau latéral d'Opencode est trop étroit pour la ligne complète,
     // qui s'y coupait au milieu d'une unité.
-    setLines(line.split(" · ").filter(Boolean));
+    setLines(
+      line
+        .split(" · ")
+        .map(formatStatuslineLine)
+        .filter(Boolean),
+    );
   }
 
   refresh();
@@ -79,11 +84,14 @@ function StatusFooter(props) {
           if (key.name === "return" || key.name === "space") toggle();
         }}
       >
-        <text>{expanded() ? "▼" : "▶"} AI Footprint{version() ? ` ${formatVersion(version())}` : ""}</text>
+        <text>
+          {expanded() ? "▼" : "▶"} AI Footprint
+          {version() && <text fg="gray"> {formatVersion(version())}</text>}
+        </text>
       </box>
       {expanded() && (
         <For each={lines()}>
-          {(item) => <text>{formatStatuslineLine(item)}</text>}
+          {(item) => <text>{item}</text>}
         </For>
       )}
     </box>
