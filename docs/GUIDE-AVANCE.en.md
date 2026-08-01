@@ -72,9 +72,9 @@ Example: install a test branch in an isolated directory, without touching
 the production install or `settings.json`:
 
 ```bash
-AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-AI_FOOTPRINT_NO_CLAUDE=1 \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  AI_FOOTPRINT_NO_CLAUDE=1 bash
 ```
 
 ## Complete uninstallation

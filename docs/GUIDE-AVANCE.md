@@ -73,9 +73,9 @@ Exemple : installer une branche de test dans un répertoire isolé, sans
 toucher à l'installation de production ni à `settings.json` :
 
 ```bash
-AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-AI_FOOTPRINT_NO_CLAUDE=1 \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  AI_FOOTPRINT_NO_CLAUDE=1 bash
 ```
 
 ## Désinstallation complète

@@ -24,8 +24,8 @@ point at any branch or tag — useful to test a contribution under real
 conditions (clone + venv + Claude Code hook) before merging:
 
 ```bash
-AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test bash
 ```
 
 `AI_FOOTPRINT_DIR` avoids overwriting the current installation in

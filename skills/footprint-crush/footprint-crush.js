@@ -15,7 +15,10 @@ const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 
-const { ingestExport } = require("./lib/footprint-crush-lib.js");
+const {
+  ingestExport,
+  toExportMessage,
+} = require("./lib/footprint-crush-lib.js");
 
 const execFileAsync = promisify(execFile);
 
@@ -82,27 +85,9 @@ async function exportSession(client, sessionId) {
           updated: session.time_updated || 0,
         },
       },
-      messages: (messages || []).map((msg) => ({
-        info: {
-          role: msg.role || "user",
-          time: msg.time || { created: 0 },
-          agent: msg.agent || "opencode",
-          model: msg.model || { id: "", providerID: "" },
-          tokens: msg.tokens || {
-            input: 0,
-            output: 0,
-            reasoning: 0,
-            cache: { read: 0, write: 0 },
-          },
-          cost: msg.cost || 0,
-          id: msg.id || "",
-          sessionID: msg.session_id || sessionId,
-        },
-        parts: (msg.parts || []).map((p) => ({
-          type: p.type || "text",
-          text: p.text || "",
-        })),
-      })),
+      messages: (messages || []).map((message) =>
+        toExportMessage(message, sessionId),
+      ),
     };
 
     const outPath = path.join(EXPORT_DIR, `${sessionId}.json`);

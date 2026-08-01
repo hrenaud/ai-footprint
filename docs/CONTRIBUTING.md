@@ -24,8 +24,8 @@ pointer sur n'importe quelle branche ou tag — utile pour tester une contributi
 en conditions réelles (clone + venv + hook Claude Code) avant de merger :
 
 ```bash
-AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test bash
 ```
 
 `AI_FOOTPRINT_DIR` évite d'écraser l'installation courante dans

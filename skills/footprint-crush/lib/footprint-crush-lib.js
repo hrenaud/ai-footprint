@@ -43,4 +43,29 @@ async function ingestExport(execFileImpl, bin, exportDir, sessionId) {
   }
 }
 
-module.exports = { ingestExport };
+function toExportMessage(message, sessionId) {
+  const info = message.info || message;
+  return {
+    info: {
+      role: info.role || "user",
+      time: info.time || { created: 0 },
+      agent: info.agent || "opencode",
+      model: info.model || { id: "", providerID: "" },
+      tokens: info.tokens || {
+        input: 0,
+        output: 0,
+        reasoning: 0,
+        cache: { read: 0, write: 0 },
+      },
+      cost: info.cost || 0,
+      id: info.id || "",
+      sessionID: info.sessionID || info.session_id || sessionId,
+    },
+    parts: (message.parts || []).map((part) => ({
+      type: part.type || "text",
+      text: part.text || "",
+    })),
+  };
+}
+
+module.exports = { ingestExport, toExportMessage };
