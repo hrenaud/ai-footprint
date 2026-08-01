@@ -86,7 +86,7 @@ function StatusFooter(props) {
       >
         <text>
           {expanded() ? "▼" : "▶"} AI Footprint
-          {version() && <text fg="gray"> {formatVersion(version())}</text>}
+          {version() && <span fg="gray"> {formatVersion(version())}</span>}
         </text>
       </box>
       {expanded() && (

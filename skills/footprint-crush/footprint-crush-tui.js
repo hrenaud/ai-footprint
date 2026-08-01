@@ -102,7 +102,7 @@ function StatusFooter(props) {
     _$insert(_el$3, (() => {
       var _c$ = _$memo(() => !!version());
       return () => _c$() && (() => {
-        var _el$5 = _$createElement("text"), _el$6 = _$createTextNode(` `);
+        var _el$5 = _$createElement("span"), _el$6 = _$createTextNode(` `);
         _$insertNode(_el$5, _el$6);
         _$setProp(_el$5, "fg", "gray");
         _$insert(_el$5, () => formatVersion(version()), null);
