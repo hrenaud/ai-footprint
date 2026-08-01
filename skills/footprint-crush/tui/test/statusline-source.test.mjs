@@ -8,6 +8,9 @@ import {
   fetchVersion,
   fetchStatusline,
   resolveSessionId,
+  SIDEBAR_EXPANDED_KEY,
+  isSidebarExpanded,
+  sidebarToggleMessage,
 } from "../src/statusline-source.mjs";
 
 test("formatStatuslineLine: masque le diagnostic de tokens", () => {
@@ -23,6 +26,20 @@ test("formatStatuslineLine: conserve la note de modele", () => {
 
 test("formatVersion: ajoute le prefixe v a la version semantique", () => {
   assert.equal(formatVersion("1.8.0"), "v1.8.0");
+});
+
+test("sidebar state: utilise la cle de preference persistante", () => {
+  assert.equal(SIDEBAR_EXPANDED_KEY, "footprint.sidebar.expanded");
+});
+
+test("sidebar state: reste deplié sauf si la preference vaut false", () => {
+  assert.equal(isSidebarExpanded(undefined), true);
+  assert.equal(isSidebarExpanded(false), false);
+});
+
+test("sidebar state: fournit le message de confirmation adapte", () => {
+  assert.equal(sidebarToggleMessage(true), "AI Footprint expanded");
+  assert.equal(sidebarToggleMessage(false), "AI Footprint collapsed");
 });
 
 test("resolveBinPath: utilise AI_FOOTPRINT_BIN si défini", () => {

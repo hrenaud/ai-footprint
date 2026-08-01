@@ -19,6 +19,9 @@ import { createRoot, createSignal, onCleanup, For } from "solid-js";
 import {
   formatStatuslineLine,
   formatVersion,
+  SIDEBAR_EXPANDED_KEY,
+  isSidebarExpanded,
+  sidebarToggleMessage,
   resolveBinPath,
   resolveDbPath,
   fetchStatusline,
@@ -46,14 +49,24 @@ function execFileWithStdin(bin, args, stdin) {
 
 function StatusFooter(props) {
   const [lines, setLines] = createSignal([]);
-  const [expanded, setExpanded] = createSignal(true);
+  const [expanded, setExpanded] = createSignal(
+    isSidebarExpanded(props.api.kv.get(SIDEBAR_EXPANDED_KEY, true)),
+  );
   const [version, setVersion] = createSignal("");
   const bin = resolveBinPath(process.env);
 
   fetchVersion(execFileWithStdin, bin).then(setVersion);
 
-  function toggle() {
-    setExpanded(!expanded());
+  function toggle(notify) {
+    const nextExpanded = !expanded();
+    setExpanded(nextExpanded);
+    props.api.kv.set(SIDEBAR_EXPANDED_KEY, nextExpanded);
+    if (notify) {
+      props.api.ui.toast({
+        variant: "info",
+        message: sidebarToggleMessage(nextExpanded),
+      });
+    }
   }
 
   async function refresh() {
@@ -79,15 +92,23 @@ function StatusFooter(props) {
     <box>
       <box
         focusable
-        onMouseDown={toggle}
+        onMouseDown={() => toggle(true)}
         onKeyDown={(key) => {
-          if (key.name === "return" || key.name === "space") toggle();
+          if (key.name === "return" || key.name === "space") toggle(false);
         }}
       >
-        <text>
-          {expanded() ? "▼" : "▶"} AI Footprint
-          {version() && <span fg="gray"> {formatVersion(version())}</span>}
-        </text>
+        <box flexDirection="row">
+          <text>{expanded() ? "▼" : "▶"} AI Footprint</text>
+          {version() && (
+            <text
+              fg={props.theme.textMuted}
+              opacity={0.7}
+              selectable={false}
+            >
+              {` ${formatVersion(version())}`}
+            </text>
+          )}
+        </box>
       </box>
       {expanded() && (
         <For each={lines()}>
@@ -105,8 +126,14 @@ export const tui = async (api) => {
     api.slots.register({
       order: 90,
       slots: {
-        sidebar_content(props) {
-          return <StatusFooter sessionId={props.session_id} api={api} />;
+        sidebar_content(ctx) {
+          return (
+            <StatusFooter
+              sessionId={ctx.session_id}
+              theme={ctx.theme.current}
+              api={api}
+            />
+          );
         },
       },
     });

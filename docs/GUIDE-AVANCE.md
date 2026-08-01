@@ -192,11 +192,13 @@ moment de l'installation, la statusline TUI ne s'affichera pas tant que ce
 `skills/footprint-crush/tui/package.json`).
 
 La carte, dépliée par défaut, est repliable avec un clic ou au clavier (Entrée
-ou Espace après avoir reçu le focus). Elle affiche la version installée, puis
-une ligne par indicateur (🌍/💧/⚡) plutôt qu'une seule ligne inline, le panneau
-latéral étant trop étroit pour la ligne complète utilisée par les autres outils
-(elle s'y coupait au milieu d'une unité). Un avertissement de modèle extrapolé
-peut compléter les indicateurs. Cet avertissement nomme le modèle récent et sa
+ou Espace après avoir reçu le focus). Son état est conservé entre les sessions.
+Un clic affiche une notification de confirmation ; les bascules au clavier
+restent silencieuses. Elle affiche la version installée, puis une ligne par
+indicateur (🌍/💧/⚡) plutôt qu'une seule ligne inline, le panneau latéral étant
+trop étroit pour la ligne complète utilisée par les autres outils (elle s'y
+coupait au milieu d'une unité). Un avertissement de modèle extrapolé peut
+compléter les indicateurs. Cet avertissement nomme le modèle récent et sa
 version de repli, quel que soit son fournisseur (par exemple `gpt-5.6-terra`
 avec les paramètres de `gpt-5.5`).
 

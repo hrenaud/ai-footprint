@@ -5,6 +5,16 @@
 
 import path from "node:path";
 
+export const SIDEBAR_EXPANDED_KEY = "footprint.sidebar.expanded";
+
+export function isSidebarExpanded(value) {
+  return value !== false;
+}
+
+export function sidebarToggleMessage(expanded) {
+  return expanded ? "AI Footprint expanded" : "AI Footprint collapsed";
+}
+
 export function resolveBinPath(env) {
   const home = env.HOME || "~";
   return (

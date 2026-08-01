@@ -1,5 +1,6 @@
 // src/tui.tsx
 import { createComponent as _$createComponent } from "@opentui/solid";
+import { effect as _$effect } from "@opentui/solid";
 import { createTextNode as _$createTextNode } from "@opentui/solid";
 import { insertNode as _$insertNode } from "@opentui/solid";
 import { insert as _$insert } from "@opentui/solid";
@@ -11,6 +12,13 @@ import { createRoot, createSignal, onCleanup, For } from "solid-js";
 
 // src/statusline-source.mjs
 import path from "node:path";
+var SIDEBAR_EXPANDED_KEY = "footprint.sidebar.expanded";
+function isSidebarExpanded(value) {
+  return value !== false;
+}
+function sidebarToggleMessage(expanded) {
+  return expanded ? "AI Footprint expanded" : "AI Footprint collapsed";
+}
 function resolveBinPath(env) {
   const home = env.HOME || "~";
   return env.AI_FOOTPRINT_BIN || path.join(home, ".ai-footprint", "src", ".venv", "bin", "ai-footprint");
@@ -72,12 +80,20 @@ function execFileWithStdin(bin, args, stdin) {
 }
 function StatusFooter(props) {
   const [lines, setLines] = createSignal([]);
-  const [expanded, setExpanded] = createSignal(true);
+  const [expanded, setExpanded] = createSignal(isSidebarExpanded(props.api.kv.get(SIDEBAR_EXPANDED_KEY, true)));
   const [version, setVersion] = createSignal("");
   const bin = resolveBinPath(process.env);
   fetchVersion(execFileWithStdin, bin).then(setVersion);
-  function toggle() {
-    setExpanded(!expanded());
+  function toggle(notify) {
+    const nextExpanded = !expanded();
+    setExpanded(nextExpanded);
+    props.api.kv.set(SIDEBAR_EXPANDED_KEY, nextExpanded);
+    if (notify) {
+      props.api.ui.toast({
+        variant: "info",
+        message: sidebarToggleMessage(nextExpanded)
+      });
+    }
   }
   async function refresh() {
     const db = resolveDbPath(process.env);
@@ -89,24 +105,27 @@ function StatusFooter(props) {
   const timer = setInterval(refresh, REFRESH_MS);
   onCleanup(() => clearInterval(timer));
   return (() => {
-    var _el$ = _$createElement("box"), _el$2 = _$createElement("box"), _el$3 = _$createElement("text"), _el$4 = _$createTextNode(` AI Footprint`);
+    var _el$ = _$createElement("box"), _el$2 = _$createElement("box"), _el$3 = _$createElement("box"), _el$4 = _$createElement("text"), _el$5 = _$createTextNode(` AI Footprint`);
     _$insertNode(_el$, _el$2);
     _$insertNode(_el$2, _el$3);
     _$setProp(_el$2, "focusable", true);
-    _$setProp(_el$2, "onMouseDown", toggle);
+    _$setProp(_el$2, "onMouseDown", () => toggle(true));
     _$setProp(_el$2, "onKeyDown", (key) => {
-      if (key.name === "return" || key.name === "space") toggle();
+      if (key.name === "return" || key.name === "space") toggle(false);
     });
     _$insertNode(_el$3, _el$4);
-    _$insert(_el$3, () => expanded() ? "\u25BC" : "\u25B6", _el$4);
+    _$setProp(_el$3, "flexDirection", "row");
+    _$insertNode(_el$4, _el$5);
+    _$insert(_el$4, () => expanded() ? "\u25BC" : "\u25B6", _el$5);
     _$insert(_el$3, (() => {
       var _c$ = _$memo(() => !!version());
       return () => _c$() && (() => {
-        var _el$5 = _$createElement("span"), _el$6 = _$createTextNode(` `);
-        _$insertNode(_el$5, _el$6);
-        _$setProp(_el$5, "fg", "gray");
-        _$insert(_el$5, () => formatVersion(version()), null);
-        return _el$5;
+        var _el$6 = _$createElement("text");
+        _$setProp(_el$6, "opacity", 0.7);
+        _$setProp(_el$6, "selectable", false);
+        _$insert(_el$6, () => ` ${formatVersion(version())}`);
+        _$effect((_$p) => _$setProp(_el$6, "fg", props.theme.textMuted, _$p));
+        return _el$6;
       })();
     })(), null);
     _$insert(_el$, (() => {
@@ -131,10 +150,13 @@ var tui = async (api) => {
     api.slots.register({
       order: 90,
       slots: {
-        sidebar_content(props) {
+        sidebar_content(ctx) {
           return _$createComponent(StatusFooter, {
             get sessionId() {
-              return props.session_id;
+              return ctx.session_id;
+            },
+            get theme() {
+              return ctx.theme.current;
             },
             api
           });
