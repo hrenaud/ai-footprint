@@ -86,7 +86,7 @@ async function exportSession(client, sessionId) {
         },
       },
       messages: (messages || []).map((message) =>
-        toExportMessage(message, sessionId),
+        toExportMessage(message, sessionId, session.model),
       ),
     };
 

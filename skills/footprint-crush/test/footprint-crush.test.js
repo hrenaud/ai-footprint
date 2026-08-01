@@ -69,3 +69,19 @@ test("toExportMessage: lit les metadonnees depuis info", () => {
     parts: [{ type: "text", text: "OK" }],
   });
 });
+
+test("toExportMessage: utilise le modele de session si le message ne le renseigne pas", () => {
+  const result = toExportMessage({
+    info: {
+      role: "assistant",
+      model: { id: "", providerID: "" },
+      tokens: { input: 28049, output: 19, cache: { read: 0, write: 0 } },
+    },
+    parts: [],
+  }, "ses_123", { id: "claude-sonnet-4", providerID: "anthropic" });
+
+  assert.deepEqual(result.info.model, {
+    id: "claude-sonnet-4",
+    providerID: "anthropic",
+  });
+});

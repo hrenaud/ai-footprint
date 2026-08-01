@@ -43,14 +43,19 @@ async function ingestExport(execFileImpl, bin, exportDir, sessionId) {
   }
 }
 
-function toExportMessage(message, sessionId) {
+function toExportMessage(message, sessionId, sessionModel) {
   const info = message.info || message;
+  const messageModel = info.model || {};
+  const model =
+    messageModel.id || messageModel.modelID
+      ? messageModel
+      : sessionModel || { id: "", providerID: "" };
   return {
     info: {
       role: info.role || "user",
       time: info.time || { created: 0 },
       agent: info.agent || "opencode",
-      model: info.model || { id: "", providerID: "" },
+      model,
       tokens: info.tokens || {
         input: 0,
         output: 0,
