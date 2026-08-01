@@ -37,10 +37,26 @@ The TUI queries the local ai-footprint binary for its version once when the
 component mounts. It does not run this command during the five-second metric
 refresh cycle.
 
+## Model Attribution
+
+Impact is calculated per assistant response, not from a session-wide model.
+
+- Claude Code transcripts already contain the selected model on every assistant
+  message; a model change in one session must therefore produce events with
+  distinct models.
+- OpenCode stores the selected provider and model on the preceding user
+  message while the following assistant message contains the token usage. The
+  exporter and SQLite backfill must carry that latest selected model forward to
+  the next assistant message. They must not use the session-level model as a
+  fallback for earlier responses, because it can be the model selected later
+  in the session.
+
 ## Verification
 
 - Unit tests cover statusline segmentation for the optional model warning.
 - The TUI source test covers the one-time version lookup helper.
+- Collector tests cover a session that changes model before a later assistant
+  response for both Claude Code and OpenCode.
 - The TUI bundle builds successfully.
 - Manual OpenCode test confirms that the header is expanded initially and that
   tokens and the optional warning are displayed as separate lines.
