@@ -17,9 +17,11 @@
 import { execFile } from "node:child_process";
 import { createRoot, createSignal, onCleanup, For } from "solid-js";
 import {
+  formatStatuslineLine,
   resolveBinPath,
   resolveDbPath,
   fetchStatusline,
+  fetchVersion,
   resolveSessionId,
 } from "./statusline-source.mjs";
 
@@ -43,9 +45,17 @@ function execFileWithStdin(bin, args, stdin) {
 
 function StatusFooter(props) {
   const [lines, setLines] = createSignal([]);
+  const [expanded, setExpanded] = createSignal(true);
+  const [version, setVersion] = createSignal("");
+  const bin = resolveBinPath(process.env);
+
+  fetchVersion(execFileWithStdin, bin).then(setVersion);
+
+  function toggle() {
+    setExpanded(!expanded());
+  }
 
   async function refresh() {
-    const bin = resolveBinPath(process.env);
     const db = resolveDbPath(process.env);
     const sessionId = resolveSessionId(props.sessionId, props.api);
     const line = await fetchStatusline(execFileWithStdin, bin, db, sessionId);
@@ -60,8 +70,21 @@ function StatusFooter(props) {
   onCleanup(() => clearInterval(timer));
 
   return (
-    <box title="AI Footprint" border padding={1}>
-      <For each={lines()}>{(item) => <text>{item}</text>}</For>
+    <box>
+      <box
+        focusable
+        onMouseDown={toggle}
+        onKeyDown={(key) => {
+          if (key.name === "return" || key.name === "space") toggle();
+        }}
+      >
+        <text>{expanded() ? "▼" : "▶"} AI Footprint{version() ? ` ${version()}` : ""}</text>
+      </box>
+      {expanded() && (
+        <For each={lines()}>
+          {(item) => <text>{formatStatuslineLine(item)}</text>}
+        </For>
+      )}
     </box>
   );
 }

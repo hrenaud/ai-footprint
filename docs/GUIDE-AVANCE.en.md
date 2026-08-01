@@ -145,6 +145,13 @@ to the **global total** of the history:
 The installer never replaces a statusline already used by another tool — it
 then displays the command to switch manually.
 
+### OpenCode TUI statusline
+
+OpenCode shows its session status in the sidebar. Its AI Footprint card is
+expanded by default and can be collapsed with a click or, once focused, Enter
+or Space. It shows the installed version and one line per indicator; the token
+count label is temporary, and an extrapolated-model warning may be shown.
+
 ### Uncovered models and resolution
 
 See [METHODOLOGY.md](METHODOLOGY.md) for details on what is measured and

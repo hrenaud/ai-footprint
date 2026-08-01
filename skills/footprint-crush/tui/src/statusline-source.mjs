@@ -20,6 +20,10 @@ export function resolveDbPath(env) {
   );
 }
 
+export function formatStatuslineLine(line) {
+  return line.startsWith("🔢 ") ? `🔢 Tokens : ${line.slice(3)}` : line;
+}
+
 /**
  * @param {(bin: string, args: string[]) => Promise<{stdout: string}>} execFileImpl
  * @param {string} bin

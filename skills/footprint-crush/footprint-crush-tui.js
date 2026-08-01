@@ -1,6 +1,9 @@
 // src/tui.tsx
-import { insert as _$insert } from "@opentui/solid";
 import { createComponent as _$createComponent } from "@opentui/solid";
+import { createTextNode as _$createTextNode } from "@opentui/solid";
+import { insertNode as _$insertNode } from "@opentui/solid";
+import { insert as _$insert } from "@opentui/solid";
+import { memo as _$memo } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { execFile } from "node:child_process";
@@ -15,6 +18,17 @@ function resolveBinPath(env) {
 function resolveDbPath(env) {
   const home = env.HOME || "~";
   return env.AI_FOOTPRINT_DB || path.join(home, ".ai-footprint", "ai-footprint.db");
+}
+function formatStatuslineLine(line) {
+  return line.startsWith("\u{1F522} ") ? `\u{1F522} Tokens : ${line.slice(3)}` : line;
+}
+async function fetchVersion(execFileImpl, bin) {
+  try {
+    const { stdout } = await execFileImpl(bin, ["--version"]);
+    return stdout.trim();
+  } catch {
+    return "";
+  }
 }
 function resolveSessionId(ctxSessionId, api) {
   if (ctxSessionId) return ctxSessionId;
@@ -55,8 +69,14 @@ function execFileWithStdin(bin, args, stdin) {
 }
 function StatusFooter(props) {
   const [lines, setLines] = createSignal([]);
+  const [expanded, setExpanded] = createSignal(true);
+  const [version, setVersion] = createSignal("");
+  const bin = resolveBinPath(process.env);
+  fetchVersion(execFileWithStdin, bin).then(setVersion);
+  function toggle() {
+    setExpanded(!expanded());
+  }
   async function refresh() {
-    const bin = resolveBinPath(process.env);
     const db = resolveDbPath(process.env);
     const sessionId = resolveSessionId(props.sessionId, props.api);
     const line = await fetchStatusline(execFileWithStdin, bin, db, sessionId);
@@ -66,20 +86,33 @@ function StatusFooter(props) {
   const timer = setInterval(refresh, REFRESH_MS);
   onCleanup(() => clearInterval(timer));
   return (() => {
-    var _el$ = _$createElement("box");
-    _$setProp(_el$, "title", "AI Footprint");
-    _$setProp(_el$, "border", true);
-    _$setProp(_el$, "padding", 1);
-    _$insert(_el$, _$createComponent(For, {
-      get each() {
-        return lines();
-      },
-      children: (item) => (() => {
-        var _el$2 = _$createElement("text");
-        _$insert(_el$2, item);
-        return _el$2;
-      })()
-    }));
+    var _el$ = _$createElement("box"), _el$2 = _$createElement("box"), _el$3 = _$createElement("text"), _el$4 = _$createTextNode(` AI Footprint`);
+    _$insertNode(_el$, _el$2);
+    _$insertNode(_el$2, _el$3);
+    _$setProp(_el$2, "focusable", true);
+    _$setProp(_el$2, "onMouseDown", toggle);
+    _$setProp(_el$2, "onKeyDown", (key) => {
+      if (key.name === "return" || key.name === "space") toggle();
+    });
+    _$insertNode(_el$3, _el$4);
+    _$insert(_el$3, () => expanded() ? "\u25BC" : "\u25B6", _el$4);
+    _$insert(_el$3, (() => {
+      var _c$ = _$memo(() => !!version());
+      return () => _c$() ? ` ${version()}` : "";
+    })(), null);
+    _$insert(_el$, (() => {
+      var _c$2 = _$memo(() => !!expanded());
+      return () => _c$2() && _$createComponent(For, {
+        get each() {
+          return lines();
+        },
+        children: (item) => (() => {
+          var _el$5 = _$createElement("text");
+          _$insert(_el$5, () => formatStatuslineLine(item));
+          return _el$5;
+        })()
+      });
+    })(), null);
     return _el$;
   })();
 }

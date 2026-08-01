@@ -3,10 +3,22 @@ import assert from "node:assert/strict";
 import {
   resolveBinPath,
   resolveDbPath,
+  formatStatuslineLine,
   fetchVersion,
   fetchStatusline,
   resolveSessionId,
 } from "../src/statusline-source.mjs";
+
+test("formatStatuslineLine: labelle temporairement les tokens", () => {
+  assert.equal(formatStatuslineLine("🔢 8 300 tok"), "🔢 Tokens : 8 300 tok");
+});
+
+test("formatStatuslineLine: conserve la note de modele", () => {
+  assert.equal(
+    formatStatuslineLine("≈ sonnet-5 inconnu, params sonnet-4"),
+    "≈ sonnet-5 inconnu, params sonnet-4",
+  );
+});
 
 test("resolveBinPath: utilise AI_FOOTPRINT_BIN si défini", () => {
   const env = { AI_FOOTPRINT_BIN: "/custom/ai-footprint", HOME: "/home/x" };
