@@ -23,8 +23,7 @@ border or padding:
 1. Carbon impact.
 2. Water consumption.
 3. Energy consumption.
-4. Temporary token diagnostic, labelled `🔢 Tokens :`.
-5. Optional fallback-model warning as the final line, for example
+4. Optional fallback-model warning as the final line, for example
    `≈ sonnet-5 inconnu, params sonnet-4`.
 
 The warning is emitted as the final ` · `-separated statusline segment. This
@@ -34,8 +33,8 @@ it as its final line without TUI-specific parsing.
 ## Version
 
 The TUI queries the local ai-footprint binary for its version once when the
-component mounts. It does not run this command during the five-second metric
-refresh cycle.
+component mounts. It renders the version in grey after `AI Footprint` and does
+not run this command during the five-second metric refresh cycle.
 
 ## Model Attribution
 

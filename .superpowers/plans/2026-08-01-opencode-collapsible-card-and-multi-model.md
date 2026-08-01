@@ -201,3 +201,54 @@ Run: `node --test skills/footprint-crush/test/footprint-crush.test.js && npm tes
 git add skills/footprint-crush/tui docs/GUIDE-AVANCE.md docs/GUIDE-AVANCE.en.md
 git commit -m "feat(opencode): add collapsible footprint sidebar"
 ```
+
+### Task 4: Remove The Token Diagnostic
+
+**Files:**
+- Modify: `skills/footprint-crush/tui/src/tui.tsx`
+- Modify: `skills/footprint-crush/tui/src/statusline-source.mjs`
+- Modify: `skills/footprint-crush/tui/test/statusline-source.test.mjs`
+- Regenerate: `skills/footprint-crush/footprint-crush-tui.js`
+- Modify: `docs/GUIDE-AVANCE.md`
+- Modify: `docs/GUIDE-AVANCE.en.md`
+
+**Interfaces:**
+- Produces: `formatStatuslineLine(line)` returning an empty string for the
+  temporary token segment and preserving impact and fallback-model segments.
+
+- [ ] **Step 1: Write the failing source test**
+
+```js
+test("formatStatuslineLine: masque le diagnostic de tokens", () => {
+  assert.equal(formatStatuslineLine("🔢 8 300 tok"), "");
+});
+```
+
+- [ ] **Step 2: Run the test and verify it fails**
+
+Run: `npm test --prefix skills/footprint-crush/tui`
+
+Expected: FAIL because the formatter still labels the token segment.
+
+- [ ] **Step 3: Implement the compact header and filtered lines**
+
+Render the header title and its version in separate text nodes. Give only the
+version text `fg="gray"`. Make `formatStatuslineLine()` return an empty string
+for the `🔢 ` segment and filter empty formatted lines before rendering the
+expanded list. Keep click and keyboard collapse handling unchanged.
+
+- [ ] **Step 4: Run tests and rebuild the bundle**
+
+Run: `npm test --prefix skills/footprint-crush/tui && npm run build --prefix skills/footprint-crush/tui`
+
+Expected: tests pass and `skills/footprint-crush/footprint-crush-tui.js` is regenerated.
+
+- [ ] **Step 5: Update guides and commit**
+
+Remove wording that identifies the token label as temporary from both advanced
+guides, retain the version and extrapolated-model warning documentation, then:
+
+```bash
+git add skills/footprint-crush/tui docs/GUIDE-AVANCE.md docs/GUIDE-AVANCE.en.md
+git commit -m "refactor(opencode): hide token diagnostic"
+```
