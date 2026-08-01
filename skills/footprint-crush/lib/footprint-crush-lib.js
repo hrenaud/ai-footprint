@@ -43,13 +43,16 @@ async function ingestExport(execFileImpl, bin, exportDir, sessionId) {
   }
 }
 
-function toExportMessage(message, sessionId, sessionModel) {
+function toModel(info) {
+  const model = info.model || {};
+  return {
+    id: model.id || model.modelID || info.modelID || "",
+    providerID: model.providerID || info.providerID || "",
+  };
+}
+
+function toExportMessage(message, sessionId, model = toModel(message.info || message)) {
   const info = message.info || message;
-  const messageModel = info.model || {};
-  const model =
-    messageModel.id || messageModel.modelID
-      ? messageModel
-      : sessionModel || { id: "", providerID: "" };
   return {
     info: {
       role: info.role || "user",
@@ -73,4 +76,18 @@ function toExportMessage(message, sessionId, sessionModel) {
   };
 }
 
-module.exports = { ingestExport, toExportMessage };
+function toExportMessages(messages, sessionId) {
+  const models = new Map();
+  return messages.map((message) => {
+    const info = message.info || message;
+    const model = toModel(info);
+    if (model.id) models.set(info.id, model);
+    return toExportMessage(
+      message,
+      sessionId,
+      model.id ? model : models.get(info.parentID),
+    );
+  });
+}
+
+module.exports = { ingestExport, toExportMessage, toExportMessages };

@@ -37,6 +37,18 @@ def test_collect_from_single_file():
     assert len(events) == 2  # les 2 messages assistant du fichier
 
 
+def test_preserves_model_for_each_assistant_response(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        '{"type":"assistant","timestamp":"2026-07-31T10:00:00Z","cwd":"/x/proj","sessionId":"s1","uuid":"m1","message":{"model":"model-a","usage":{"input_tokens":10,"output_tokens":1}}}\n'
+        '{"type":"assistant","timestamp":"2026-07-31T10:00:01Z","cwd":"/x/proj","sessionId":"s1","uuid":"m2","message":{"model":"model-b","usage":{"input_tokens":20,"output_tokens":2}}}\n'
+    )
+
+    events = list(ClaudeCodeCollector(str(transcript)).collect())
+
+    assert [event.model for event in events] == ["model-a", "model-b"]
+
+
 def test_malformed_json_line_is_logged(tmp_path, caplog):
     import logging
     transcript = tmp_path / "session.jsonl"

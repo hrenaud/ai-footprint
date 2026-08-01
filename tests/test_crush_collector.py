@@ -280,6 +280,49 @@ def test_backfill_from_sqlite():
     os.rmdir(tmp_dir)
 
 
+def test_backfill_uses_each_assistant_top_level_model_metadata(tmp_path):
+    """Les metadonnees directes d'une reponse priment sur le modele final."""
+    db_path = tmp_path / "opencode.db"
+    conn = sqlite3.connect(db_path)
+    conn.executescript("""
+        CREATE TABLE session (
+            id TEXT, title TEXT, directory TEXT, model TEXT,
+            tokens_input INTEGER, tokens_output INTEGER,
+            tokens_cache_read INTEGER, tokens_cache_write INTEGER,
+            time_created INTEGER, time_updated INTEGER
+        );
+        CREATE TABLE message (id TEXT, session_id TEXT, data TEXT);
+    """)
+    conn.execute(
+        "INSERT INTO session VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        ("s1", "t", "/x/proj", json.dumps({"id": "final-model", "providerID": "final-provider"}),
+         0, 0, 0, 0, 1000, 2000),
+    )
+    for msg_id, provider, model in (
+        ("m1", "provider-a", "model-a"),
+        ("m2", "provider-b", "model-b"),
+    ):
+        conn.execute(
+            "INSERT INTO message VALUES (?, ?, ?)",
+            (msg_id, "s1", json.dumps({
+                "role": "assistant",
+                "providerID": provider,
+                "modelID": model,
+                "tokens": {"input": 10, "output": 1},
+                "time": {"created": 1000, "completed": 1100},
+            })),
+        )
+    conn.commit()
+    conn.close()
+
+    events = list(CrushCollector(backfill_db_path=str(db_path)).collect())
+
+    assert {(event.provider, event.model) for event in events} == {
+        ("provider-a", "model-a"),
+        ("provider-b", "model-b"),
+    }
+
+
 def test_backfill_ignores_user_messages():
     """Les messages user dans la DB ne sont pas produits."""
     tmp_dir = Path(tempfile.mkdtemp())

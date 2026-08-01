@@ -17,7 +17,7 @@ const { promisify } = require("util");
 
 const {
   ingestExport,
-  toExportMessage,
+  toExportMessages,
 } = require("./lib/footprint-crush-lib.js");
 
 const execFileAsync = promisify(execFile);
@@ -85,9 +85,7 @@ async function exportSession(client, sessionId) {
           updated: session.time_updated || 0,
         },
       },
-      messages: (messages || []).map((message) =>
-        toExportMessage(message, sessionId, session.model),
-      ),
+      messages: toExportMessages(messages || [], sessionId),
     };
 
     const outPath = path.join(EXPORT_DIR, `${sessionId}.json`);

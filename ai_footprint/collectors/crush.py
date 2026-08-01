@@ -183,6 +183,8 @@ class CrushCollector(Collector):
         except sqlite3.Error:
             return
 
+        parsed_messages: list[tuple[sqlite3.Row, dict]] = []
+        message_map: dict[str, dict] = {}
         for msg in messages:
             try:
                 data = json.loads(msg["data"]) if isinstance(msg["data"], str) else msg["data"]
@@ -192,6 +194,13 @@ class CrushCollector(Collector):
             if not isinstance(data, dict):
                 continue
 
+            parsed_messages.append((msg, data))
+            message_id = data.get("id") or msg["id"]
+            if message_id:
+                message_map[message_id] = data
+
+        for msg, data in parsed_messages:
+
             if data.get("role") != "assistant":
                 continue
 
@@ -200,16 +209,22 @@ class CrushCollector(Collector):
             if not session:
                 continue
 
-            # Session-level model (fallback si message-level absent)
-            try:
-                session_model = json.loads(session["model"]) if isinstance(session["model"], str) else session["model"]
-            except (json.JSONDecodeError, TypeError):
-                session_model = {}
-
-            # Message-level data
+            # Les metadonnees propres au message priment. Sans elles, le modele
+            # est porte par le message parent, jamais par le modele final de session.
             msg_model = data.get("model") or {}
-            provider = msg_model.get("providerID") or session_model.get("providerID", "")
-            model = msg_model.get("modelID") or msg_model.get("id") or session_model.get("id", "")
+            provider = msg_model.get("providerID") or data.get("providerID") or ""
+            model = msg_model.get("modelID") or msg_model.get("id") or data.get("modelID") or ""
+            parent_id = data.get("parentID")
+            seen_parents: set[str] = set()
+            while not model and parent_id and parent_id not in seen_parents:
+                seen_parents.add(parent_id)
+                parent = message_map.get(parent_id)
+                if not parent:
+                    break
+                parent_model = parent.get("model") or {}
+                provider = parent_model.get("providerID") or parent.get("providerID") or ""
+                model = parent_model.get("modelID") or parent_model.get("id") or parent.get("modelID") or ""
+                parent_id = parent.get("parentID")
 
             # Tokens : par message uniquement. Pas de fallback sur les totaux de
             # session (qui agrègent tous les messages) : l'appliquer à un message

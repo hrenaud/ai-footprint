@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   ingestExport,
   toExportMessage,
+  toExportMessages,
 } = require("../lib/footprint-crush-lib.js");
 
 test("ingestExport: appelle `ai-footprint ingest --source-crush <dir>`", async () => {
@@ -70,7 +71,7 @@ test("toExportMessage: lit les metadonnees depuis info", () => {
   });
 });
 
-test("toExportMessage: utilise le modele de session si le message ne le renseigne pas", () => {
+test("toExportMessage: ne reutilise pas le modele final de session", () => {
   const result = toExportMessage({
     info: {
       role: "assistant",
@@ -78,10 +79,24 @@ test("toExportMessage: utilise le modele de session si le message ne le renseign
       tokens: { input: 28049, output: 19, cache: { read: 0, write: 0 } },
     },
     parts: [],
-  }, "ses_123", { id: "claude-sonnet-4", providerID: "anthropic" });
+  }, "ses_123");
 
   assert.deepEqual(result.info.model, {
-    id: "claude-sonnet-4",
-    providerID: "anthropic",
+    id: "",
+    providerID: "",
   });
+});
+
+test("toExportMessages: conserve le modele de chaque reponse", () => {
+  const messages = [
+    { info: { id: "user_1", role: "user", model: { modelID: "model-a", providerID: "provider-a" } } },
+    { info: { id: "assistant_1", parentID: "user_1", role: "assistant", tokens: { input: 10, output: 1 } } },
+    { info: { id: "user_2", role: "user", model: { modelID: "model-b", providerID: "provider-b" } } },
+    { info: { id: "assistant_2", parentID: "user_2", role: "assistant", tokens: { input: 20, output: 2 } } },
+  ];
+
+  const result = toExportMessages(messages, "ses_123");
+
+  assert.deepEqual(result[1].info.model, { id: "model-a", providerID: "provider-a" });
+  assert.deepEqual(result[3].info.model, { id: "model-b", providerID: "provider-b" });
 });
