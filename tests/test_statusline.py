@@ -84,6 +84,19 @@ def test_marks_line_as_provisional_when_extrapolated_warning_present():
     assert "sonnet-5" in line and "inconnu" in line and "sonnet-4" in line
 
 
+def test_marks_line_as_provisional_for_openai_extrapolation():
+    rows = [
+        {"model": "gpt-5.6-terra",
+         "energy_min": 0.1, "energy_max": 0.2, "gwp_min": 1.0, "gwp_max": 2.0,
+         "wcf_min": 3.0, "wcf_max": 4.0,
+         "warnings": '["params-extrapolated-openai:gpt-5.5"]'},
+    ]
+
+    line = render_statusline(rows)
+
+    assert "≈ gpt-5.6-terra inconnu, params gpt-5.5" in line
+
+
 def test_render_statusline_places_extrapolated_note_last():
     rows = [
         {"model": "claude-sonnet-5",

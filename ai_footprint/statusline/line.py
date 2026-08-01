@@ -4,6 +4,8 @@ import re
 def _short_name(model: str) -> str:
     """Raccourcit un nom de modèle Anthropic pour la statusline
     (ex. « claude-sonnet-4-6 » → « sonnet-4 », « claude-sonnet-5 » → « sonnet-5 »)."""
+    if not model.startswith("claude-"):
+        return model
     name = model.removeprefix("claude-")
     match = re.match(r"([a-z]+-\d+)", name)
     return match.group(1) if match else name
@@ -55,10 +57,9 @@ def render_statusline(rows: list[dict], tokens: int | None = None) -> str:
     note = ""
     for r in rows:
         warnings = r.get("warnings") or ""
-        marker = "params-extrapolated-anthropic:"
-        idx = warnings.find(marker)
-        if idx != -1:
-            sibling = warnings[idx + len(marker):].split('"')[0]
+        match = re.search(r"params-extrapolated-[^:\"]+:([^\"]+)", warnings)
+        if match:
+            sibling = match.group(1)
             model = r.get("model", "")
             note = f" · ≈ {_short_name(model)} inconnu, params {_short_name(sibling)}"
             break

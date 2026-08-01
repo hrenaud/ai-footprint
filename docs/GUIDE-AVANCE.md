@@ -197,7 +197,9 @@ une ligne par indicateur (🌍/💧/⚡) plutôt qu'une seule ligne inline, le p
 latéral étant trop étroit pour la ligne complète utilisée par les autres outils
 (elle s'y coupait au milieu d'une unité). Le total de tokens est libellé
 temporairement et un avertissement de modèle extrapolé peut compléter les
-indicateurs.
+indicateurs. Cet avertissement nomme le modèle récent et sa version de repli,
+quel que soit son fournisseur (par exemple `gpt-5.6-terra` avec les paramètres
+de `gpt-5.5`).
 
 Opencode ≥1.18.9 tourne sur un binaire compilé Bun. Sous Bun, l'interop
 CJS→ESM d'un module `module.exports = fonction` (fonction nue) fuite les
