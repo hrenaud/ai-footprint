@@ -328,15 +328,17 @@ def test_estimated_param_models_lists_models_with_estimation_warnings(tmp_path):
     from ai_footprint.store.db import SQLiteStore
     store = SQLiteStore(str(tmp_path / "t.db"))
     store.conn.execute(
-        "INSERT INTO events VALUES ('s1','m1','ollama','est-model',1,2,0,0,"
-        "'2026-07-02T00:00:00+00:00','p',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client) "
+        "VALUES ('s1','m1','ollama','est-model',1,2,0,0,'2026-07-02T00:00:00+00:00','p',0,'')")
     store.conn.execute(
         "INSERT INTO impacts VALUES ('s1','m1','est-model','WOR','v',"
         "1,2,1,2,1,2,1,2,1,2,'{}',?,NULL)",
         (_json.dumps(["params-from-cli-used_storage", "params-bytes-per-param:0.5"]),))
     store.conn.execute(
-        "INSERT INTO events VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,"
-        "'2026-07-02T00:00:00+00:00','p',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client) "
+        "VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,'2026-07-02T00:00:00+00:00','p',0,'')")
     store.conn.execute(
         "INSERT INTO impacts VALUES ('s1','m2','gpt-4o-mini','WOR','v',"
         "1,2,1,2,1,2,1,2,1,2,'{}','[]',NULL)")
@@ -351,15 +353,17 @@ def test_extrapolated_param_models_lists_models_with_extrapolation_warning(tmp_p
     from ai_footprint.store.db import SQLiteStore
     store = SQLiteStore(str(tmp_path / "t.db"))
     store.conn.execute(
-        "INSERT INTO events VALUES ('s1','m1','anthropic','claude-sonnet-5',1,2,0,0,"
-        "'2026-07-02T00:00:00+00:00','p',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client) "
+        "VALUES ('s1','m1','anthropic','claude-sonnet-5',1,2,0,0,'2026-07-02T00:00:00+00:00','p',0,'')")
     store.conn.execute(
         "INSERT INTO impacts VALUES ('s1','m1','claude-sonnet-5','WOR','v',"
         "1,2,1,2,1,2,1,2,1,2,'{}',?,NULL)",
         (_json.dumps(["params-extrapolated-anthropic:claude-sonnet-4-6"]),))
     store.conn.execute(
-        "INSERT INTO events VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,"
-        "'2026-07-02T00:00:00+00:00','p',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client) "
+        "VALUES ('s1','m2','openai','gpt-4o-mini',1,2,0,0,'2026-07-02T00:00:00+00:00','p',0,'')")
     store.conn.execute(
         "INSERT INTO impacts VALUES ('s1','m2','gpt-4o-mini','WOR','v',"
         "1,2,1,2,1,2,1,2,1,2,'{}','[]',NULL)")
@@ -423,8 +427,9 @@ def test_open_migrates_legacy_z_timestamps(tmp_path):
     db = str(tmp_path / "t.db")
     s = SQLiteStore(db)
     s.conn.execute(
-        "INSERT INTO events VALUES ('s1','m1','p','mod',1,2,0,0,"
-        "'2026-07-02T10:00:00Z','proj',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client) "
+        "VALUES ('s1','m1','p','mod',1,2,0,0,'2026-07-02T10:00:00Z','proj',0,'')")
     s.conn.execute(
         "INSERT INTO sessions VALUES ('s1','proj','2026-07-02T10:00:00Z','2026-07-02T11:00:00Z')")
     s.conn.commit()

@@ -18,7 +18,14 @@ CREATE TABLE IF NOT EXISTS events (
   timestamp TEXT, project TEXT,
   active_seconds REAL DEFAULT 0,
   client TEXT DEFAULT '',
+  route_hint TEXT DEFAULT '',
+  route TEXT DEFAULT 'unknown',
+  model_raw TEXT DEFAULT '',
+  model_canonical TEXT DEFAULT '',
   PRIMARY KEY (session_id, msg_id)
+);
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  name TEXT PRIMARY KEY
 );
 CREATE TABLE IF NOT EXISTS impacts (
   session_id TEXT, msg_id TEXT, model_resolved TEXT, zone TEXT,
@@ -62,16 +69,7 @@ class SQLiteStore:
         self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(_SCHEMA)
-        # Migrations : colonnes ajoutées après coup sur une DB pré-existante.
-        for ddl in (
-            "ALTER TABLE events ADD COLUMN active_seconds REAL DEFAULT 0",
-            "ALTER TABLE events ADD COLUMN client TEXT DEFAULT ''",
-        ):
-            try:
-                self.conn.execute(ddl)
-            except sqlite3.OperationalError:
-                pass  # colonne déjà présente
-        self.conn.commit()
+        self._migrate_events()
         # Migration N2 : timestamps hérités « …Z » → format canonique « +00:00 »
         # (idempotent : ne touche que les lignes au vieux format).
         self.conn.execute(
@@ -83,6 +81,41 @@ class SQLiteStore:
             "WHERE started_at LIKE '%Z' OR ended_at LIKE '%Z'")
         self.conn.commit()
 
+    def _migrate_events(self) -> None:
+        columns = {row["name"] for row in self.conn.execute("PRAGMA table_info(events)")}
+        legacy_route_data = "route" not in columns
+        migrations = (
+            ("active_seconds", "ALTER TABLE events ADD COLUMN active_seconds REAL DEFAULT 0"),
+            ("client", "ALTER TABLE events ADD COLUMN client TEXT DEFAULT ''"),
+            ("route_hint", "ALTER TABLE events ADD COLUMN route_hint TEXT DEFAULT ''"),
+            ("route", "ALTER TABLE events ADD COLUMN route TEXT DEFAULT 'unknown'"),
+            ("model_raw", "ALTER TABLE events ADD COLUMN model_raw TEXT DEFAULT ''"),
+            ("model_canonical", "ALTER TABLE events ADD COLUMN model_canonical TEXT DEFAULT ''"),
+        )
+        with self.conn:
+            for name, ddl in migrations:
+                if name not in columns:
+                    self.conn.execute(ddl)
+            self.conn.execute(
+                "UPDATE events SET model_raw=model WHERE model_raw=''"
+            )
+            self.conn.execute(
+                "UPDATE events SET route_hint=provider WHERE route_hint=''"
+            )
+            if legacy_route_data and self.conn.execute(
+                "SELECT 1 FROM schema_migrations WHERE name='historical-routes-v1'"
+            ).fetchone() is None:
+                self.conn.execute(
+                    "UPDATE events SET route = CASE "
+                    "WHEN lower(model_raw) LIKE 'claude%' THEN 'anthropic' "
+                    "WHEN lower(model_raw) LIKE 'chatgpt%' THEN 'openai' "
+                    "WHEN lower(model_raw) = 'openrouter/free' THEN 'openrouter' "
+                    "ELSE 'local' END"
+                )
+                self.conn.execute(
+                    "INSERT INTO schema_migrations (name) VALUES ('historical-routes-v1')"
+                )
+
     def import_legacy(self, carbon_db_path: str):
         raise NotImplementedError("backfill carbon.db pas encore implémenté")
 
@@ -92,11 +125,16 @@ class SQLiteStore:
         for e in events:
             e = dataclasses.replace(e, timestamp=_canonical_ts(e.timestamp))
             cur = self.conn.execute(
-                "INSERT OR IGNORE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR IGNORE INTO events ("
+                "session_id, msg_id, provider, model, input_tokens, output_tokens, "
+                "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, "
+                "client, route_hint, route, model_raw, model_canonical"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (e.session_id, e.msg_id, e.provider, e.model,
                  e.input_tokens, e.output_tokens,
                  e.cache_creation_tokens, e.cache_read_tokens,
-                 e.timestamp, e.project, e.active_seconds, e.client),
+                 e.timestamp, e.project, e.active_seconds, e.client,
+                 e.route_hint, e.route, e.model_raw, e.model_canonical),
             )
             if cur.rowcount == 0:
                 # déjà ingéré → idempotent ; on backfille juste les colonnes
@@ -110,6 +148,16 @@ class SQLiteStore:
                     "UPDATE events SET client=? "
                     "WHERE session_id=? AND msg_id=? AND client=''",
                     (e.client, e.session_id, e.msg_id),
+                )
+                self.conn.execute(
+                    "UPDATE events SET model_raw=? "
+                    "WHERE session_id=? AND msg_id=? AND model_raw=''",
+                    (e.model_raw, e.session_id, e.msg_id),
+                )
+                self.conn.execute(
+                    "UPDATE events SET route_hint=? "
+                    "WHERE session_id=? AND msg_id=? AND route_hint=''",
+                    (e.route_hint, e.session_id, e.msg_id),
                 )
                 continue
             new_count += 1
@@ -175,7 +223,7 @@ class SQLiteStore:
     def rows_for_report(self, since: str | None = None,
                         session_id: str | None = None) -> list[dict]:
         sql = (
-            "SELECT e.model, e.project, e.timestamp, e.client, "
+            "SELECT e.model, e.model_raw, e.model_canonical, e.route, e.project, e.timestamp, e.client, "
             "i.energy_min, i.energy_max, i.gwp_min, i.gwp_max, "
             "i.adpe_min, i.adpe_max, i.pe_min, i.pe_max, i.wcf_min, i.wcf_max, "
             "i.warnings "
@@ -191,6 +239,59 @@ class SQLiteStore:
             sql += " AND e.session_id = ?"
             params.append(session_id)
         return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
+
+    def resolve_events(self, *, route: str, model_canonical: str,
+                       session_id: str | None = None, since: str | None = None,
+                       until: str | None = None) -> int:
+        """Confirme une route uniquement pour le lot explicitement sélectionné."""
+        if not session_id and not since and not until:
+            raise ValueError("A session or date range is required")
+        clauses = ["route='unknown'"]
+        params: list[str] = []
+        if session_id:
+            clauses.append("session_id=?")
+            params.append(session_id)
+        if since:
+            clauses.append("timestamp>=?")
+            params.append(since)
+        if until:
+            clauses.append("timestamp<=?")
+            params.append(until)
+        cur = self.conn.execute(
+            "UPDATE events SET route=?, model_canonical=? WHERE " + " AND ".join(clauses),
+            (route, model_canonical, *params),
+        )
+        self.conn.commit()
+        return cur.rowcount
+
+    def unresolved_batches(self) -> list[dict]:
+        return [dict(row) for row in self.conn.execute(
+            "SELECT client, model_raw, session_id, MIN(timestamp) AS first_seen, "
+            "MAX(timestamp) AS last_seen, SUM(input_tokens + output_tokens + "
+            "cache_creation_tokens + cache_read_tokens) AS tokens, COUNT(*) AS events "
+            "FROM events WHERE route='unknown' "
+            "GROUP BY client, model_raw, session_id "
+            "ORDER BY first_seen"
+        )]
+
+    def tokens_by_model_route(self, since: str | None = None) -> list[dict]:
+        return self._tokens_by("model_canonical AS model, route", "model_canonical, route", since)
+
+    def tokens_by_canonical_model(self, since: str | None = None) -> list[dict]:
+        return self._tokens_by("model_canonical AS model", "model_canonical", since)
+
+    def _tokens_by(self, select: str, group_by: str, since: str | None) -> list[dict]:
+        sql = (
+            "SELECT " + select + ", "
+            "SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens) "
+            "AS tokens FROM events"
+        )
+        params: tuple[str, ...] = ()
+        if since:
+            sql += " WHERE timestamp>=?"
+            params = (since,)
+        sql += " GROUP BY " + group_by
+        return [dict(row) for row in self.conn.execute(sql, params)]
 
     def tokens_for_session(self, session_id: str) -> int:
         """Total de tokens (entrée+sortie) d'une session, sans jointure sur
@@ -387,13 +488,15 @@ class SQLiteStore:
         batch_size = 100
         for i, r in enumerate(rows):
             e = InferenceEvent(
-                provider=r["provider"], model=r["model"],
+                provider=r["route_hint"], model=r["model_raw"],
                 input_tokens=r["input_tokens"], output_tokens=r["output_tokens"],
                 cache_creation_tokens=r["cache_creation_tokens"],
                 cache_read_tokens=r["cache_read_tokens"],
                 timestamp=r["timestamp"], project=r["project"],
                 session_id=r["session_id"], msg_id=r["msg_id"],
-                active_seconds=r["active_seconds"], client=r["client"])
+                active_seconds=r["active_seconds"], client=r["client"],
+                model_raw=r["model_raw"], route_hint=r["route_hint"],
+                route=r["route"], model_canonical=r["model_canonical"])
             self._store_impact(e, engine.compute(e, config))
             if (i + 1) % batch_size == 0:
                 self.conn.commit()

@@ -148,8 +148,10 @@ def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
     db = str(tmp_path / "t.db")
     store = SQLiteStore(db)
     store.conn.execute(
-        "INSERT INTO events VALUES ('s1','m1','ollama','org/nouveau',1,2,0,0,"
-        "'2026-07-02T00:00:00+00:00','p',0,'')")
+        "INSERT INTO events (session_id, msg_id, provider, model, input_tokens, output_tokens, "
+        "cache_creation_tokens, cache_read_tokens, timestamp, project, active_seconds, client, "
+        "model_raw, route_hint) VALUES ('s1','m1','ollama','org/nouveau',1,2,0,0,"
+        "'2026-07-02T00:00:00+00:00','p',0,'','org/nouveau','ollama')")
     store.conn.execute(
         "INSERT INTO impacts VALUES ('s1','m1','org/nouveau','WOR','v',"
         "NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"
