@@ -217,6 +217,9 @@ function`. `footprint-crush.js` exporte donc directement la forme V1
 `module.exports = { server: async ({client}) => {...} }`, lue par `mod.default`
 sans jamais retomber sur le scan legacy — la fuite Bun devient sans effet.
 
+Les exports de session et leur ingestion sont silencieux en cas de succès pour
+ne pas perturber le TUI ; seules les erreurs du plugin sont journalisées.
+
 Par ailleurs, Opencode/Bun scanne tous les `.js` à la **racine** de son
 dossier plugins comme candidats plugin, même non déclarés dans
 `opencode.json`/`tui.json` (un sous-dossier n'est pas scanné). La logique

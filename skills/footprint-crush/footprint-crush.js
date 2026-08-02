@@ -92,7 +92,6 @@ async function exportSession(client, sessionId) {
     await fs.promises.writeFile(outPath, JSON.stringify(obj, null, 2), {
       encoding: "utf-8",
     });
-    console.log(`[footprint-crush] Exported session ${sessionId} → ${outPath}`);
   } catch (err) {
     console.error(
       `[footprint-crush] Failed to export session ${sessionId}: ${err.message}`,
@@ -190,9 +189,6 @@ module.exports = {
     return {
       event: async ({ event }) => {
         if (event.type === "session.idle") {
-          console.log(
-            `[footprint-crush] Session idle: ${event.properties.sessionID} — export en cours...`,
-          );
           await exportSession(client, event.properties.sessionID);
           await ingestExport(
             execFileAsync,
