@@ -224,8 +224,11 @@ def test_data_vs_info_keys():
 
 # --- SQLite backfill mode ---
 
-def test_backfill_from_sqlite():
+def test_backfill_from_sqlite(monkeypatch):
     """Le mode backfill lit les sessions et messages depuis une DB SQLite."""
+    event_factory = Mock(side_effect=InferenceEvent)
+    monkeypatch.setattr("ai_footprint.collectors.crush.InferenceEvent", event_factory)
+
     tmp_dir = Path(tempfile.mkdtemp())
     db_path = str(tmp_dir / "opencode.db")
 
@@ -280,6 +283,10 @@ def test_backfill_from_sqlite():
     assert e.model_raw == "claude-sonnet"
     assert e.route_hint == "anthropic"
     assert e.route == "unknown"
+    assert event_factory.call_args.kwargs["model_raw"] == "claude-sonnet"
+    assert event_factory.call_args.kwargs["route_hint"] == "anthropic"
+    assert "provider" not in event_factory.call_args.kwargs
+    assert "model" not in event_factory.call_args.kwargs
     assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_creation_tokens == 7052
