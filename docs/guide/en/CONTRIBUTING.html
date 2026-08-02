@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -923,8 +923,8 @@ python3 -m venv .venv
 <p><code>install.sh</code> installs <code>main</code> by default, but accepts <code>AI_FOOTPRINT_REF</code> to
 point at any branch or tag — useful to test a contribution under real
 conditions (clone + venv + Claude Code hook) before merging:</p>
-<pre><code class="language-bash">AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test bash
 </code></pre>
 <p><code>AI_FOOTPRINT_DIR</code> avoids overwriting the current installation in
 <code>~/.ai-footprint/src</code> during the test. See also <code>AI_FOOTPRINT_DB</code>,
@@ -1274,7 +1274,7 @@ export and workstation energy are out of scope.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

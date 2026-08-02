@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -486,6 +486,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#codex-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -684,6 +695,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#codex-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -756,6 +778,7 @@
 <th>Claude Code (JSONL)</th>
 <th>Opencode (JSON)</th>
 <th>Pi (JSONL)</th>
+<th>Codex CLI (JSONL)</th>
 <th>Usage dans ai-footprint</th>
 </tr>
 </thead>
@@ -766,12 +789,14 @@
 <td></td>
 <td></td>
 <td></td>
+<td></td>
 </tr>
 <tr>
 <td><code>sessionId</code></td>
 <td>✅</td>
 <td>✅ <code>session_id</code></td>
 <td>✅ header <code>type:"session"</code>, <code>id</code></td>
+<td>✅ <code>session_meta.payload.id</code></td>
 <td>Clé de jointure avec <code>sessions</code> table</td>
 </tr>
 <tr>
@@ -779,10 +804,12 @@
 <td>✅ <code>msg_id</code></td>
 <td>✅ <code>message.id</code></td>
 <td>✅ <code>message.id</code> (entrée <code>type:"message"</code>)</td>
+<td>❌ (id synthétique <code>session_id:ligne</code>)</td>
 <td>Clé unique par message</td>
 </tr>
 <tr>
 <td><strong>Modèle</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -793,6 +820,7 @@
 <td>✅ <code>"claude-opus-4-8"</code></td>
 <td>⚠️ <code>{providerID, modelID}</code></td>
 <td>✅ <code>message.model</code></td>
+<td>✅ <code>turn_context.payload.model</code> (par tour)</td>
 <td>Normalisé en <code>provider</code> + <code>model</code> dans <code>InferenceEvent</code></td>
 </tr>
 <tr>
@@ -800,10 +828,12 @@
 <td>❌ (déduit de <code>model</code>)</td>
 <td>✅ <code>model.providerID</code></td>
 <td>✅ <code>message.provider</code></td>
+<td>✅ <code>session_meta.payload.model_provider</code></td>
 <td>Permet le lookup EcoLogits</td>
 </tr>
 <tr>
 <td><strong>Tokens</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -814,6 +844,7 @@
 <td>✅</td>
 <td>✅ <code>tokens.input</code></td>
 <td>✅ <code>message.usage.input</code></td>
+<td>⚠️ <code>last_token_usage.input_tokens</code> (inclut le cache)</td>
 <td>Calcul d'impact</td>
 </tr>
 <tr>
@@ -821,6 +852,7 @@
 <td>✅</td>
 <td>✅ <code>tokens.output</code></td>
 <td>✅ <code>message.usage.output</code></td>
+<td>✅ <code>last_token_usage.output_tokens</code></td>
 <td>Calcul d'impact</td>
 </tr>
 <tr>
@@ -828,6 +860,7 @@
 <td>✅</td>
 <td>⚠️ <code>tokens.cache.write</code></td>
 <td>✅ <code>message.usage.cacheWrite</code></td>
+<td>❌ (non distingué par l'API OpenAI)</td>
 <td>Calcul d'impact (cache)</td>
 </tr>
 <tr>
@@ -835,6 +868,7 @@
 <td>✅</td>
 <td>⚠️ <code>tokens.cache.read</code></td>
 <td>✅ <code>message.usage.cacheRead</code></td>
+<td>✅ <code>last_token_usage.cached_input_tokens</code></td>
 <td>Calcul d'impact (cache)</td>
 </tr>
 <tr>
@@ -842,10 +876,12 @@
 <td>❌</td>
 <td>✅ <code>tokens.reasoning</code></td>
 <td>❌</td>
+<td>⚠️ <code>last_token_usage.reasoning_output_tokens</code> (non stocké)</td>
 <td>À valider avec EcoLogits</td>
 </tr>
 <tr>
 <td><strong>Temps</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -856,6 +892,7 @@
 <td>✅</td>
 <td>⚠️ Unix timestamp ms</td>
 <td>✅ ISO 8601 natif</td>
+<td>✅ ISO 8601 natif</td>
 <td>Converti en ISO 8601 UTC</td>
 </tr>
 <tr>
@@ -863,10 +900,12 @@
 <td>✅ Calculé</td>
 <td>✅ <code>time.completed - time.created</code></td>
 <td>✅ Calculé (delta entre timestamps successifs)</td>
+<td>✅ Calculé (delta entre lignes successives)</td>
 <td>Mesure du temps actif</td>
 </tr>
 <tr>
 <td><strong>Coût</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -877,11 +916,13 @@
 <td>❌ (non lu par le collecteur)</td>
 <td>✅ <code>cost</code> (BD + exports)</td>
 <td>⚠️ <code>message.usage.cost.total</code> (présent mais non stocké)</td>
+<td>❌</td>
 <td><strong>Non stocké</strong> — pas de champ <code>cost</code> dans <code>InferenceEvent</code></td>
 </tr>
 <tr>
 <td><code>latency</code> (ms)</td>
 <td>❌ (non lu par le collecteur)</td>
+<td>❌</td>
 <td>❌</td>
 <td>❌</td>
 <td>Non exploité actuellement</td>
@@ -892,11 +933,13 @@
 <td></td>
 <td></td>
 <td></td>
+<td></td>
 </tr>
 <tr>
 <td><code>title</code></td>
 <td>❌</td>
 <td>✅ <code>session.title</code></td>
+<td>❌</td>
 <td>❌</td>
 <td><strong>Non stocké</strong> (note : à risquer)</td>
 </tr>
@@ -905,12 +948,14 @@
 <td>✅ <code>cwd</code></td>
 <td>✅ <code>session.directory</code></td>
 <td>✅ <code>session.cwd</code></td>
+<td>✅ <code>session_meta.payload.cwd</code></td>
 <td>Utilisé pour <code>project</code> (basename)</td>
 </tr>
 <tr>
 <td><code>slug</code></td>
 <td>❌</td>
 <td>✅ <code>session.slug</code></td>
+<td>❌</td>
 <td>❌</td>
 <td><strong>Non stocké</strong> (note : à risquer)</td>
 </tr>
@@ -919,10 +964,12 @@
 <td>❌</td>
 <td>✅ <code>session.path</code></td>
 <td>❌</td>
+<td>❌</td>
 <td><strong>Non stocké</strong> (note : à risquer)</td>
 </tr>
 <tr>
 <td><strong>Statut</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -933,12 +980,14 @@
 <td>✅</td>
 <td>✅</td>
 <td>✅ <code>message.role</code></td>
+<td>❌ (filtré via <code>event_msg</code>/<code>token_count</code>)</td>
 <td>Filtrage (seuls les assistant comptent)</td>
 </tr>
 <tr>
 <td><code>error</code></td>
 <td>❌</td>
 <td>✅ <code>error.name</code>, <code>error.data</code></td>
+<td>❌</td>
 <td>❌</td>
 <td><strong>Non stocké</strong> — pas de champ <code>error</code> dans <code>InferenceEvent</code></td>
 </tr>
@@ -947,10 +996,12 @@
 <td>❌</td>
 <td>✅ <code>time_archived</code></td>
 <td>❌</td>
+<td>❌</td>
 <td>Non exploité actuellement</td>
 </tr>
 <tr>
 <td><strong>Collecte</strong></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -961,6 +1012,7 @@
 <td>JSONL (ligne par ligne)</td>
 <td>SQLite (BDD locale)</td>
 <td>JSONL (ligne par ligne)</td>
+<td>JSONL (ligne par ligne)</td>
 <td>Collecteurs spécifiques par outil</td>
 </tr>
 <tr>
@@ -968,12 +1020,14 @@
 <td><code>hooks.Stop</code> (fin de session)</td>
 <td><code>session.idle</code> (plugin)</td>
 <td><code>session_shutdown</code> (extension)</td>
+<td>Aucun (backfill seul — slot <code>notify</code> non câblé)</td>
 <td>Installation automatique</td>
 </tr>
 <tr>
 <td>Backfilling</td>
 <td>Lecture directe JSONL</td>
 <td>Lecture directe SQLite</td>
+<td>Lecture directe JSONL</td>
 <td>Lecture directe JSONL</td>
 <td>Scripts de backfilling spécifiques</td>
 </tr>
@@ -1087,6 +1141,31 @@
 </code></pre>
 <p><strong>Collecteur</strong> : <code>PiCollector</code> (lecture directe JSONL, root = répertoire ou fichier unique)</p>
 <hr />
+<h3 id="codex-cli">Codex CLI</h3>
+<p><strong>Sources disponibles</strong> :</p>
+<ol>
+<li><strong>Transcripts de session (rollout)</strong> : <code>$CODEX_HOME/sessions/**/*.jsonl</code>
+   (défaut <code>~/.codex/sessions</code> si <code>$CODEX_HOME</code> n'est pas positionné).</li>
+</ol>
+<p><strong>Structure d'un fichier de session</strong> (une entrée <code>session_meta</code>, puis des
+entrées <code>turn_context</code> — modèle du tour courant — et <code>event_msg</code> de type
+<code>token_count</code> portant l'usage cumulé et le delta du tour) :</p>
+<pre><code class="language-json">{&quot;type&quot;:&quot;session_meta&quot;,&quot;payload&quot;:{&quot;id&quot;:&quot;sess-A&quot;,&quot;cwd&quot;:&quot;/Users/me/DEV/projA&quot;,&quot;model_provider&quot;:&quot;openai&quot;}}
+{&quot;type&quot;:&quot;turn_context&quot;,&quot;payload&quot;:{&quot;turn_id&quot;:&quot;t1&quot;,&quot;model&quot;:&quot;gpt-5.5&quot;}}
+{&quot;type&quot;:&quot;event_msg&quot;,&quot;payload&quot;:{&quot;type&quot;:&quot;token_count&quot;,&quot;info&quot;:{&quot;last_token_usage&quot;:{&quot;input_tokens&quot;:17242,&quot;cached_input_tokens&quot;:10496,&quot;output_tokens&quot;:117,&quot;reasoning_output_tokens&quot;:23,&quot;total_tokens&quot;:17359}}}}
+</code></pre>
+<p>Particularité OpenAI : <code>cached_input_tokens</code> et <code>reasoning_output_tokens</code> sont
+des <strong>sous-ensembles</strong> de <code>input_tokens</code>/<code>output_tokens</code> (contrairement au
+schéma Anthropic où le cache est additif) — <code>input_tokens</code> stocké dans
+<code>InferenceEvent</code> est donc <code>last_token_usage.input_tokens - cached_input_tokens</code>.</p>
+<p>Aucun identifiant de message natif n'existe dans ce format : <code>msg_id</code> est
+synthétique (<code>session_id:numéro_de_ligne</code>). Les lignes <code>token_count</code> dont
+<code>last_token_usage</code> est <code>null</code> (pas de nouveau tour depuis le dernier calcul)
+sont ignorées.</p>
+<p><strong>Collecteur</strong> : <code>CodexCollector</code> (lecture directe JSONL, root = répertoire ou
+fichier unique). Backfill uniquement — pas de hook temps réel (le slot
+<code>notify</code> de <code>config.toml</code> peut être pris par un autre outil).</p>
+<hr />
 <h2 id="notes-pour-les-futurs-outils">Notes pour les futurs outils</h2>
 <p>Quand un nouvel outil est ajouté, mettre à jour :</p>
 <ol>
@@ -1120,7 +1199,7 @@
 <li><code>error</code> (string)</li>
 </ul>
 <hr />
-<p><em>Document créé le 2026-06-30, mis à jour le 2026-07-13. À mettre à jour à chaque nouvel outil ajouté.</em></p>
+<p><em>Document créé le 2026-06-30, mis à jour le 2026-07-18. À mettre à jour à chaque nouvel outil ajouté.</em></p>
 
 
 
@@ -1173,7 +1252,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -494,6 +494,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#opencode-tui-statusline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenCode TUI statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#uncovered-models-and-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -807,6 +818,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#opencode-tui-statusline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenCode TUI statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#uncovered-models-and-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -924,9 +946,9 @@ from the repository — not installed by brew/pip.</p>
 </table>
 <p>Example: install a test branch in an isolated directory, without touching
 the production install or <code>settings.json</code>:</p>
-<pre><code class="language-bash">AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-AI_FOOTPRINT_NO_CLAUDE=1 \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=my-branch AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  AI_FOOTPRINT_NO_CLAUDE=1 bash
 </code></pre>
 <h2 id="complete-uninstallation">Complete uninstallation</h2>
 <p>The <a href="GUIDE.html#uninstallation">uninstaller</a> keeps the SQLite database by
@@ -977,6 +999,14 @@ to the <strong>global total</strong> of the history:</p>
 </code></pre>
 <p>The installer never replaces a statusline already used by another tool — it
 then displays the command to switch manually.</p>
+<h3 id="opencode-tui-statusline">OpenCode TUI statusline</h3>
+<p>OpenCode shows its session status in the sidebar. Its AI Footprint card is
+expanded by default and can be collapsed with a click or, once focused, Enter
+or Space. Its collapsed state persists between sessions. A click shows a
+confirmation toast, while keyboard toggles remain silent. It shows the
+installed version and one line per indicator; an extrapolated-model warning may
+be shown. The warning names the recent model and its fallback version for any
+provider, for example <code>gpt-5.6-terra</code> using <code>gpt-5.5</code> parameters.</p>
 <h3 id="uncovered-models-and-resolution">Uncovered models and resolution</h3>
 <p>See <a href="METHODOLOGY.html">METHODOLOGY.md</a> for details on what is measured and
 why some models remain out of scope. <code>ai-footprint resolve</code> associates an
@@ -1034,7 +1064,7 @@ actual parameters, and recalculates the impacts.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

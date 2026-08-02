@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -472,6 +472,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#routes-dinference-et-resolution-par-lot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routes d'inférence et résolution par lot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ingestion-multi-outils" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -487,6 +498,17 @@
     <span class="md-ellipsis">
       
         Statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statusline-tui-opencode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statusline TUI Opencode
       
     </span>
   </a>
@@ -785,6 +807,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#routes-dinference-et-resolution-par-lot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routes d'inférence et résolution par lot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ingestion-multi-outils" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -800,6 +833,17 @@
     <span class="md-ellipsis">
       
         Statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statusline-tui-opencode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statusline TUI Opencode
       
     </span>
   </a>
@@ -853,7 +897,7 @@ voir <a href="CONTRIBUTING.html">CONTRIBUTING.md</a>.</p>
 <p>L'installeur en une ligne (voir le <a href="GUIDE.html#installer">guide utilisateur</a>)
 reste la méthode recommandée : il détecte tes outils installés et câble tout
 automatiquement. Les méthodes ci-dessous n'installent que la <strong>CLI</strong>, sans
-câblage automatique dans Claude Code, Opencode ou Pi.</p>
+câblage automatique dans Claude Code, Opencode, Pi ou Codex CLI.</p>
 <h3 id="via-homebrew-macoslinux">Via Homebrew (macOS/Linux)</h3>
 <pre><code class="language-bash">brew install hrenaud/tap/ai-footprint
 </code></pre>
@@ -925,9 +969,9 @@ skills du dépôt — non installés par brew/pip.</p>
 </table>
 <p>Exemple : installer une branche de test dans un répertoire isolé, sans
 toucher à l'installation de production ni à <code>settings.json</code> :</p>
-<pre><code class="language-bash">AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
-AI_FOOTPRINT_NO_CLAUDE=1 \
-  curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | \
+  AI_FOOTPRINT_REF=ma-branche AI_FOOTPRINT_DIR=/tmp/ai-footprint-test \
+  AI_FOOTPRINT_NO_CLAUDE=1 bash
 </code></pre>
 <h2 id="desinstallation-complete">Désinstallation complète</h2>
 <p>L'<a href="GUIDE.html#desinstallation">uninstaller</a> conserve la base SQLite par
@@ -948,6 +992,25 @@ ai-footprint resolve --set &quot;provider/modele=org/repo-hf&quot;   # applique 
 ai-footprint resolve --forget &quot;provider/modele&quot;            # retire un mapping et recalcule
 ai-footprint nudge --json     # état des nudges (modèles non proposés, mise à jour dispo)
 </code></pre>
+<h3 id="routes-dinference-et-resolution-par-lot">Routes d'inférence et résolution par lot</h3>
+<p>Chaque event conserve le nom de modèle tel que lu (<code>model_raw</code>) et un
+<code>route_hint</code>, c'est-à-dire l'indice de provenance fourni par le collecteur. Un
+<code>route_hint</code> est une valeur <strong>indicative</strong> : par exemple, la présence d'OpenRouter dans un
+transcript ne confirme pas le fournisseur qui a exécuté l'inférence. Une route ne
+devient confirmée qu'avec <code>ai-footprint resolve</code>.</p>
+<p>Commence par <code>ai-footprint resolve --list</code>, puis sélectionne le lot concerné avec
+sa session ou une date de début. En ligne de commande non interactive, l'option
+<code>--session ou --since</code> est obligatoire, avec <code>--client</code>, <code>--raw-model</code>, <code>--route</code>
+et <code>--model</code> :</p>
+<pre><code class="language-bash">ai-footprint resolve --session SESSION --client opencode \
+  --raw-model nom-vu --route local --model nom-canonique \
+  --active-params 7 --total-params 7
+</code></pre>
+<p>La confirmation et le recalcul sont limités à ce lot ; les events d'une autre
+session ou période, même avec le même nom brut, ne changent pas. <code>local</code> demande les
+paramètres actifs et totaux (en milliards). Les routes <code>openrouter</code> et <code>custom</code>
+restent conservées avec un impact non estimé : elles identifient un routeur ou une
+intégration tierce, pas un modèle exécuteur suffisamment attribuable.</p>
 <p><code>ingest</code> résume la couverture obtenue, par exemple :</p>
 <pre><code>80 events ingérés · 33639/33709 mesurés · 70 non couverts (conservés, impact non estimé)
 </code></pre>
@@ -959,7 +1022,7 @@ avec <code>ai-footprint resolve</code> (ou <code>/footprint-resolve</code>). Dé
 <a href="METHODOLOGY.html">METHODOLOGY.md</a>.</p>
 <h3 id="ingestion-multi-outils">Ingestion multi-outils</h3>
 <p><code>ai-footprint ingest</code> lit les transcripts de session de chaque outil détecté
-(Claude Code, Opencode, Pi) et les convertit en events dans la base
+(Claude Code, Opencode, Pi, Codex CLI) et les convertit en events dans la base
 SQLite. L'ingestion est <strong>idempotente</strong> : rejouer un même transcript ne
 duplique rien. Chaque outil déclenche l'ingestion à sa façon :</p>
 <ul>
@@ -969,6 +1032,10 @@ duplique rien. Chaque outil déclenche l'ingestion à sa façon :</p>
 <li><strong>Opencode</strong> : un plugin déclenche l'ingestion sur les mêmes
   événements de cycle de vie de session.</li>
 <li><strong>Pi</strong> : une extension fait de même sur ses propres événements de session.</li>
+<li><strong>Codex CLI</strong> : pas de hook temps réel (le slot <code>notify</code> de <code>config.toml</code>
+  peut être pris par un autre outil) — l'ingestion se fait par backfill, au
+  moment de l'installation puis à chaque relance manuelle de
+  <code>ai-footprint ingest --source-codex</code>.</li>
 </ul>
 <h3 id="statusline">Statusline</h3>
 <p>La statusline affiche l'impact de la <strong>session en cours</strong>. L'outil transmet
@@ -979,6 +1046,83 @@ le <strong>total global</strong> de l'historique :</p>
 </code></pre>
 <p>L'installeur ne remplace jamais une statusline déjà utilisée par un autre
 outil — il affiche alors la commande pour basculer manuellement.</p>
+<p>Chaque indicateur choisit automatiquement son unité (ex. eau en mL, cL ou L ;
+énergie en mWh, Wh ou kWh ; CO2 en mgCO2eq, gCO2eq ou kgCO2eq) pour éviter les
+« 0.000… » sur les petites sessions. Sans donnée, la statusline affiche une
+ligne à 0 (jamais une ligne vide) pour rester rafraîchie par l'outil hôte.</p>
+<p>Une ligne à 0 malgré des tokens réellement consommés a deux causes
+possibles : (1) aucune donnée n'a été ingérée pour cette session, ou (2) le
+modèle utilisé n'est pas couvert par EcoLogits — l'event est bien ingéré mais
+<code>rows_for_report</code> l'exclut des totaux (<code>WHERE i.error IS NULL</code>), afficher un
+faux chiffre étant pire qu'un trou de couverture. Pour distinguer ces deux cas,
+la statusline de session ajoute un suffixe <code>· 🔢 N tok</code> quand
+<code>tokens_for_session</code> (qui compte directement sur <code>events</code>, sans la jointure
+<code>impacts</code>) renvoie un total non nul — un <code>🔢</code> présent avec le reste de la
+ligne à 0 signale un modèle non couvert, son absence signale une absence
+d'ingestion.</p>
+<h3 id="statusline-tui-opencode">Statusline TUI Opencode</h3>
+<p>Opencode affiche ses infos de statut dans le corps du panneau latéral de
+session (<code>sidebar_content</code>), pas en pied d'écran comme les autres outils. Un
+plugin dédié — <code>skills/footprint-crush/tui/</code> (sources), compilé en
+<code>skills/footprint-crush/footprint-crush-tui.js</code> (bundle committé) — s'y
+enregistre pour afficher la statusline ai-footprint à cet endroit.</p>
+<p>L'installeur :</p>
+<ul>
+<li>copie le bundle dans <code>~/.config/opencode/plugins/footprint-crush-tui.js</code> et
+  l'enregistre dans <code>~/.config/opencode/tui.json</code> ;</li>
+<li>installe un <code>node_modules</code> réel à côté (<code>~/.config/opencode/plugins/</code>) pour
+  <code>@opentui/core</code>, <code>@opentui/solid</code> et <code>solid-js</code> via <code>npm install</code>.</li>
+</ul>
+<p>Ce <code>node_modules</code> est nécessaire car ces trois librairies restent <strong>external</strong>
+au bundle esbuild (cf. <code>skills/footprint-crush/tui/build.mjs</code>) : le renderer
+universel Solid s'initialise par effet de bord au chargement du module et a
+besoin d'une instance unique de ces libs — les bundler en dur casse ce
+mécanisme (erreur <code>No renderer found</code> à l'exécution). Si <code>npm</code> est absent au
+moment de l'installation, la statusline TUI ne s'affichera pas tant que ce
+<code>node_modules</code> n'est pas créé manuellement (mêmes paquets/versions que
+<code>skills/footprint-crush/tui/package.json</code>).</p>
+<p>La carte, dépliée par défaut, est repliable avec un clic ou au clavier (Entrée
+ou Espace après avoir reçu le focus). Son état est conservé entre les sessions.
+Un clic affiche une notification de confirmation ; les bascules au clavier
+restent silencieuses. Elle affiche la version installée, puis une ligne par
+indicateur (🌍/💧/⚡) plutôt qu'une seule ligne inline, le panneau latéral étant
+trop étroit pour la ligne complète utilisée par les autres outils (elle s'y
+coupait au milieu d'une unité). Un avertissement de modèle extrapolé peut
+compléter les indicateurs. Cet avertissement nomme le modèle récent et sa
+version de repli, quel que soit son fournisseur (par exemple <code>gpt-5.6-terra</code>
+avec les paramètres de <code>gpt-5.5</code>).</p>
+<p>Opencode ≥1.18.9 tourne sur un binaire compilé Bun. Sous Bun, l'interop
+CJS→ESM d'un module <code>module.exports = fonction</code> (fonction nue) fuite les
+propriétés intrinsèques de cette fonction (<code>.length</code>, <code>.name</code>) comme de faux
+exports nommés supplémentaires du module — contrairement à Node, où l'interop
+ne produit que <code>{default: fonction}</code>. Le chargeur de plugins d'Opencode lit
+d'abord <code>mod.default</code> en cherchant la forme V1 documentée <code>{server:
+fonction}</code> ; si ce n'est pas un objet de cette forme (cas d'une fonction nue),
+il retombe sur un chargement « legacy » qui itère <em>tous</em> les exports du
+module et exige que chacun soit soit une fonction, soit un objet <code>{server:
+fonction}</code> — les faux exports <code>.length</code>/<code>.name</code> (un nombre et une chaîne) ne
+satisfont ni l'un ni l'autre, d'où l'erreur <code>Plugin export is not a
+function</code>. <code>footprint-crush.js</code> exporte donc directement la forme V1
+<code>module.exports = { server: async ({client}) =&gt; {...} }</code>, lue par <code>mod.default</code>
+sans jamais retomber sur le scan legacy — la fuite Bun devient sans effet.</p>
+<p>Par ailleurs, Opencode/Bun scanne tous les <code>.js</code> à la <strong>racine</strong> de son
+dossier plugins comme candidats plugin, même non déclarés dans
+<code>opencode.json</code>/<code>tui.json</code> (un sous-dossier n'est pas scanné). La logique
+testable (<code>ingestExport</code>) vit donc dans <code>lib/footprint-crush-lib.js</code> (et non à
+la racine), requis via <code>require()</code> par <code>footprint-crush.js</code> mais jamais
+lui-même un candidat plugin scanné — <code>install.sh</code> déploie
+<code>footprint-crush.js</code> à la racine de <code>~/.config/opencode/plugins/</code> et
+<code>footprint-crush-lib.js</code> dans son sous-dossier <code>lib/</code>.</p>
+<p>Le prop <code>session_id</code> que le slot <code>sidebar_content</code> d'Opencode transmet à la
+fonction enregistrée n'est pas toujours renseigné à l'exécution (constaté
+empiriquement) : sans repli, <code>fetchStatusline</code> n'envoie alors aucun id de
+session au binaire, qui calcule sur le <strong>total global</strong> de l'historique
+(tous outils/modèles confondus) au lieu de la session en cours — d'où des
+chiffres démesurés et un modèle affiché sans rapport avec celui réellement
+utilisé. Le plugin retombe donc sur <code>api.route.current.params.sessionID</code>
+(route de session courante) quand <code>session_id</code> est absent, comme le fait le
+plugin de référence <code>opencode-subagent-statusline</code>
+(<code>resolveSessionId</code> dans <code>skills/footprint-crush/tui/src/statusline-source.mjs</code>).</p>
 <h3 id="modeles-non-couverts-et-resolution">Modèles non couverts et résolution</h3>
 <p>Voir <a href="METHODOLOGY.html">METHODOLOGY.md</a> pour le détail de ce qui est mesuré et
 pourquoi certains modèles restent hors périmètre. <code>ai-footprint resolve</code>
@@ -1036,7 +1180,7 @@ paramètres réels, et recalcule les impacts.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

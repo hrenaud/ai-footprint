@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -473,6 +473,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Modèles auto-hébergés et tiers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#route-confirmee-indice-et-service-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route confirmée, indice et service tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -509,10 +526,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modeles-anthropic-trop-recents-pour-le-registre-ecologits" class="md-nav__link">
+  <a href="#modeles-trop-recents-pour-le-registre-ecologits-extrapolation-automatique" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modèles Anthropic trop récents pour le registre EcoLogits
+        Modèles trop récents pour le registre EcoLogits (extrapolation automatique)
       
     </span>
   </a>
@@ -764,6 +781,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Modèles auto-hébergés et tiers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#route-confirmee-indice-et-service-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route confirmée, indice et service tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -800,10 +834,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modeles-anthropic-trop-recents-pour-le-registre-ecologits" class="md-nav__link">
+  <a href="#modeles-trop-recents-pour-le-registre-ecologits-extrapolation-automatique" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modèles Anthropic trop récents pour le registre EcoLogits
+        Modèles trop récents pour le registre EcoLogits (extrapolation automatique)
       
     </span>
   </a>
@@ -992,6 +1026,8 @@ ai-footprint les résout en cascade :</p>
    précédemment, avec provenance (<code>source</code>, <code>hf_repo</code>).</li>
 <li><strong>Hugging Face</strong> — nombre de paramètres lu depuis les métadonnées safetensors
    (<code>total ÷ 1e9</code>, en <strong>milliards</strong>). Offline-safe : tout échec ⇒ non résolu.</li>
+<li><strong>Extrapolation d'une version sœur</strong> — modèle propriétaire trop récent pour
+   le registre et introuvable sur Hugging Face (cf. section dédiée ci-dessous).</li>
 <li><strong>Sinon</strong> — le modèle reste <strong>non couvert</strong> (impact non estimé), mis en file
    d'attente.</li>
 </ol>
@@ -1004,6 +1040,19 @@ suppose « dense » ; un couple MoE se déclare à la main — cf. backlog.)</em
 <p><strong>Unité (piège récurrent)</strong> : les paramètres EcoLogits sont <strong>en milliards</strong>
 partout. <code>safetensors.total</code> (compte brut) est divisé par <code>1e9</code>.</p>
 </blockquote>
+<h3 id="route-confirmee-indice-et-service-tiers">Route confirmée, indice et service tiers</h3>
+<p>La provenance lue dans un transcript est conservée dans <code>route_hint</code>. C'est un
+indice consultatif du collecteur, jamais une preuve qu'un fournisseur a exécuté
+l'inférence. Les nouveaux events restent sur la route <code>unknown</code> tant que
+<code>ai-footprint resolve</code> ne confirme pas explicitement, pour un lot de session ou de
+période, la route et le nom canonique du modèle. Cette opération ne change ni les
+autres lots ni leurs impacts.</p>
+<p>Une route <code>local</code> confirmée peut être estimée lorsque ses paramètres actifs et
+totaux sont déclarés, en milliards. À l'inverse, <code>openrouter</code> et <code>custom</code> désignent
+un service tiers ou une intégration dont le modèle exécuteur n'est pas attribuable
+avec assez de certitude : leurs events sont conservés avec un <strong>impact non estimé</strong>
+et exclus des totaux. Confirmer le routeur rend l'information de provenance plus
+fiable, sans transformer cette absence d'attribution en calcul spéculatif.</p>
 <h2 id="lire-les-chiffres-couverture">Lire les chiffres : couverture</h2>
 <p>La sortie d'<code>ingest</code> (et le rapport) distingue :</p>
 <ul>
@@ -1014,7 +1063,8 @@ partout. <code>safetensors.total</code> (compte brut) est divisé par <code>1e9<
 <li>les placeholders internes <code>&lt;synthetic&gt;</code> de Claude Code (0 token, aucune inférence
     réelle) — non couvrables par nature, exclus du rapport ;</li>
 <li>les vrais modèles tiers/auto-hébergés non résolus — <strong>résolubles</strong> vers un repo
-    Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>).</li>
+     Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>), sauf les
+     routes tierces confirmées <code>openrouter</code> et <code>custom</code>, qui restent non estimées.</li>
 </ul>
 <p>La résolution d'un modèle déclenche un <strong>recalcul</strong> des impacts déjà en base
 (<code>resolve --recompute</code>), sans re-parser les transcripts.</p>
@@ -1038,21 +1088,31 @@ indétectable, on produit une <strong>fourchette</strong> (0.5–2 octets/param,
 rapport 1:4 sur les params) plutôt qu'une valeur unique. Ces estimations
 portent un warning de provenance en base et les modèles concernés sont
 signalés dans le rapport (« Params estimés depuis la taille des fichiers »).</p>
-<h2 id="modeles-anthropic-trop-recents-pour-le-registre-ecologits">Modèles Anthropic trop récents pour le registre EcoLogits</h2>
-<p>Le registre EcoLogits porte ses propres estimations (extrapolées, <code>model-arch-not-
-released</code>) pour les modèles Anthropic fermés — mais un modèle tout juste sorti
-(ex. <code>claude-sonnet-5</code>, <code>claude-fable-5</code>) peut ne pas encore y figurer. Plutôt que de
-le laisser <strong>non couvert</strong>, ai-footprint réutilise en attendant les paramètres
-qu'EcoLogits déclare pour la version connue de la même lignée (ex. la famille
-Sonnet-4.x : MoE, 440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le
-débit <code>tps</code> change d'une version à l'autre). Ce stand-in est déclaré à la main dans
-<code>model_params</code> (<code>source: "extrapolated"</code>) et porte un warning dédié
-(<code>params-extrapolated-anthropic:…</code>).</p>
+<h2 id="modeles-trop-recents-pour-le-registre-ecologits-extrapolation-automatique">Modèles trop récents pour le registre EcoLogits (extrapolation automatique)</h2>
+<p>Un modèle propriétaire tout juste sorti (ex. <code>claude-sonnet-5</code>, <code>claude-fable-5</code>) peut
+n'être ni dans le registre EcoLogits, ni résoluble sur Hugging Face (fermé, pas de
+repo public). Plutôt que de le laisser <strong>non couvert</strong>, le tier 4
+(<code>ModelParamsResolver._from_sibling_extrapolation</code>, <code>ai_footprint/impact/params.py</code>)
+identifie automatiquement la <strong>version sœur connue la plus proche</strong> dans le registre
+(même provider, même famille — parsing générique du nom, versions à tiret façon
+Anthropic ex. <code>sonnet-5</code> → famille <code>sonnet</code>, version <code>(5,)</code>, comme à point façon
+OpenAI ex. <code>gpt-5.6</code> → famille <code>gpt</code>, version <code>(5.6,)</code>, comparées aux versions déjà
+enregistrées de la même famille) et
+réutilise ses paramètres comme stand-in temporaire (ex. la famille Sonnet-4.x : MoE,
+440 Md total, 44–132 Md actifs — stable sur toute la lignée, seul le débit <code>tps</code>
+change d'une version à l'autre). Le résultat est mis en cache dans <code>model_params</code>
+(<code>source: "extrapolated"</code>) avec un warning de provenance
+(<code>params-extrapolated-&lt;provider&gt;:&lt;sibling&gt;</code>).</p>
+<p><strong>Aucune intervention manuelle requise, dans un sens comme dans l'autre</strong> : le tier 1
+(registre) reste consulté en premier à chaque résolution, donc dès qu'une release
+EcoLogits couvre réellement le modèle, elle prend automatiquement le pas sur l'entrée
+« extrapolated » en cache pour tout nouvel event — sans purge ni <code>resolve --forget</code>.
+Les impacts déjà calculés en base restent toutefois flagués « provisoires » jusqu'à
+un recalcul explicite (<code>ai-footprint resolve --retry-hf</code>).</p>
 <p>Ces modèles sont signalés séparément des estimations HF, dans le rapport (note
 « Params extrapolés d'une version sœur ») et dans la statusline (préfixe <code>≈</code>) : les
 chiffres affichés sont un <strong>repère provisoire</strong>, pas une mesure EcoLogits officielle
-pour ce modèle précis. Dès qu'une release EcoLogits couvre le modèle, l'entrée
-manuelle doit être retirée (<code>resolve --forget</code>) pour repasser sur le registre.</p>
+pour ce modèle précis.</p>
 <h2 id="limites-assumees">Limites assumées</h2>
 <ul>
 <li>Impact piloté par les <strong>tokens de sortie</strong> (entrée/cache non comptés).</li>
@@ -1062,6 +1122,9 @@ manuelle doit être retirée (<code>resolve --forget</code>) pour repasser sur l
   l'inférence est modélisée, pas la consommation de la machine de l'utilisateur).</li>
 <li><strong>MoE auto-résolu en dense</strong> par le tier Hugging Face (le couple actif/total se
   déclare manuellement pour l'instant).</li>
+<li><strong>Extrapolation sœur (tier 4)</strong> : suppose que les paramètres restent stables au
+  sein d'une même lignée de modèles propriétaires — une approximation, pas une
+  mesure du modèle réel.</li>
 </ul>
 <h2 id="references">Références</h2>
 <ul>
@@ -1121,7 +1184,7 @@ manuelle doit être retirée (<code>resolve --forget</code>) pour repasser sur l
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

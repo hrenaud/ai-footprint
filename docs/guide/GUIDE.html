@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -869,7 +869,7 @@
 skills au quotidien. Pour une présentation rapide du produit, voir le
 <a href="https://github.com/hrenaud/ai-footprint#readme">README</a> ; pour comprendre
 comment les impacts sont calculés, voir <a href="METHODOLOGY.html">METHODOLOGY.md</a>.</p>
-<p><code>ai-footprint</code> fonctionne avec <strong>Claude Code</strong>, <strong>Opencode</strong> et <strong>Pi</strong> :
+<p><code>ai-footprint</code> fonctionne avec <strong>Claude Code</strong>, <strong>Opencode</strong>, <strong>Pi</strong> et <strong>Codex CLI</strong> :
 l'installeur détecte automatiquement les outils présents sur ta machine et
 active les skills/le suivi pour chacun d'eux, sans réglage à faire toi-même.</p>
 <h2 id="installation">Installation</h2>
@@ -883,10 +883,10 @@ active les skills/le suivi pour chacun d'eux, sans réglage à faire toi-même.<
 <pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/hrenaud/ai-footprint/main/install.sh | bash
 </code></pre>
 <p>Cette commande installe <code>ai-footprint</code>, l'active pour tous les outils
-compatibles détectés sur ta machine (Claude Code, Opencode, Pi), et
+compatibles détectés sur ta machine (Claude Code, Opencode, Pi, Codex CLI), et
 reprend l'historique de tes sessions passées. <strong>Redémarre ton outil</strong> (Claude
-Code, Opencode ou Pi) une fois l'installation terminée pour activer les
-skills.</p>
+Code, Opencode, Pi ou Codex CLI) une fois l'installation terminée pour activer
+les skills.</p>
 <h3 id="mettre-a-jour">Mettre à jour</h3>
 <p>Relance simplement la commande d'installation ci-dessus : elle met à jour
 <code>ai-footprint</code> sans perdre ton historique. Une mise à jour disponible t'est
@@ -930,6 +930,11 @@ chaque modèle non couvert, une correspondance avec un modèle équivalent connu
 et recalcule les impacts après ta confirmation.</p>
 <p>Se déclenche automatiquement en proposition en début de session si pertinent,
 ou manuellement à tout moment.</p>
+<p>Le transcript peut suggérer une provenance, mais cette indication n'est pas une
+confirmation. Le skill te fait choisir un lot précis de session ou de période avant
+de confirmer sa route et son modèle : cette confirmation ne modifie pas les autres
+events. Les routes de service tiers <code>openrouter</code> et <code>custom</code> restent conservées mais
+non estimées, même après confirmation.</p>
 <h3 id="footprint-config-reglages"><code>/footprint-config</code> — réglages</h3>
 <p>Ajuste les hypothèses utilisées pour le calcul (zone du mix électrique,
 rendement du datacenter…). Détectées automatiquement au premier rapport si
@@ -1006,7 +1011,7 @@ précisément mesuré : l'impact affiché est alors un repère provisoire — vo
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

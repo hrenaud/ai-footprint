@@ -106,6 +106,22 @@ suppose « dense » ; un couple MoE se déclare à la main — cf. backlog.)_
 > **Unité (piège récurrent)** : les paramètres EcoLogits sont **en milliards**
 > partout. `safetensors.total` (compte brut) est divisé par `1e9`.
 
+### Route confirmée, indice et service tiers
+
+La provenance lue dans un transcript est conservée dans `route_hint`. C'est un
+indice consultatif du collecteur, jamais une preuve qu'un fournisseur a exécuté
+l'inférence. Les nouveaux events restent sur la route `unknown` tant que
+`ai-footprint resolve` ne confirme pas explicitement, pour un lot de session ou de
+période, la route et le nom canonique du modèle. Cette opération ne change ni les
+autres lots ni leurs impacts.
+
+Une route `local` confirmée peut être estimée lorsque ses paramètres actifs et
+totaux sont déclarés, en milliards. À l'inverse, `openrouter` et `custom` désignent
+un service tiers ou une intégration dont le modèle exécuteur n'est pas attribuable
+avec assez de certitude : leurs events sont conservés avec un **impact non estimé**
+et exclus des totaux. Confirmer le routeur rend l'information de provenance plus
+fiable, sans transformer cette absence d'attribution en calcul spéculatif.
+
 ## Lire les chiffres : couverture
 
 La sortie d'`ingest` (et le rapport) distingue :
@@ -116,8 +132,9 @@ La sortie d'`ingest` (et le rapport) distingue :
   totaux**. Deux familles :
   - les placeholders internes `<synthetic>` de Claude Code (0 token, aucune inférence
     réelle) — non couvrables par nature, exclus du rapport ;
-  - les vrais modèles tiers/auto-hébergés non résolus — **résolubles** vers un repo
-    Hugging Face via `ai-footprint resolve` (skill `/footprint-resolve`).
+   - les vrais modèles tiers/auto-hébergés non résolus — **résolubles** vers un repo
+     Hugging Face via `ai-footprint resolve` (skill `/footprint-resolve`), sauf les
+     routes tierces confirmées `openrouter` et `custom`, qui restent non estimées.
 
 La résolution d'un modèle déclenche un **recalcul** des impacts déjà en base
 (`resolve --recompute`), sans re-parser les transcripts.

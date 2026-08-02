@@ -54,7 +54,7 @@ JSONL Claude Code (~/.claude/projects/**/*.jsonl)
     ↓
 ClaudeCodeCollector (parse, normalise, temps actif, client)
     ↓
-InferenceEvent[]  (provider, model, tokens, timestamp, session, projet, active_seconds, client)
+InferenceEvent[]  (route_hint, route, model_raw, model_canonical, tokens, timestamp, session, projet, active_seconds, client)
     ↓
 EcoLogitsEngine (offline, EcoLogits 0.11.0)
     ├─ modèle reconnu → llm_impacts()
@@ -72,11 +72,11 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 | Module                      | Rôle                                                                                                                                                                                                     |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `collectors/claude_code.py` | parse les JSONL → `InferenceEvent` (ignore non-`assistant`/sans usage ; dérive projet du `cwd` ; estime `active_seconds` ; renseigne `client`). Aucun contenu de prompt/réponse extrait.                 |
-| `models.py`                 | dataclass `InferenceEvent`.                                                                                                                                                                              |
+| `models.py`                 | dataclass `InferenceEvent` : `route_hint` consultatif, route confirmée, modèle brut et modèle canonique.                                                                                                 |
 | `impact/engine.py`          | `EcoLogitsEngine.compute()` : chemin registre vs fallback auto-hébergé ; `_extract_impacts` (totals/usage/embodied en min/max).                                                                          |
 | `impact/resolver.py`        | `ModelResolver` : alias de noms (`Config.model_aliases`).                                                                                                                                                |
 | `impact/params.py`          | `ModelParamsResolver` (cascade registre→cache→HF→file) + `fetch_hf_params(repo)` (safetensors ÷ 1e9, offline-safe).                                                                                      |
-| `store/db.py`               | `SQLiteStore` : ingestion idempotente, agrégations, recompute.                                                                                                                                           |
+| `store/db.py`               | `SQLiteStore` : ingestion idempotente, migrations de routes, agrégations et recompute limité au lot résolu.                                                                                              |
 | `report/cli.py`             | rendu des sections du rapport (5 + une 6ᵉ, intensité par outil, si plusieurs outils sont présents). Expose aussi `_central`/`_scale`/`_ranked_projects`, réutilisés par `card/cli.py`.                   |
 | `card/cli.py`               | sous-commande `card` : agrège les totaux (`build_card_data`), génère le HTML (`render_card_html` + `card/template.html`), rend le PNG via Chrome/Chromium headless local (`render_png`, `_find_chrome`). |
 | `resolve/cli.py`            | sous-commande `resolve` (list/set/recompute/forget).                                                                                                                                                     |
@@ -101,6 +101,10 @@ CREATE TABLE events (
   project TEXT,                    -- dérivé du cwd
   active_seconds REAL DEFAULT 0,   -- temps actif estimé (intensité)
   client TEXT DEFAULT '',          -- outil source (claude-code…)
+  route_hint TEXT DEFAULT '',      -- indice collecteur, non confirmé
+  route TEXT DEFAULT 'unknown',    -- confirmation explicite par resolve
+  model_raw TEXT DEFAULT '',       -- nom lu dans le transcript
+  model_canonical TEXT DEFAULT '', -- nom confirmé pour la route
   PRIMARY KEY (session_id, msg_id)
 );
 
@@ -117,8 +121,16 @@ CREATE TABLE impacts (
 
 CREATE TABLE sessions (session_id TEXT PRIMARY KEY, project TEXT, started_at TEXT, ended_at TEXT);
 CREATE TABLE pending_models (provider TEXT, model TEXT, first_seen TEXT, occurrences INTEGER DEFAULT 0,
-                             PRIMARY KEY (provider, model));
+                              PRIMARY KEY (provider, model));
 ```
+
+Les migrations restent additives (`ALTER TABLE`). Elles renseignent `model_raw` et
+`route_hint` depuis les anciennes colonnes sans présenter cet indice comme une route
+confirmée. Une base antérieure aux colonnes de route reçoit les marqueurs
+`legacy-route-backfill-v1` puis `historical-routes-v1` dans `schema_migrations` :
+la correction historique attribue explicitement les anciennes lignes selon la règle
+déclarée (`claude*` → `anthropic`, `chatgpt*` → `openai`, `openrouter/free` →
+`openrouter`, le reste → `local`) et ne s'applique qu'une fois.
 
 **Idempotence** : `INSERT OR IGNORE` sur `(session_id, msg_id)` ; la ré-ingestion ne
 recalcule pas l'impact mais rétro-remplit `active_seconds`/`client` manquants.
@@ -135,6 +147,9 @@ lexicographique sur `timestamp`) :
 - `uncovered_keys()` — couples `(provider, model)` non couverts (hors `<synthetic>`), sans filtre `since` ; utilisée par `resolve --retry-hf` et par `ai_footprint/nudge.py`.
 - `coverage()` — `{total, measured, uncovered}`.
 - `recompute_errors(engine, config)` — recalcule les events en `error` → `{before, after}`.
+- `resolve_events(...)` et `recompute_selected_events(...)` — confirment et
+  recalculent seulement le lot sélectionné par client, modèle brut et session ou
+  période ; une résolution ne propage jamais une route à tout l'historique.
 - `mark_model_events_error(provider, model, error)` — repasse un modèle en erreur
   (appariement `(session_id, msg_id)`) pour un revert de mapping.
 
@@ -203,8 +218,18 @@ Les Markdown de `docs/` (`METHODOLOGY.md`, `comparaison-donnees-outils.md`,
   mémorisés (cache négatif en mémoire + persisté dans `config.json`, TTL 7 jours) ;
   `resolve --retry-hf` purge ce cache et retente la cascade sur les non couverts.
   Les params estimés depuis la taille des fichiers portent des warnings de
-  provenance (`params-bytes-per-param:<n>`, `params-range-unknown-dtype`) et sont
-  signalés dans le rapport.
+   provenance (`params-bytes-per-param:<n>`, `params-range-unknown-dtype`) et sont
+   signalés dans le rapport.
+
+### Compatibilité Hugging Face
+
+`pyproject.toml` borne `huggingface_hub` à `>=1.8.0,<2` (plage compatible :
+huggingface_hub>=1.8.0,<2). La première étape de la cascade utilise l'API compatible
+`model_info(repo, timeout=10)` et lit
+`info.safetensors.total` lorsqu'elle est fournie ; ce total brut est divisé par
+`1e9` avant d'être transmis à EcoLogits. Les fallbacks CLI et index safetensors
+restent nécessaires car le champ `safetensors` peut être absent. Toute exception ou
+réponse incomplète laisse le modèle non résolu, sans empêcher l'ingestion.
 
 ## Backlog technique
 
