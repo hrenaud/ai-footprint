@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.10.0] — 2026-08-02
+
+### Features
+
+- (report) — group impacts by canonical model and route
+- (resolve) — confirm routes for selected event batches
+- (store) — persist scoped inference routes
+- (collectors) — preserve route hints without inference
+- (models) — add route identity fields
+
+### Bug Fixes
+
+- (resolve) — restrict route resolution batches
+- (store) — separate legacy route migration phases
+- (models) — preserve legacy event consumers
+
+### Documentation
+
+- clarify route migration and recompute
+- explain inference routes and model resolution
+- (plan) — define inference routes implementation
+
+### Tests
+
+- (collectors) — cover SQLite route hints
+
+### Autres
+
+- merge: integrate inference routes
 ## [1.9.1] — 2026-08-02
 
 ### Bug Fixes
