@@ -131,9 +131,11 @@ duplicates nothing. Each tool triggers ingestion its own way:
   events.
 - **Pi**: an extension does the same on its own session events.
 
-### Statusline
+### Claude Code statusline
 
-The statusline displays the impact of the **current session**. The tool
+Claude Code displays the impact in its statusline. The statusline displays the impact of the **current session**.
+
+The tool
 passes the session ID to ai-footprint, which ingests the current transcript
 and filters the totals on it. Run manually outside a session, it falls back
 to the **global total** of the history:

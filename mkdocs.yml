@@ -11,6 +11,7 @@ exclude_docs: |
   assets/logo-claude.svg
   assets/logo-codex.svg
   assets/logo-opencode.png
+  assets/opencode-statusline.png
   assets/logo-pi.svg
   assets/report-en.png
   assets/report-fr.png

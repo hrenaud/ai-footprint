@@ -141,16 +141,63 @@
             </p>
           </div>
         </div>
-        <div class="step step-optional">
-          <span class="step-num">Claude Code statusline</span>
-          <p>See your impact in the statusline, live, session after session.</p>
-          <img
-            class="statusline-preview"
-            src="assets/statusline.png"
-            alt="AI Footprint statusline showing live impact ranges during a Claude Code session"
-            width="815"
-            height="53"
-          />
+        <div class="step step-optional statusline-example">
+          <span class="step-num">Statusline</span>
+          <div class="statusline-tabs" role="tablist" aria-label="Statusline examples">
+            <button
+              id="claude-statusline-tab"
+              class="statusline-tab"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="claude-statusline-panel"
+            >
+              Claude Code
+            </button>
+            <button
+              id="opencode-statusline-tab"
+              class="statusline-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="opencode-statusline-panel"
+              tabindex="-1"
+            >
+              OpenCode
+            </button>
+          </div>
+          <div
+            id="claude-statusline-panel"
+            class="statusline-panel"
+            role="tabpanel"
+            aria-labelledby="claude-statusline-tab"
+          >
+            <p>See your impact in the Claude Code statusline, live, session after session.</p>
+            <img
+              class="statusline-preview"
+              src="assets/statusline.png"
+              alt="Claude Code statusline showing AI Footprint impact ranges during a session"
+              width="1630"
+              height="106"
+            />
+          </div>
+          <div
+            id="opencode-statusline-panel"
+            class="statusline-panel"
+            role="tabpanel"
+            aria-labelledby="opencode-statusline-tab"
+            hidden
+          >
+            <p>See your impact in the OpenCode statusline, live, session after session.</p>
+            <img
+              class="statusline-preview opencode-statusline-preview"
+              src="assets/opencode-statusline.png"
+              alt="OpenCode sidebar showing the AI Footprint version, impact ranges, and model fallback warning"
+              width="310"
+              height="115"
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
     </section>
