@@ -77,7 +77,7 @@ CLI: report · statusline · resolve · models   (read the DB, never the JSONL)
 | `models.py`                 | `InferenceEvent` dataclass.                                                                                                                                                                                        |
 | `impact/engine.py`          | `EcoLogitsEngine.compute()`: registry path vs. self-hosted fallback; `_extract_impacts` (totals/usage/embodied as min/max).                                                                                        |
 | `impact/resolver.py`        | `ModelResolver`: name aliases (`Config.model_aliases`).                                                                                                                                                            |
-| `impact/params.py`          | `ModelParamsResolver` (cascade registry→cache→HF→file) + `fetch_hf_params(repo)` (safetensors ÷ 1e9, offline-safe).                                                                                                |
+| `impact/params.py`          | `ModelParamsResolver`: for a confirmed provider route, exact EcoLogits registry → same-provider prior sibling → user-confirmed HF mapping; no automatic HF lookup.                                                                                                            |
 | `store/db.py`               | `SQLiteStore`: idempotent ingestion, aggregations, recompute.                                                                                                                                                      |
 | `report/cli.py`             | renders the report sections (5, plus a 6th, intensity per tool, if several tools are present). Also exposes `_central`/`_scale`/`_ranked_projects`, reused by `card/cli.py`.                                       |
 | `card/cli.py`               | `card` subcommand: aggregates the totals (`build_card_data`), generates the HTML (`render_card_html` + `card/template.html`), renders the PNG via a local headless Chrome/Chromium (`render_png`, `_find_chrome`). |
@@ -211,14 +211,18 @@ The Markdown files in `docs/` (`METHODOLOGY.md`,
 - **New skill**: add `skills/<name>/SKILL.md` (frontmatter
   `name`/`description`). The installer deploys it via a symlink into
   `~/.claude/skills/`.
-- **Model resolution**: the cascade lives in `impact/params.py`; the
-  deterministic `resolve` CLI (HF + recompute) in `resolve/cli.py`; the
-  name→repo mapping (judgment call) in the `/footprint-resolve` skill. HF
-  failures are memoized (in-memory negative cache + persisted in
-  `config.json`, 7-day TTL); `resolve --retry-hf` purges this cache and
-  retries the cascade on the uncovered models. Params estimated from file
-  size carry provenance warnings (`params-bytes-per-param:<n>`,
-  `params-range-unknown-dtype`) and are flagged in the report.
+- **Model resolution**: for every confirmed provider route,
+  `impact/params.py` applies exactly this cascade: exact EcoLogits registry →
+  same-provider prior sibling → user-confirmed Hugging Face mapping. There is no
+  automatic Hugging Face lookup during ingestion or recomputation. The `resolve`
+  CLI in `resolve/cli.py` and the `/footprint-resolve` skill ask for confirmation
+  of the name→repo mapping, then persist the resolution under the
+  `client/model_raw` identity in `Config.model_resolutions`. Future unknown events
+  with that same client and raw model name are therefore resolved before
+  computation, without affecting other clients, raw names, or historical events.
+  Params estimated from file size carry provenance warnings
+  (`params-bytes-per-param:<n>`, `params-range-unknown-dtype`) and are flagged in
+  the report.
 
 ## Technical backlog
 

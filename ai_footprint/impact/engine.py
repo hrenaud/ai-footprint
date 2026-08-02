@@ -8,7 +8,7 @@ from ecologits.tracers.utils import llm_impacts, ImpactsOutput
 
 from ai_footprint import ENGINE_VERSION
 from ai_footprint.config import Config
-from ai_footprint.impact.params import ModelParamsResolver
+from ai_footprint.impact.params import ModelParamsResolver, ParamsResult
 from ai_footprint.impact.resolver import ModelResolver
 from ai_footprint.models import InferenceEvent
 
@@ -97,7 +97,29 @@ class EcoLogitsEngine:
             request_latency=latency,
             electricity_mix_zone=config.electricity_mix_zone,
         )
+        sibling = None
+        if out.errors and out.errors[0].code == "model-not-registered":
+            sibling = ModelParamsResolver(config).find_sibling(
+                event.route, event.model_canonical,
+            )
+            if sibling is not None:
+                out = llm_impacts(
+                    provider=event.route,
+                    model_name=sibling,
+                    output_token_count=event.output_tokens,
+                    request_latency=latency,
+                    electricity_mix_zone=config.electricity_mix_zone,
+                )
         if out.errors:
+            if out.errors[0].code == "model-not-registered":
+                params = ModelParamsResolver(config).resolve_confirmed(
+                    event.route, event.model_canonical,
+                )
+                if params is not None:
+                    return self._compute_from_params(
+                        event, event.model_canonical, params, config,
+                        [f"alias:{event.model_canonical}->{name}"] if aliased else [],
+                    )
             return ImpactRecord(
                 model_resolved=name, zone=config.electricity_mix_zone,
                 methodology_version=self.methodology_version,
@@ -108,15 +130,18 @@ class EcoLogitsEngine:
         warnings = [w.code for w in (out.warnings or [])]
         if aliased:
             warnings.append(f"alias:{event.model_canonical}->{name}")
+        if sibling is not None:
+            warnings.append(f"model-source:sibling:{event.route}:{sibling}")
         return ImpactRecord(
-            model_resolved=name, zone=config.electricity_mix_zone,
+            model_resolved=event.model_canonical if sibling is not None else name,
+            zone=config.electricity_mix_zone,
             methodology_version=self.methodology_version,
             totals=totals, usage=usage, embodied=embodied,
             warnings=warnings, error=None,
         )
 
     def _compute_selfhosted(self, event: InferenceEvent, name: str, aliased: bool,
-                             config: Config) -> ImpactRecord:
+                              config: Config) -> ImpactRecord:
         """Fallback pour modèles auto-hébergés : résout params et appelle compute_llm_impacts directement."""
         if self.params_resolver is None:
             self.params_resolver = ModelParamsResolver(config)
@@ -129,6 +154,15 @@ class EcoLogitsEngine:
                 totals={}, usage={}, embodied={},
                 warnings=[], error="model-params-unresolved",
             )
+        return self._compute_from_params(
+            event, name, params, config,
+            [f"alias:{event.model_canonical}->{name}"] if aliased else [],
+        )
+
+    def _compute_from_params(self, event: InferenceEvent, model: str,
+                             params: ParamsResult, config: Config,
+                             extra_warnings: list[str]) -> ImpactRecord:
+        zone = config.electricity_mix_zone or "WOR"
         mix = electricity_mixes.find_electricity_mix(zone=zone)
         latency = _latency(event, config)
         impacts = compute_llm_impacts(
@@ -143,11 +177,13 @@ class EcoLogitsEngine:
         )
         out = ImpactsOutput.model_validate(impacts.model_dump())
         totals, usage, embodied = _extract_impacts(out)
-        warnings = list(params.warnings)
-        if aliased:
-            warnings.append(f"alias:{event.model_canonical}->{name}")
+        warnings = [*params.warnings, *extra_warnings]
+        if params.hf_repo:
+            warning = f"model-source:huggingface:{params.hf_repo}"
+            if warning not in warnings:
+                warnings.append(warning)
         return ImpactRecord(
-            model_resolved=name, zone=zone,
+            model_resolved=model, zone=zone,
             methodology_version=self.methodology_version,
             totals=totals, usage=usage, embodied=embodied,
             warnings=warnings, error=None,

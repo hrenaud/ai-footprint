@@ -94,15 +94,26 @@ Many models are not in the EcoLogits registry (local inference, open-weight
 models, third-party routers). Estimating their impact requires their
 **parameters**. ai-footprint resolves them through a cascade:
 
-1. **EcoLogits registry** (if ultimately recognized) — handles dense and
-   **MoE** (active/total) models.
-2. **Config cache** (`~/.ai-footprint/config.json`) — parameters previously
-   declared or resolved, with provenance (`source`, `hf_repo`).
-3. **Hugging Face** — parameter count read from safetensors metadata
-   (`total ÷ 1e9`, in **billions**). Offline-safe: any failure ⇒
+For a confirmed provider route, the cascade is:
+
+1. **Exact EcoLogits registry** — only for the confirmed provider; handles dense
+   and **MoE** (active/total) models.
+2. **Same-provider sibling version** — the newest strictly earlier model from the
+   same family is used when the registry does not know the exact model.
+3. **User-confirmed Hugging Face mapping** — parameters are read from the
+   safetensors metadata (`total / 1e9`, in **billions**) of the confirmed
+   repository. Without a confirmed repository, or on failure, the model remains
    unresolved.
-4. **Otherwise** — the model stays **uncovered** (impact not estimated),
-   queued.
+
+Automatic cache entries and registry entries from another provider are excluded from
+this cascade. For general resolution outside a confirmed route, the config cache
+(`~/.ai-footprint/config.json`) can retain previously declared or resolved parameters,
+with provenance (`source`, `hf_repo`).
+
+Same-provider sibling and confirmed Hugging Face results are inferred sources, never exact
+measurements of the requested model. They carry the provenance warnings
+`model-source:sibling:<provider>:<model>` and
+`model-source:huggingface:<repo>`, respectively.
 
 **Active vs. total (MoE).** For a Mixture-of-Experts model, energy depends
 on the **active** parameters per token (≪ total). Conflating active and
@@ -113,6 +124,27 @@ pair must be declared manually — see backlog.)_
 
 > **Unit (recurring pitfall)**: EcoLogits parameters are **in billions**
 > everywhere. `safetensors.total` (raw count) is divided by `1e9`.
+
+### Confirmed route, hint, and third-party service
+
+The provenance read from a transcript is retained in `route_hint`. It is a
+collector hint, not proof that a provider ran the inference. New events remain
+on the `unknown` route until `ai-footprint resolve` explicitly confirms the
+route and canonical model for a session or time-period batch. This operation
+does not alter other batches or their impacts.
+
+With `--route`, `resolve` also requires `--session` or `--since`: it confirms
+the batch identity and recalculates that batch only. This is distinct from
+`resolve --recompute`, which confirms no route and globally recalculates all
+stored error events, for example after a parameter mapping; it does not reread
+transcripts.
+
+A confirmed `local` route can be estimated when active and total parameters are
+declared in billions. Conversely, `openrouter` and `custom` identify a router
+or third-party integration whose executing model cannot be attributed with
+sufficient certainty: their events are retained with an unestimated impact and
+excluded from totals. Confirming the router improves provenance without making
+that absence of attribution calculable.
 
 ## Reading the numbers: coverage
 
@@ -156,25 +188,24 @@ parameters) rather than a single value. These estimates carry a provenance
 warning in the database, and the affected models are flagged in the report
 ("Params estimated from file size").
 
-## Anthropic models too recent for the EcoLogits registry
+## Models too recent for the EcoLogits registry
 
-The EcoLogits registry carries its own estimates (extrapolated,
-`model-arch-not-released`) for closed Anthropic models — but a model that
-just came out (e.g. `claude-sonnet-5`, `claude-fable-5`) may not be listed
-yet. Rather than leaving it **uncovered**, ai-footprint temporarily reuses
-the parameters EcoLogits declares for the known version of the same
-lineage (e.g. the Sonnet-4.x family: MoE, 440 B total, 44–132 B active —
-stable across the whole lineage, only the `tps` throughput changes between
-versions). This stand-in is declared manually in `model_params`
-(`source: "extrapolated"`) and carries a dedicated warning
-(`params-extrapolated-anthropic:…`).
+A just-released closed model (for example `claude-sonnet-5`) may not yet be
+in the registry or resolvable on Hugging Face. Rather than leaving it
+**uncovered**, ai-footprint automatically finds the closest known earlier
+sibling in the registry, from the same provider and family, and temporarily
+reuses its parameters. The result is cached in `model_params` with
+`source: "extrapolated"` and a `params-extrapolated-<provider>:<sibling>`
+warning.
 
 These models are flagged separately from HF estimates, in the report
 (note "Params extrapolated from a sibling version") and in the statusline
 (prefix `≈`): the displayed numbers are a **provisional reference**, not an
-official EcoLogits measurement for this exact model. As soon as an
-EcoLogits release covers the model, the manual entry should be removed
-(`resolve --forget`) to switch back to the registry.
+official EcoLogits measurement for this exact model. The exact registry is
+checked first for every new event, so a future EcoLogits release automatically
+replaces the sibling estimate without clearing the cache or running
+`resolve --forget`. Previously stored provisional impacts require an explicit
+recalculation.
 
 ## Assumed limitations
 

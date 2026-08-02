@@ -340,3 +340,12 @@ def test_registry_fallback_constant_includes_huggingface_hub():
     import ai_footprint.impact.params as params_mod
 
     assert "huggingface_hub" in params_mod._REGISTRY_FALLBACK_PROVIDERS
+
+
+def test_confirmed_mapping_exposes_huggingface_repo():
+    resolver = ModelParamsResolver(Config(model_params={"openai/Org/Model": {
+        "active": 7.0, "total": 7.0, "arch": "dense", "source": "resolve",
+        "hf_repo": "Org/Model",
+    }}))
+
+    assert resolver.resolve("openai", "Org/Model").hf_repo == "Org/Model"

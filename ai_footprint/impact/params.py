@@ -77,6 +77,7 @@ class ParamsResult:
     arch: str            # "dense" | "moe"
     source: str          # "registry" | "user" | "huggingface"
     warnings: list[str] = field(default_factory=list)
+    hf_repo: str | None = None
 
 
 def _param_to_json(v: float | RangeValue) -> float | dict:
@@ -313,7 +314,7 @@ def _find_sibling(provider: str, model: str) -> str | None:
 
 class ModelParamsResolver:
     """Résout (params actifs, totaux) pour un modèle, en cascade :
-    registre EcoLogits → cache config → Hugging Face → None."""
+    registre EcoLogits → cache config → extrapolation sœur → Hugging Face → None."""
 
     def __init__(self, config):
         self.config = config
@@ -321,12 +322,23 @@ class ModelParamsResolver:
         # run — évite de relancer la cascade réseau à chaque event du même modèle.
         self._hf_failed: set[str] = set()
 
+    def find_sibling(self, provider: str, model: str) -> str | None:
+        return _find_sibling(provider, model)
+
     def resolve(self, provider: str, model: str) -> ParamsResult | None:
         return (
             self._from_registry(provider, model)
             or self._from_cache(provider, model)
-            or self._from_huggingface(provider, model)
             or self._from_sibling_extrapolation(provider, model)
+            or self._from_huggingface(provider, model)
+        )
+
+    def resolve_confirmed(self, provider: str, model: str) -> ParamsResult | None:
+        """Resolve confirmed routes without cross-provider registry fallbacks."""
+        return (
+            self._from_exact_registry(provider, model)
+            or self._from_sibling_extrapolation(provider, model)
+            or self._from_confirmed_cache(provider, model)
         )
 
     def resolve_local(self, model: str) -> ParamsResult | None:
@@ -335,28 +347,34 @@ class ModelParamsResolver:
 
     def _from_registry(self, provider: str, model: str) -> ParamsResult | None:
         for prov in (provider, *_REGISTRY_FALLBACK_PROVIDERS):
-            m = models.find_model(provider=prov, model_name=model)
-            if m is not None:
-                p = m.architecture.parameters
-                if isinstance(p, ParametersMoE):
-                    active = ((p.active.min + p.active.max) / 2.0
-                              if isinstance(p.active, RangeValue) else float(p.active))
-                    total = ((p.total.min + p.total.max) / 2.0
-                             if isinstance(p.total, RangeValue) else float(p.total))
-                    return ParamsResult(active=active, total=total,
-                                        arch="moe", source="registry")
-                # Gérer RangeValue (min/max) en prenant la moyenne.
-                # EcoLogits expose parfois une plage de paramètres quand l'architecture
-                # n'est pas précisément spécifiée. On prend la valeur centrale comme
-                # estimation typique ; l'incertitude dominante vient du PUE et du mix,
-                # pas de la fourchette des paramètres.
-                if isinstance(p, RangeValue):
-                    val = (p.min + p.max) / 2.0
-                else:
-                    val = float(p)
-                return ParamsResult(active=val, total=val,
-                                    arch="dense", source="registry")
+            result = self._from_exact_registry(prov, model)
+            if result is not None:
+                return result
         return None
+
+    def _from_exact_registry(self, provider: str, model: str) -> ParamsResult | None:
+        m = models.find_model(provider=provider, model_name=model)
+        if m is None:
+            return None
+        p = m.architecture.parameters
+        if isinstance(p, ParametersMoE):
+            active = ((p.active.min + p.active.max) / 2.0
+                      if isinstance(p.active, RangeValue) else float(p.active))
+            total = ((p.total.min + p.total.max) / 2.0
+                     if isinstance(p.total, RangeValue) else float(p.total))
+            return ParamsResult(active=active, total=total,
+                                arch="moe", source="registry")
+        # Gérer RangeValue (min/max) en prenant la moyenne.
+        # EcoLogits expose parfois une plage de paramètres quand l'architecture
+        # n'est pas précisément spécifiée. On prend la valeur centrale comme
+        # estimation typique ; l'incertitude dominante vient du PUE et du mix,
+        # pas de la fourchette des paramètres.
+        if isinstance(p, RangeValue):
+            val = (p.min + p.max) / 2.0
+        else:
+            val = float(p)
+        return ParamsResult(active=val, total=val,
+                            arch="dense", source="registry")
 
     def _from_cache(self, provider: str, model: str) -> ParamsResult | None:
         """Tier 2 : params déclarés par l'utilisateur ou résolus précédemment via HF,
@@ -368,7 +386,14 @@ class ModelParamsResolver:
             active=_param_from_json(entry["active"]),
             total=_param_from_json(entry["total"]),
             arch=entry.get("arch", "dense"), source=entry.get("source", "user"),
-            warnings=list(entry.get("warnings", [])))
+            warnings=list(entry.get("warnings", [])), hf_repo=entry.get("hf_repo"))
+
+    def _from_confirmed_cache(self, provider: str, model: str) -> ParamsResult | None:
+        """Return only a mapping persisted after the user confirmed its HF repo."""
+        result = self._from_cache(provider, model)
+        if result is None or result.source == "huggingface" or not result.hf_repo:
+            return None
+        return result
 
     def _negative_fresh(self, key: str) -> bool:
         """Vrai si un échec HF récent (< TTL) est mémorisé en config pour key."""
@@ -408,10 +433,10 @@ class ModelParamsResolver:
         stand-in temporaire. Marqué « extrapolated » et mis en cache : le tier 1
         (registre) reprend automatiquement la main dès que le vrai modèle y
         apparaît, sans purge manuelle nécessaire."""
-        sibling = _find_sibling(provider, model)
+        sibling = self.find_sibling(provider, model)
         if sibling is None:
             return None
-        base = self._from_registry(provider, sibling)
+        base = self._from_exact_registry(provider, sibling)
         if base is None:
             return None
         res = ParamsResult(

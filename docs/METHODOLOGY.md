@@ -87,15 +87,27 @@ Beaucoup de modèles ne sont pas dans le registre EcoLogits (inférence locale, 
 open-weight, routeurs tiers). Pour estimer leur impact, il faut leurs **paramètres**.
 ai-footprint les résout en cascade :
 
-1. **Registre EcoLogits** (si finalement reconnu) — gère dense et **MoE** (actif/total).
-2. **Cache config** (`~/.ai-footprint/config.json`) — params déclarés ou résolus
-   précédemment, avec provenance (`source`, `hf_repo`).
-3. **Hugging Face** — nombre de paramètres lu depuis les métadonnées safetensors
-   (`total ÷ 1e9`, en **milliards**). Offline-safe : tout échec ⇒ non résolu.
-4. **Extrapolation d'une version sœur** — modèle propriétaire trop récent pour
-   le registre et introuvable sur Hugging Face (cf. section dédiée ci-dessous).
-5. **Sinon** — le modèle reste **non couvert** (impact non estimé), mis en file
-   d'attente.
+Pour une route de fournisseur confirmée, la cascade est :
+
+1. **Registre EcoLogits exact** — uniquement chez le fournisseur confirmé ; gère
+   dense et **MoE** (actif/total).
+2. **Version sœur du même fournisseur** — le modèle connu le plus récent,
+   strictement antérieur, de la même famille est utilisé si le registre ne connaît
+   pas le modèle exact.
+3. **Mapping Hugging Face confirmé par l'utilisateur** — les paramètres proviennent
+   du dépôt confirmé, lu depuis les métadonnées safetensors (`total / 1e9`, en
+   **milliards**). Sans dépôt confirmé ou en cas d'échec, le modèle n'est pas
+   résolu.
+
+Les entrées de cache automatiques et les entrées de registre d'un autre fournisseur
+ne font pas partie de cette cascade. Pour une résolution générale hors route
+confirmée, le cache config (`~/.ai-footprint/config.json`) peut conserver des params
+déclarés ou résolus précédemment, avec leur provenance (`source`, `hf_repo`).
+
+Les résultats des étapes 2 et 3 sont des sources **inférées**, jamais des mesures
+exactes du modèle demandé. Ils portent respectivement les avertissements de
+provenance `model-source:sibling:<provider>:<model>` et
+`model-source:huggingface:<repo>`.
 
 **Actif vs total (MoE).** Pour un Mixture-of-Experts, l'énergie dépend des paramètres
 **actifs** par token (≪ total). Confondre actif et total surestime fortement l'énergie

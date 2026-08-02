@@ -1,5 +1,14 @@
+from types import SimpleNamespace
+
+import pytest
+
+import ai_footprint.impact.params as params_mod
 from ai_footprint.config import Config
 from ai_footprint.impact.params import ModelParamsResolver, ParamsResult
+
+
+def _model(provider, name):
+    return SimpleNamespace(provider=SimpleNamespace(value=provider), name=name)
 
 
 def test_registry_tier_resolves_known_model():
@@ -9,6 +18,22 @@ def test_registry_tier_resolves_known_model():
     assert isinstance(res, ParamsResult)
     assert res.source == "registry"
     assert res.total > 0
+
+
+def test_confirmed_openai_route_rejects_huggingface_only_registry_entry(monkeypatch):
+    resolver = ModelParamsResolver(Config())
+    hf_model = SimpleNamespace(architecture=SimpleNamespace(parameters=7.0))
+
+    monkeypatch.setattr(
+        params_mod.models,
+        "find_model",
+        lambda provider, model_name: (
+            hf_model if provider == "huggingface_hub" else None
+        ),
+    )
+    monkeypatch.setattr(params_mod.models, "list_models", lambda: [])
+
+    assert resolver.resolve_confirmed("openai", "gpt-99-regression") is None
 
 
 def test_cache_tier_resolves_declared_model():
@@ -107,3 +132,31 @@ def test_sibling_extrapolation_handles_dotted_version():
     assert isinstance(res, ParamsResult)
     assert res.source == "extrapolated"
     assert res.warnings[0].startswith("params-extrapolated-openai:gpt-5.5")
+
+
+def test_find_sibling_returns_newest_prior_model_for_same_provider(monkeypatch):
+    resolver = ModelParamsResolver(Config())
+    monkeypatch.setattr(params_mod.models, "list_models", lambda: [
+        _model("openai", "gpt-5.4"),
+        _model("openai", "gpt-5.5"),
+        _model("anthropic", "gpt-5.9"),
+    ])
+    assert resolver.find_sibling("openai", "gpt-5.6-terra") == "gpt-5.5"
+
+
+def test_resolve_uses_sibling_before_huggingface(monkeypatch):
+    resolver = ModelParamsResolver(Config())
+    monkeypatch.setattr(
+        resolver,
+        "_from_exact_registry",
+        lambda _, candidate: (
+            ParamsResult(1.0, 1.0, "dense", "registry")
+            if candidate == "gpt-5.5" else None
+        ),
+    )
+    monkeypatch.setattr(resolver, "_from_cache", lambda *_: None)
+    monkeypatch.setattr(resolver, "find_sibling", lambda *_: "gpt-5.5")
+    monkeypatch.setattr(resolver, "_from_huggingface", lambda *_: pytest.fail("HF must not run"))
+    assert resolver.resolve("openai", "gpt-5.6-terra").warnings == [
+        "params-extrapolated-openai:gpt-5.5"
+    ]

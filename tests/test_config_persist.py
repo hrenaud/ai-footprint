@@ -65,3 +65,14 @@ def test_config_roundtrips_resolve_prompt_state(tmp_path):
 
 def test_config_resolve_prompt_state_defaults_to_empty_dict():
     assert Config().resolve_prompt_state == {}
+
+
+def test_config_persists_model_resolution(tmp_path):
+    path = tmp_path / "config.json"
+    Config(model_resolutions={"opencode/gpt-5.6-terra": {
+        "route": "openai", "model": "gpt-5.6-terra",
+    }}).save(str(path))
+
+    assert Config.load(str(path)).model_resolutions["opencode/gpt-5.6-terra"] == {
+        "route": "openai", "model": "gpt-5.6-terra",
+    }

@@ -109,6 +109,41 @@ def test_resolve_scopes_a_session_to_the_selected_client_and_raw_model(tmp_path,
     ]
 
 
+def test_resolve_persists_identity_for_later_matching_unknown_event(tmp_path, monkeypatch):
+    db = str(tmp_path / "c.db")
+    config_path = str(tmp_path / "config.json")
+    Config(electricity_mix_zone="FRA").save(config_path)
+    _patch_config(monkeypatch, config_path)
+    store = SQLiteStore(db)
+    store.ingest([InferenceEvent(
+        "openai", "displayed-gpt", 10, 20, 0, 0,
+        "2026-08-02T00:00:00Z", "p", "s1", "m1",
+        client="opencode", route="unknown",
+    )], _engine(), Config(electricity_mix_zone="FRA"))
+
+    assert cli.main([
+        "resolve", "--db", db, "--session", "s1", "--client", "opencode",
+        "--raw-model", "displayed-gpt", "--route", "openai",
+        "--model", "gpt-4o-mini",
+    ]) == 0
+    assert Config.load(config_path).model_resolutions == {
+        "opencode/displayed-gpt": {"route": "openai", "model": "gpt-4o-mini"},
+    }
+
+    store = SQLiteStore(db)
+    store.ingest([InferenceEvent(
+        "openai", "displayed-gpt", 10, 20, 0, 0,
+        "2026-08-02T00:01:00Z", "p", "s2", "m2",
+        client="opencode", route="unknown",
+    )], _engine(), Config.load(config_path))
+
+    row = store.conn.execute(
+        "SELECT e.route, e.model_raw, e.model_canonical, i.error "
+        "FROM events e JOIN impacts i USING (session_id, msg_id) WHERE e.msg_id='m2'"
+    ).fetchone()
+    assert tuple(row) == ("openai", "displayed-gpt", "gpt-4o-mini", None)
+
+
 def test_interactive_resolution_numbers_listed_batches_and_reprompts_only_invalid_local_field(
         tmp_path, monkeypatch, capsys):
     from ai_footprint.resolve.cli import _interactive_resolution

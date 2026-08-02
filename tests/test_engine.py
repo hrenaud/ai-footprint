@@ -1,4 +1,5 @@
 from ai_footprint.config import Config
+import ai_footprint.impact.engine as engine_mod
 from ai_footprint.impact.engine import EcoLogitsEngine, ImpactRecord, CRITERIA
 from ai_footprint.impact.resolver import ModelResolver
 from ai_footprint.models import InferenceEvent
@@ -55,3 +56,77 @@ def test_alias_is_recorded_in_warnings():
     rec = eng.compute(_event("claude-x"), Config())
     assert rec.error is None
     assert any(w.startswith("alias:") for w in rec.warnings)
+
+
+def test_openai_registry_miss_uses_prior_sibling(monkeypatch):
+    event = InferenceEvent(
+        "openai", "gpt-5.6-terra", 10, 20, 0, 0, "2026-08-02T00:00:00Z",
+        route="openai", model_canonical="gpt-5.6-terra",
+    )
+    calls = []
+    original = engine_mod.llm_impacts
+
+    def unknown_model_then_gpt_55(**kwargs):
+        calls.append(kwargs["model_name"])
+        return original(**kwargs)
+
+    monkeypatch.setattr(engine_mod, "llm_impacts", unknown_model_then_gpt_55)
+    record = EcoLogitsEngine(ModelResolver({})).compute(event, Config())
+
+    assert record.error is None
+    assert record.model_resolved == "gpt-5.6-terra"
+    assert calls == ["gpt-5.6-terra", "gpt-5.5"]
+    assert "model-source:sibling:openai:gpt-5.5" in record.warnings
+
+
+def test_unknown_route_never_uses_sibling(monkeypatch):
+    event = InferenceEvent(
+        "openai", "gpt-5.6-terra", 10, 20, 0, 0, "2026-08-02T00:00:00Z",
+        route="unknown",
+    )
+    monkeypatch.setattr(
+        engine_mod,
+        "llm_impacts",
+        lambda **_: (_ for _ in ()).throw(AssertionError("sibling must not run")),
+    )
+
+    assert EcoLogitsEngine(ModelResolver({})).compute(event, Config()).error == "route-not-estimated"
+
+
+def test_openai_huggingface_mapping_calculates_after_registry_miss():
+    config = Config(model_params={"openai/Org/Model": {
+        "active": 7.0, "total": 7.0, "arch": "dense", "source": "resolve",
+        "hf_repo": "Org/Model",
+    }})
+    record = EcoLogitsEngine(ModelResolver({})).compute(
+        _event("Org/Model", route="openai"), config)
+
+    assert record.error is None
+    assert record.model_resolved == "Org/Model"
+    assert "model-source:huggingface:Org/Model" in record.warnings
+
+
+def test_provider_registry_miss_never_looks_up_huggingface_automatically(monkeypatch):
+    import ai_footprint.impact.params as params_mod
+
+    monkeypatch.setattr(
+        params_mod, "fetch_hf_params",
+        lambda _: (_ for _ in ()).throw(AssertionError("HF lookup must not run")),
+    )
+
+    record = EcoLogitsEngine(ModelResolver({})).compute(
+        _event("Org/Unconfirmed", route="openai"), Config())
+
+    assert record.error == "model-not-registered"
+
+
+def test_provider_registry_miss_rejects_legacy_automatic_huggingface_cache():
+    config = Config(model_params={"openai/Org/Legacy": {
+        "active": 7.0, "total": 7.0, "arch": "dense", "source": "huggingface",
+    }})
+
+    record = EcoLogitsEngine(ModelResolver({})).compute(
+        _event("Org/Legacy", route="openai"), config)
+
+    assert record.error == "model-not-registered"
+    assert record.totals == {}

@@ -228,7 +228,10 @@ def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
             "active": active, "total": total, "arch": "moe" if active != total else "dense",
             "source": "resolve", "hf_repo": repo,
         }
-        config.save()
+    config.model_resolutions[f"{client}/{raw_model}"] = {
+        "route": route, "model": model,
+    }
+    config.save()
     changed = store.resolve_events(
         route=route, model_canonical=model, client=client, model_raw=raw_model,
         session_id=session, since=since,

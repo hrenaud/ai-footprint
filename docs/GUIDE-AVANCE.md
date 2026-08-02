@@ -118,10 +118,11 @@ Il existe une seule exception pour les bases créées avant ce modèle : une
 **migration historique ponctuelle** attribue leurs anciennes lignes selon une règle
 déclarée au démarrage de la nouvelle version. Elle est marquée dans la base et ne se reproduit pas ; elle ne transforme pas les nouveaux `route_hint` en confirmations.
 
-Commence par `ai-footprint resolve --list`, puis sélectionne le lot concerné avec
-sa session ou une date de début. En ligne de commande non interactive, l'option
-`--session ou --since` est obligatoire, avec `--client`, `--raw-model`, `--route`
-et `--model` :
+Commence par `ai-footprint resolve --list`. En terminal, `ai-footprint resolve`
+interactif affiche les lots `unknown` et demande, pour chaque lot à traiter, la
+route et le modèle canonique : cette confirmation est nécessaire avant tout
+recalcul. En ligne de commande non interactive, l'option `--session ou --since`
+est obligatoire, avec `--client`, `--raw-model`, `--route` et `--model` :
 
 ```bash
 ai-footprint resolve --session SESSION --client opencode \
@@ -130,10 +131,17 @@ ai-footprint resolve --session SESSION --client opencode \
 ```
 
 La confirmation et le recalcul sont limités à ce lot ; les events d'une autre
-session ou période, même avec le même nom brut, ne changent pas. `local` demande les
+session ou période, même avec le même nom brut, ne changent pas. La cascade
+d'estimation (registre exact, version sœur, puis paramètres Hugging Face
+confirmés) ne s'exécute qu'après cette confirmation de route. `local` demande les
 paramètres actifs et totaux (en milliards). Les routes `openrouter` et `custom`
 restent conservées avec un impact non estimé : elles identifient un routeur ou une
 intégration tierce, pas un modèle exécuteur suffisamment attribuable.
+
+Une résolution confirmée enregistre aussi dans `~/.ai-footprint/config.json` une
+règle d'identité `client` + nom brut du modèle. Les futurs events `unknown` qui
+correspondent reçoivent cette route et ce modèle canonique avant le calcul, sans
+devoir relancer `resolve`. La règle ne persiste pas une version sœur : EcoLogits est vérifié à nouveau pour chaque nouvel event, donc une future entrée exacte de son registre remplace automatiquement l'estimation par version sœur antérieure.
 
 `ingest` résume la couverture obtenue, par exemple :
 

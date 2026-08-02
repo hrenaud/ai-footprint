@@ -140,6 +140,11 @@ class SQLiteStore:
         new_count = 0
         for e in events:
             e = dataclasses.replace(e, timestamp=_canonical_ts(e.timestamp))
+            rule = config.model_resolutions.get(f"{e.client}/{e.model_raw}")
+            if e.route == "unknown" and rule:
+                e = dataclasses.replace(
+                    e, route=rule["route"], model_canonical=rule["model"]
+                )
             cur = self.conn.execute(
                 "INSERT OR IGNORE INTO events ("
                 "session_id, msg_id, provider, model, input_tokens, output_tokens, "

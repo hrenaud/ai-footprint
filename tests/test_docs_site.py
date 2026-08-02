@@ -102,6 +102,9 @@ def test_french_docs_explain_inference_routes_and_scoped_resolution():
     assert "recalcul ciblé" in methodology
     assert "--recompute" in methodology
     assert "tous les events en erreur" in methodology
+    assert "~/.ai-footprint/config.json" in advanced
+    assert "ne persiste pas une version sœur" in advanced
+    assert "EcoLogits est vérifié à nouveau pour chaque nouvel event" in advanced
     assert "model_raw" in contributing
     assert "model_canonical" in contributing
     assert "historical-routes-v1" in contributing
@@ -128,6 +131,27 @@ def test_advanced_guides_name_the_claude_code_statusline():
     assert "Claude Code affiche l'impact dans sa statusline" in fr_guide
     assert "### Claude Code statusline" in en_guide
     assert "Claude Code displays the impact in its statusline" in en_guide
+
+
+def test_english_docs_explain_confirmed_routes_and_registry_reselection():
+    advanced = (DOCS_DIR / "GUIDE-AVANCE.en.md").read_text(encoding="utf-8")
+    methodology = (DOCS_DIR / "METHODOLOGY.en.md").read_text(encoding="utf-8")
+    french_methodology = (DOCS_DIR / "METHODOLOGY.md").read_text(encoding="utf-8")
+    methodology_text = " ".join(methodology.split())
+
+    assert "route_hint" in advanced
+    assert "historical migration" in advanced
+    assert "EcoLogits is checked again for every new event" in advanced
+    assert "Exact EcoLogits registry" in methodology
+    assert "Same-provider sibling version" in methodology
+    assert "User-confirmed Hugging Face mapping" in methodology
+    assert methodology.index("Exact EcoLogits registry") < methodology.index(
+        "Same-provider sibling version"
+    ) < methodology.index("User-confirmed Hugging Face mapping")
+    assert "Registre EcoLogits exact" in french_methodology
+    assert "Version sœur du même fournisseur" in french_methodology
+    assert "Mapping Hugging Face confirmé par l'utilisateur" in french_methodology
+    assert "The exact registry is checked first for every new event" in methodology_text
 
 
 def test_readme_distinguishes_the_claude_code_and_opencode_displays():

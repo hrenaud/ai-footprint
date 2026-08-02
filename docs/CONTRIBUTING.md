@@ -75,7 +75,7 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 | `models.py`                 | dataclass `InferenceEvent` : `route_hint` consultatif, route confirmée, modèle brut et modèle canonique.                                                                                                 |
 | `impact/engine.py`          | `EcoLogitsEngine.compute()` : chemin registre vs fallback auto-hébergé ; `_extract_impacts` (totals/usage/embodied en min/max).                                                                          |
 | `impact/resolver.py`        | `ModelResolver` : alias de noms (`Config.model_aliases`).                                                                                                                                                |
-| `impact/params.py`          | `ModelParamsResolver` (cascade registre→cache→HF→file) + `fetch_hf_params(repo)` (safetensors ÷ 1e9, offline-safe).                                                                                      |
+| `impact/params.py`          | `ModelParamsResolver` : pour une route fournisseur confirmée, cascade registre EcoLogits exact → version sœur antérieure du même fournisseur → mapping HF confirmé par l'utilisateur ; aucune recherche HF automatique.                                      |
 | `store/db.py`               | `SQLiteStore` : ingestion idempotente, migrations de routes, agrégations et recompute limité au lot résolu.                                                                                              |
 | `report/cli.py`             | rendu des sections du rapport (5 + une 6ᵉ, intensité par outil, si plusieurs outils sont présents). Expose aussi `_central`/`_scale`/`_ranked_projects`, réutilisés par `card/cli.py`.                   |
 | `card/cli.py`               | sous-commande `card` : agrège les totaux (`build_card_data`), génère le HTML (`render_card_html` + `card/template.html`), rend le PNG via Chrome/Chromium headless local (`render_png`, `_find_chrome`). |
@@ -212,14 +212,18 @@ Les Markdown de `docs/` (`METHODOLOGY.md`, `comparaison-donnees-outils.md`,
   [`checklist-nouvel-outil.md`](checklist-nouvel-outil.md).
 - **Nouveau skill** : ajouter `skills/<nom>/SKILL.md` (frontmatter `name`/`description`).
   L'installeur le déploie par symlink dans `~/.claude/skills/`.
-- **Résolution de modèles** : la cascade vit dans `impact/params.py` ; la CLI
-  `resolve` (déterministe : HF + recompute) dans `resolve/cli.py` ; le mapping
-  nom→repo (jugement) dans le skill `/footprint-resolve`. Les échecs HF sont
-  mémorisés (cache négatif en mémoire + persisté dans `config.json`, TTL 7 jours) ;
-  `resolve --retry-hf` purge ce cache et retente la cascade sur les non couverts.
-  Les params estimés depuis la taille des fichiers portent des warnings de
-   provenance (`params-bytes-per-param:<n>`, `params-range-unknown-dtype`) et sont
-   signalés dans le rapport.
+- **Résolution de modèles** : pour chaque route fournisseur confirmée,
+  `impact/params.py` applique exactement la cascade registre EcoLogits exact →
+  version sœur antérieure du même fournisseur → mapping Hugging Face confirmé par
+  l'utilisateur. Il n'y a aucune recherche Hugging Face automatique pendant
+  l'ingestion ou le recalcul. La CLI `resolve` dans `resolve/cli.py` et le skill
+  `/footprint-resolve` demandent la confirmation du mapping nom→repo, puis
+  persistent la résolution sous l'identité `client/model_raw` dans
+  `Config.model_resolutions`. Les futurs events inconnus de ce même client et de ce
+  même nom brut sont ainsi résolus avant le calcul, sans toucher les autres clients,
+  noms bruts ou events historiques. Les params estimés depuis la taille des fichiers
+  portent des warnings de provenance (`params-bytes-per-param:<n>`,
+  `params-range-unknown-dtype`) et sont signalés dans le rapport.
 
 ### Compatibilité Hugging Face
 

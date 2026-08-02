@@ -64,3 +64,14 @@ def test_selfhosted_range_params_produce_wider_bounds():
     assert rec.error is None
     gwp_min, gwp_max = rec.totals["gwp"]
     assert 0 < gwp_min < gwp_max  # la fourchette de params élargit les bornes
+
+
+def test_selfhosted_huggingface_mapping_records_provenance():
+    cfg = Config(model_params={"local/Org/Model": {
+        "active": 7.0, "total": 7.0, "arch": "dense", "source": "resolve",
+        "hf_repo": "Org/Model",
+    }})
+    rec = EcoLogitsEngine(ModelResolver({})).compute(_event("ollama", "Org/Model"), cfg)
+
+    assert rec.error is None
+    assert "model-source:huggingface:Org/Model" in rec.warnings

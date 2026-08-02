@@ -104,6 +104,45 @@ ai-footprint resolve --forget "provider/model"            # removes a mapping an
 ai-footprint nudge --json     # nudge status (unproposed models, update available)
 ```
 
+### Inference routes and batch resolution
+
+Each event retains the model name as read (`model_raw`) and a `route_hint`, the
+provenance hint supplied by the collector. A `route_hint` is **indicative**:
+for example, OpenRouter in a transcript does not confirm which provider ran the
+inference. A route is confirmed only through `ai-footprint resolve`.
+
+There is one exception for databases created before this model: a one-time
+**historical migration** assigns their old rows through a declared rule when the
+new version starts. It is recorded in the database and does not run again; it
+does not turn new `route_hint` values into confirmations.
+
+Start with `ai-footprint resolve --list`. In a terminal, interactive
+`ai-footprint resolve` shows `unknown` batches and asks for the route and
+canonical model of each batch before recalculating. In non-interactive use,
+`--session` or `--since` is required with `--client`, `--raw-model`, `--route`,
+and `--model`:
+
+```bash
+ai-footprint resolve --session SESSION --client opencode \
+  --raw-model seen-name --route local --model canonical-name \
+  --active-params 7 --total-params 7
+```
+
+Confirmation and recalculation apply only to that batch; events from another
+session or period, even with the same raw name, do not change. The estimation
+cascade (exact registry, sibling version, then confirmed Hugging Face
+parameters) runs only after the route is confirmed. `local` requires active
+and total parameters in billions. `openrouter` and `custom` remain retained
+with unestimated impacts because they identify a router or third-party
+integration rather than an attributable executing model.
+
+A confirmed resolution also persists an identity rule in
+`~/.ai-footprint/config.json` for the `client` and raw model name. Matching
+future `unknown` events receive that route and canonical model before
+calculation, without rerunning `resolve`. The rule does not persist a sibling
+version: EcoLogits is checked again for every new event, so a future exact
+registry entry automatically replaces an earlier sibling estimate.
+
 `ingest` summarizes the coverage obtained, for example:
 
 ```
