@@ -262,6 +262,60 @@ def render_tokens_by_model(rows: list[dict], detailed: bool = False) -> str:
     )
 
 
+def _route_token_label(row: dict) -> str:
+    measured = row["measured_tokens"]
+    unestimated = row["unestimated_tokens"]
+    if not unestimated:
+        return "mesuré"
+    if not measured:
+        return "non estimé"
+    return f"{_kilo(measured)} mesurés · {_kilo(unestimated)} non estimés"
+
+
+def render_tokens_by_model_route(rows: list[dict], detailed: bool = False) -> str:
+    """Tokens par modèle canonique et route, sans attribuer d'impact aux non estimés."""
+    if not rows:
+        return ""
+    rows = sorted(rows, key=lambda row: row["tokens"], reverse=True)
+    model_w = max(len("modèle"), max(len(_truncate(row["model"])) for row in rows))
+    route_w = max(len("route"), max(len(row["route"]) for row in rows))
+    token_values = [_kilo(row["tokens"]) for row in rows]
+    token_w = max(len("tokens"), max(len(value) for value in token_values))
+    status_values = [_route_token_label(row) for row in rows]
+    status_w = max(len("impact"), max(len(value) for value in status_values))
+    out = ["Tokens par modèle et route — total sur la plage", "",
+           f"  {'modèle'.ljust(model_w)}  {'route'.ljust(route_w)}  {'tokens'.rjust(token_w)}  {'impact'.ljust(status_w)}"]
+    for row, tokens, status in zip(rows, token_values, status_values):
+        out.append(
+            f"  {_truncate(row['model']).ljust(model_w)}  {row['route'].ljust(route_w)}  "
+            f"{tokens.rjust(token_w)}  {status.ljust(status_w)}".rstrip()
+        )
+    return "\n".join(out)
+
+
+def render_tokens_by_canonical_model(rows: list[dict], detailed: bool = False) -> str:
+    """Rollup par modèle canonique, en gardant visibles les contributions des routes."""
+    if not rows:
+        return ""
+    rows = sorted(rows, key=lambda row: row["tokens"], reverse=True)
+    model_w = max(len("modèle"), max(len(_truncate(row["model"])) for row in rows))
+    token_values = [_kilo(row["tokens"]) for row in rows]
+    token_w = max(len("tokens"), max(len(value) for value in token_values))
+    route_values = ["; ".join(
+        f"{route['route']} : {_kilo(route['tokens'])} {_route_token_label(route)}"
+        for route in row["routes"]
+    ) for row in rows]
+    route_w = max(len("contributions par route"), max(len(value) for value in route_values))
+    out = ["Tokens par modèle canonique — total sur la plage", "",
+           f"  {'modèle'.ljust(model_w)}  {'tokens'.rjust(token_w)}  {'contributions par route'.ljust(route_w)}"]
+    for row, tokens, routes in zip(rows, token_values, route_values):
+        out.append(
+            f"  {_truncate(row['model']).ljust(model_w)}  {tokens.rjust(token_w)}  "
+            f"{routes.ljust(route_w)}".rstrip()
+        )
+    return "\n".join(out)
+
+
 def render_uncovered(rows: list[dict]) -> str:
     """Modèles à impact non estimé (hors `<synthetic>`) : tokens générés sur la
     plage, triés décroissant, + invite à lancer la résolution. Vide si tout est

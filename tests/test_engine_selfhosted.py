@@ -10,14 +10,14 @@ def _event(provider, model):
         provider=provider, model=model, input_tokens=100, output_tokens=200,
         cache_creation_tokens=0, cache_read_tokens=0,
         timestamp="2026-06-29T10:00:00Z", project="p",
-        session_id="s", msg_id="m")
+        session_id="s", msg_id="m", route="local", model_canonical=model)
 
 
 def test_selfhosted_cached_model_is_computed():
     cfg = Config(
         electricity_mix_zone="FRA",
-        model_params={"ollama/qwen2.5:7b": {
-            "active": 7e9, "total": 7e9, "arch": "dense", "source": "user"}})
+        model_params={"local/qwen2.5:7b": {
+            "active": 7.0, "total": 7.0, "arch": "dense", "source": "user"}})
     eng = EcoLogitsEngine(ModelResolver({}))
     rec = eng.compute(_event("ollama", "qwen2.5:7b"), cfg)
     assert rec.error is None
@@ -29,7 +29,7 @@ def test_pue_range_propagates_to_minmax():
     cfg = Config(
         electricity_mix_zone="FRA",
         datacenter_pue=RangeValue(min=1.0, max=2.0),
-        model_params={"ollama/m": {"active": 7e9, "total": 7e9,
+        model_params={"local/m": {"active": 7.0, "total": 7.0,
                                    "arch": "dense", "source": "user"}})
     eng = EcoLogitsEngine(ModelResolver({}))
     rec = eng.compute(_event("ollama", "m"), cfg)
@@ -49,7 +49,7 @@ def test_selfhosted_range_params_produce_wider_bounds():
     from ai_footprint.models import InferenceEvent
     cfg = Config(
         electricity_mix_zone="WOR",
-        model_params={"ollama/range-model": {
+        model_params={"local/range-model": {
             "active": {"min": 7.0, "max": 28.0},
             "total": {"min": 7.0, "max": 28.0},
             "arch": "dense", "source": "huggingface"}})
@@ -58,7 +58,8 @@ def test_selfhosted_range_params_produce_wider_bounds():
                        input_tokens=10, output_tokens=100,
                        cache_creation_tokens=0, cache_read_tokens=0,
                        timestamp="2026-07-02T00:00:00+00:00", project="p",
-                       session_id="s", msg_id="m", active_seconds=1.0)
+                        session_id="s", msg_id="m", active_seconds=1.0,
+                        route="local", model_canonical="range-model")
     rec = engine.compute(e, cfg)
     assert rec.error is None
     gwp_min, gwp_max = rec.totals["gwp"]

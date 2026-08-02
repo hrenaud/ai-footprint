@@ -87,6 +87,12 @@ et recalcule les impacts après ta confirmation.
 Se déclenche automatiquement en proposition en début de session si pertinent,
 ou manuellement à tout moment.
 
+Le transcript peut suggérer une provenance, mais cette indication n'est pas une
+confirmation. Le skill te fait choisir un lot précis de session ou de période avant
+de confirmer sa route et son modèle : cette confirmation ne modifie pas les autres
+events. Les routes de service tiers `openrouter` et `custom` restent conservées mais
+non estimées, même après confirmation.
+
 ### `/footprint-config` — réglages
 
 Ajuste les hypothèses utilisées pour le calcul (zone du mix électrique,

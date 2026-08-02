@@ -29,7 +29,8 @@ from ai_footprint.report.cli import (
     render_intensity_by_client,
     render_projects,
     render_report,
-    render_tokens_by_model,
+    render_tokens_by_canonical_model,
+    render_tokens_by_model_route,
     render_uncovered,
 )
 from ai_footprint.release import ReleaseError, run as run_release
@@ -195,6 +196,15 @@ def main(argv: list[str] | None = None) -> int:
                        help="date de début (ex. 2026-06-27, 27/06/2026, 27/06/26)")
     p_res.add_argument("--list", action="store_true")
     p_res.add_argument("--json", action="store_true")
+    p_res.add_argument("--route", choices=("anthropic", "openai", "openrouter", "custom", "local"),
+                       help="route confirmée pour le lot sélectionné")
+    p_res.add_argument("--model", help="modèle canonique pour le lot sélectionné")
+    p_res.add_argument("--client", help="client du lot sélectionné")
+    p_res.add_argument("--raw-model", dest="raw_model", help="modèle brut du lot sélectionné")
+    p_res.add_argument("--session", help="session à résoudre")
+    p_res.add_argument("--repo", help="dépôt Hugging Face du modèle local")
+    p_res.add_argument("--active-params", type=float, help="paramètres actifs locaux (milliards)")
+    p_res.add_argument("--total-params", type=float, help="paramètres totaux locaux (milliards)")
     p_res.add_argument("--set", action="append", default=[], metavar="P/M=REPO")
     p_res.add_argument("--forget", action="append", default=[], metavar="P/M")
     p_res.add_argument("--recompute", action="store_true",
@@ -261,9 +271,14 @@ def main(argv: list[str] | None = None) -> int:
         projects = render_projects(rows, show_all=args.all_projects, detailed=args.detail)
         if projects:
             out += "\n\n" + projects
-        tokens = render_tokens_by_model(store.tokens_by_model(args.since), detailed=args.detail)
-        if tokens:
-            out += "\n\n" + tokens
+        by_route = render_tokens_by_model_route(
+            store.tokens_by_model_route(args.since), detailed=args.detail)
+        if by_route:
+            out += "\n\n" + by_route
+        by_canonical_model = render_tokens_by_canonical_model(
+            store.tokens_by_canonical_model(args.since), detailed=args.detail)
+        if by_canonical_model:
+            out += "\n\n" + by_canonical_model
         estimated = render_estimated_note(store.estimated_param_models(args.since))
         if estimated:
             out += "\n\n" + estimated

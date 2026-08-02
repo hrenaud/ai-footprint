@@ -85,6 +85,30 @@ def test_mkdocs_config_declares_fr_and_en_locales():
     assert locales == {"fr", "en"}
 
 
+def test_french_docs_explain_inference_routes_and_scoped_resolution():
+    advanced = (DOCS_DIR / "GUIDE-AVANCE.md").read_text(encoding="utf-8")
+    methodology = (DOCS_DIR / "METHODOLOGY.md").read_text(encoding="utf-8")
+    contributing = (DOCS_DIR / "CONTRIBUTING.md").read_text(encoding="utf-8")
+
+    assert "route_hint" in advanced
+    assert "indicative" in advanced
+    assert "--session ou --since" in advanced
+    assert "migration historique ponctuelle" in advanced
+    assert "ne se reproduit pas" in advanced
+    assert "openrouter" in methodology
+    assert "custom" in methodology
+    assert "impact non estimé" in methodology
+    assert "--route" in methodology
+    assert "recalcul ciblé" in methodology
+    assert "--recompute" in methodology
+    assert "tous les events en erreur" in methodology
+    assert "model_raw" in contributing
+    assert "model_canonical" in contributing
+    assert "historical-routes-v1" in contributing
+    assert "huggingface_hub>=1.8.0,<2" in contributing
+    assert "model_info(repo, timeout=10)" in contributing
+
+
 def test_mkdocs_config_declares_nav_translations_for_en_locale():
     config = _mkdocs_config()
     i18n_plugin = next(

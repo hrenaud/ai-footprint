@@ -473,6 +473,23 @@
     </span>
   </a>
 
+    <nav class="md-nav" aria-label="Modèles auto-hébergés et tiers">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#route-confirmee-indice-et-service-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Route confirmée, indice et service tiers
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
 </li>
 
         <li class="md-nav__item">
@@ -764,6 +781,23 @@
     </span>
   </a>
 
+    <nav class="md-nav" aria-label="Modèles auto-hébergés et tiers">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#route-confirmee-indice-et-service-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Route confirmée, indice et service tiers
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
 </li>
 
         <li class="md-nav__item">
@@ -1006,6 +1040,24 @@ suppose « dense » ; un couple MoE se déclare à la main — cf. backlog.)</em
 <p><strong>Unité (piège récurrent)</strong> : les paramètres EcoLogits sont <strong>en milliards</strong>
 partout. <code>safetensors.total</code> (compte brut) est divisé par <code>1e9</code>.</p>
 </blockquote>
+<h3 id="route-confirmee-indice-et-service-tiers">Route confirmée, indice et service tiers</h3>
+<p>La provenance lue dans un transcript est conservée dans <code>route_hint</code>. C'est un
+indice consultatif du collecteur, jamais une preuve qu'un fournisseur a exécuté
+l'inférence. Les nouveaux events restent sur la route <code>unknown</code> tant que
+<code>ai-footprint resolve</code> ne confirme pas explicitement, pour un lot de session ou de
+période, la route et le nom canonique du modèle. Cette opération ne change ni les
+autres lots ni leurs impacts.</p>
+<p>Avec <code>--route</code>, <code>resolve</code> exige aussi un sélecteur <code>--session</code> ou <code>--since</code> : il
+confirme l'identité du lot et effectue un <strong>recalcul ciblé</strong> de ce lot seulement.
+Ce chemin est distinct de <code>resolve --recompute</code>, qui ne confirme aucune route et
+recalcule globalement <strong>tous les events en erreur</strong> déjà en base, par exemple après
+un mapping de paramètres ; il ne relit pas les transcripts.</p>
+<p>Une route <code>local</code> confirmée peut être estimée lorsque ses paramètres actifs et
+totaux sont déclarés, en milliards. À l'inverse, <code>openrouter</code> et <code>custom</code> désignent
+un service tiers ou une intégration dont le modèle exécuteur n'est pas attribuable
+avec assez de certitude : leurs events sont conservés avec un <strong>impact non estimé</strong>
+et exclus des totaux. Confirmer le routeur rend l'information de provenance plus
+fiable, sans transformer cette absence d'attribution en calcul spéculatif.</p>
 <h2 id="lire-les-chiffres-couverture">Lire les chiffres : couverture</h2>
 <p>La sortie d'<code>ingest</code> (et le rapport) distingue :</p>
 <ul>
@@ -1016,10 +1068,12 @@ partout. <code>safetensors.total</code> (compte brut) est divisé par <code>1e9<
 <li>les placeholders internes <code>&lt;synthetic&gt;</code> de Claude Code (0 token, aucune inférence
     réelle) — non couvrables par nature, exclus du rapport ;</li>
 <li>les vrais modèles tiers/auto-hébergés non résolus — <strong>résolubles</strong> vers un repo
-    Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>).</li>
+     Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>), sauf les
+     routes tierces confirmées <code>openrouter</code> et <code>custom</code>, qui restent non estimées.</li>
 </ul>
-<p>La résolution d'un modèle déclenche un <strong>recalcul</strong> des impacts déjà en base
-(<code>resolve --recompute</code>), sans re-parser les transcripts.</p>
+<p>La confirmation d'une route déclenche son recalcul ciblé. <code>resolve --recompute</code>
+recalcule au contraire tous les events en erreur, sans sélectionner ni confirmer de
+route et sans re-parser les transcripts.</p>
 <h2 id="reproductibilite">Reproductibilité</h2>
 <p>Chaque impact stocke sa <code>methodology_version</code>
 (<code>engine=…;ecologits=…</code>). On peut ainsi recalculer après une mise à jour d'EcoLogits

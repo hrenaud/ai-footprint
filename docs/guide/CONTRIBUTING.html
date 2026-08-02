@@ -629,6 +629,23 @@
     </span>
   </a>
 
+    <nav class="md-nav" aria-label="Étendre">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#compatibilite-hugging-face" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Compatibilité Hugging Face
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
 </li>
 
         <li class="md-nav__item">
@@ -840,6 +857,23 @@
     </span>
   </a>
 
+    <nav class="md-nav" aria-label="Étendre">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#compatibilite-hugging-face" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Compatibilité Hugging Face
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
 </li>
 
         <li class="md-nav__item">
@@ -948,7 +982,7 @@ AI_FOOTPRINT_PURGE_DB=1 bash uninstall.sh</code> (<code>uninstall.sh</code> déf
     ↓
 ClaudeCodeCollector (parse, normalise, temps actif, client)
     ↓
-InferenceEvent[]  (provider, model, tokens, timestamp, session, projet, active_seconds, client)
+InferenceEvent[]  (route_hint, route, model_raw, model_canonical, tokens, timestamp, session, projet, active_seconds, client)
     ↓
 EcoLogitsEngine (offline, EcoLogits 0.11.0)
     ├─ modèle reconnu → llm_impacts()
@@ -975,7 +1009,7 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 </tr>
 <tr>
 <td><code>models.py</code></td>
-<td>dataclass <code>InferenceEvent</code>.</td>
+<td>dataclass <code>InferenceEvent</code> : <code>route_hint</code> consultatif, route confirmée, modèle brut et modèle canonique.</td>
 </tr>
 <tr>
 <td><code>impact/engine.py</code></td>
@@ -991,7 +1025,7 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
 </tr>
 <tr>
 <td><code>store/db.py</code></td>
-<td><code>SQLiteStore</code> : ingestion idempotente, agrégations, recompute.</td>
+<td><code>SQLiteStore</code> : ingestion idempotente, migrations de routes, agrégations et recompute limité au lot résolu.</td>
 </tr>
 <tr>
 <td><code>report/cli.py</code></td>
@@ -1042,6 +1076,10 @@ CLI : report · statusline · resolve · models   (lisent la DB, jamais les JSON
   project TEXT,                    -- dérivé du cwd
   active_seconds REAL DEFAULT 0,   -- temps actif estimé (intensité)
   client TEXT DEFAULT '',          -- outil source (claude-code…)
+  route_hint TEXT DEFAULT '',      -- indice collecteur, non confirmé
+  route TEXT DEFAULT 'unknown',    -- confirmation explicite par resolve
+  model_raw TEXT DEFAULT '',       -- nom lu dans le transcript
+  model_canonical TEXT DEFAULT '', -- nom confirmé pour la route
   PRIMARY KEY (session_id, msg_id)
 );
 
@@ -1058,8 +1096,15 @@ CREATE TABLE impacts (
 
 CREATE TABLE sessions (session_id TEXT PRIMARY KEY, project TEXT, started_at TEXT, ended_at TEXT);
 CREATE TABLE pending_models (provider TEXT, model TEXT, first_seen TEXT, occurrences INTEGER DEFAULT 0,
-                             PRIMARY KEY (provider, model));
+                              PRIMARY KEY (provider, model));
 </code></pre>
+<p>Les migrations restent additives (<code>ALTER TABLE</code>). Elles renseignent <code>model_raw</code> et
+<code>route_hint</code> depuis les anciennes colonnes sans présenter cet indice comme une route
+confirmée. Une base antérieure aux colonnes de route reçoit les marqueurs
+<code>legacy-route-backfill-v1</code> puis <code>historical-routes-v1</code> dans <code>schema_migrations</code> :
+la correction historique attribue explicitement les anciennes lignes selon la règle
+déclarée (<code>claude*</code> → <code>anthropic</code>, <code>chatgpt*</code> → <code>openai</code>, <code>openrouter/free</code> →
+<code>openrouter</code>, le reste → <code>local</code>) et ne s'applique qu'une fois.</p>
 <p><strong>Idempotence</strong> : <code>INSERT OR IGNORE</code> sur <code>(session_id, msg_id)</code> ; la ré-ingestion ne
 recalcule pas l'impact mais rétro-remplit <code>active_seconds</code>/<code>client</code> manquants.</p>
 <p><strong>Méthodes clés de <code>SQLiteStore</code></strong> (lecture filtrable par <code>since</code>, comparaison
@@ -1074,6 +1119,9 @@ lexicographique sur <code>timestamp</code>) :</p>
 <li><code>uncovered_keys()</code> — couples <code>(provider, model)</code> non couverts (hors <code>&lt;synthetic&gt;</code>), sans filtre <code>since</code> ; utilisée par <code>resolve --retry-hf</code> et par <code>ai_footprint/nudge.py</code>.</li>
 <li><code>coverage()</code> — <code>{total, measured, uncovered}</code>.</li>
 <li><code>recompute_errors(engine, config)</code> — recalcule les events en <code>error</code> → <code>{before, after}</code>.</li>
+<li><code>resolve_events(...)</code> et <code>recompute_selected_events(...)</code> — confirment et
+  recalculent seulement le lot sélectionné par client, modèle brut et session ou
+  période ; une résolution ne propage jamais une route à tout l'historique.</li>
 <li><code>mark_model_events_error(provider, model, error)</code> — repasse un modèle en erreur
   (appariement <code>(session_id, msg_id)</code>) pour un revert de mapping.</li>
 </ul>
@@ -1132,9 +1180,17 @@ planter.</p>
   mémorisés (cache négatif en mémoire + persisté dans <code>config.json</code>, TTL 7 jours) ;
   <code>resolve --retry-hf</code> purge ce cache et retente la cascade sur les non couverts.
   Les params estimés depuis la taille des fichiers portent des warnings de
-  provenance (<code>params-bytes-per-param:&lt;n&gt;</code>, <code>params-range-unknown-dtype</code>) et sont
-  signalés dans le rapport.</li>
+   provenance (<code>params-bytes-per-param:&lt;n&gt;</code>, <code>params-range-unknown-dtype</code>) et sont
+   signalés dans le rapport.</li>
 </ul>
+<h3 id="compatibilite-hugging-face">Compatibilité Hugging Face</h3>
+<p><code>pyproject.toml</code> borne <code>huggingface_hub</code> à <code>&gt;=1.8.0,&lt;2</code> (plage compatible :
+huggingface_hub&gt;=1.8.0,&lt;2). La première étape de la cascade utilise l'API compatible
+<code>model_info(repo, timeout=10)</code> et lit
+<code>info.safetensors.total</code> lorsqu'elle est fournie ; ce total brut est divisé par
+<code>1e9</code> avant d'être transmis à EcoLogits. Les fallbacks CLI et index safetensors
+restent nécessaires car le champ <code>safetensors</code> peut être absent. Toute exception ou
+réponse incomplète laisse le modèle non résolu, sans empêcher l'ingestion.</p>
 <h2 id="backlog-technique">Backlog technique</h2>
 <p>Voir <a href="../.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md"><code>.superpowers/specs/2026-07-02-qualite-lecture-resolution-design.md</code></a> :
 correctifs qualité de la lecture des données et de la résolution des modèles

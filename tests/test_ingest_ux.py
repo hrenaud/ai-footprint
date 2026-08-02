@@ -12,7 +12,7 @@ def _events():
     return [
         # modèle connu d'EcoLogits → mesuré
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1"),
+                        "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         # modèle inconnu (local) → non couvert
         InferenceEvent("anthropic", "Qwen3.6-35B-A3B-4bit", 100, 50, 0, 0,
                        "2026-06-27T10:05:00.000Z", "projA", "sess-A", "u2"),

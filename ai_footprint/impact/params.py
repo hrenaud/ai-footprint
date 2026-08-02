@@ -201,7 +201,10 @@ def _fetch_hf_total_params(repo: str) -> tuple[float | RangeValue, list[str]] | 
         try:
             info = huggingface_hub.model_info(repo, timeout=10)
             if info.safetensors is not None:
-                total = float(info.safetensors.total) / 1e9
+                total_raw = getattr(info.safetensors, "total", None)
+                if total_raw is None:
+                    return None
+                total = float(total_raw) / 1e9
                 if total > 0:
                     return total, []
         except (OSError, ValueError, AttributeError, ModuleNotFoundError, ImportError) as exc:
@@ -325,6 +328,10 @@ class ModelParamsResolver:
             or self._from_huggingface(provider, model)
             or self._from_sibling_extrapolation(provider, model)
         )
+
+    def resolve_local(self, model: str) -> ParamsResult | None:
+        """Lit uniquement les paramètres explicitement confirmés pour le modèle local."""
+        return self._from_cache("local", model)
 
     def _from_registry(self, provider: str, model: str) -> ParamsResult | None:
         for prov in (provider, *_REGISTRY_FALLBACK_PROVIDERS):

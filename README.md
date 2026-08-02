@@ -163,6 +163,11 @@ mais exclu des totaux (afficher un faux chiffre serait pire). Beaucoup sont des
 placeholders internes `<synthetic>` (0 token) ; les vrais modèles tiers se résolvent
 avec `/footprint-resolve`. Voir [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
+Lorsqu'un transcript ne permet pas d'identifier sa route avec certitude,
+ai-footprint conserve son indice d'origine sans le prendre pour une confirmation.
+`/footprint-resolve` confirme ensuite la route et le modèle d'un lot choisi ; les
+routes de service tiers `openrouter` et `custom` restent volontairement non estimées.
+
 ## Pour aller plus loin
 
 - **[docs/GUIDE.md](docs/GUIDE.md)** — mode d'emploi détaillé : installation,

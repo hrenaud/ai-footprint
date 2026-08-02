@@ -106,6 +106,35 @@ ai-footprint resolve --forget "provider/modele"            # retire un mapping e
 ai-footprint nudge --json     # état des nudges (modèles non proposés, mise à jour dispo)
 ```
 
+### Routes d'inférence et résolution par lot
+
+Chaque event conserve le nom de modèle tel que lu (`model_raw`) et un
+`route_hint`, c'est-à-dire l'indice de provenance fourni par le collecteur. Un
+`route_hint` est une valeur **indicative** : par exemple, la présence d'OpenRouter dans un
+transcript ne confirme pas le fournisseur qui a exécuté l'inférence. Une route ne
+devient confirmée qu'avec `ai-footprint resolve`.
+
+Il existe une seule exception pour les bases créées avant ce modèle : une
+**migration historique ponctuelle** attribue leurs anciennes lignes selon une règle
+déclarée au démarrage de la nouvelle version. Elle est marquée dans la base et ne se reproduit pas ; elle ne transforme pas les nouveaux `route_hint` en confirmations.
+
+Commence par `ai-footprint resolve --list`, puis sélectionne le lot concerné avec
+sa session ou une date de début. En ligne de commande non interactive, l'option
+`--session ou --since` est obligatoire, avec `--client`, `--raw-model`, `--route`
+et `--model` :
+
+```bash
+ai-footprint resolve --session SESSION --client opencode \
+  --raw-model nom-vu --route local --model nom-canonique \
+  --active-params 7 --total-params 7
+```
+
+La confirmation et le recalcul sont limités à ce lot ; les events d'une autre
+session ou période, même avec le même nom brut, ne changent pas. `local` demande les
+paramètres actifs et totaux (en milliards). Les routes `openrouter` et `custom`
+restent conservées avec un impact non estimé : elles identifient un routeur ou une
+intégration tierce, pas un modèle exécuteur suffisamment attribuable.
+
 `ingest` résume la couverture obtenue, par exemple :
 
 ```
