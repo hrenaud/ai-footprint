@@ -114,6 +114,10 @@ Chaque event conserve le nom de modèle tel que lu (`model_raw`) et un
 transcript ne confirme pas le fournisseur qui a exécuté l'inférence. Une route ne
 devient confirmée qu'avec `ai-footprint resolve`.
 
+Il existe une seule exception pour les bases créées avant ce modèle : une
+**migration historique ponctuelle** attribue leurs anciennes lignes selon une règle
+déclarée au démarrage de la nouvelle version. Elle est marquée dans la base et ne se reproduit pas ; elle ne transforme pas les nouveaux `route_hint` en confirmations.
+
 Commence par `ai-footprint resolve --list`, puis sélectionne le lot concerné avec
 sa session ou une date de début. En ligne de commande non interactive, l'option
 `--session ou --since` est obligatoire, avec `--client`, `--raw-model`, `--route`

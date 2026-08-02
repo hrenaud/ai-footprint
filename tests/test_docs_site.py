@@ -93,9 +93,15 @@ def test_french_docs_explain_inference_routes_and_scoped_resolution():
     assert "route_hint" in advanced
     assert "indicative" in advanced
     assert "--session ou --since" in advanced
+    assert "migration historique ponctuelle" in advanced
+    assert "ne se reproduit pas" in advanced
     assert "openrouter" in methodology
     assert "custom" in methodology
     assert "impact non estimé" in methodology
+    assert "--route" in methodology
+    assert "recalcul ciblé" in methodology
+    assert "--recompute" in methodology
+    assert "tous les events en erreur" in methodology
     assert "model_raw" in contributing
     assert "model_canonical" in contributing
     assert "historical-routes-v1" in contributing

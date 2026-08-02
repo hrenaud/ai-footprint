@@ -115,6 +115,12 @@ l'inférence. Les nouveaux events restent sur la route `unknown` tant que
 période, la route et le nom canonique du modèle. Cette opération ne change ni les
 autres lots ni leurs impacts.
 
+Avec `--route`, `resolve` exige aussi un sélecteur `--session` ou `--since` : il
+confirme l'identité du lot et effectue un **recalcul ciblé** de ce lot seulement.
+Ce chemin est distinct de `resolve --recompute`, qui ne confirme aucune route et
+recalcule globalement **tous les events en erreur** déjà en base, par exemple après
+un mapping de paramètres ; il ne relit pas les transcripts.
+
 Une route `local` confirmée peut être estimée lorsque ses paramètres actifs et
 totaux sont déclarés, en milliards. À l'inverse, `openrouter` et `custom` désignent
 un service tiers ou une intégration dont le modèle exécuteur n'est pas attribuable
@@ -136,8 +142,9 @@ La sortie d'`ingest` (et le rapport) distingue :
      Hugging Face via `ai-footprint resolve` (skill `/footprint-resolve`), sauf les
      routes tierces confirmées `openrouter` et `custom`, qui restent non estimées.
 
-La résolution d'un modèle déclenche un **recalcul** des impacts déjà en base
-(`resolve --recompute`), sans re-parser les transcripts.
+La confirmation d'une route déclenche son recalcul ciblé. `resolve --recompute`
+recalcule au contraire tous les events en erreur, sans sélectionner ni confirmer de
+route et sans re-parser les transcripts.
 
 ## Reproductibilité
 

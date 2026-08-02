@@ -1047,6 +1047,11 @@ l'inférence. Les nouveaux events restent sur la route <code>unknown</code> tant
 <code>ai-footprint resolve</code> ne confirme pas explicitement, pour un lot de session ou de
 période, la route et le nom canonique du modèle. Cette opération ne change ni les
 autres lots ni leurs impacts.</p>
+<p>Avec <code>--route</code>, <code>resolve</code> exige aussi un sélecteur <code>--session</code> ou <code>--since</code> : il
+confirme l'identité du lot et effectue un <strong>recalcul ciblé</strong> de ce lot seulement.
+Ce chemin est distinct de <code>resolve --recompute</code>, qui ne confirme aucune route et
+recalcule globalement <strong>tous les events en erreur</strong> déjà en base, par exemple après
+un mapping de paramètres ; il ne relit pas les transcripts.</p>
 <p>Une route <code>local</code> confirmée peut être estimée lorsque ses paramètres actifs et
 totaux sont déclarés, en milliards. À l'inverse, <code>openrouter</code> et <code>custom</code> désignent
 un service tiers ou une intégration dont le modèle exécuteur n'est pas attribuable
@@ -1066,8 +1071,9 @@ fiable, sans transformer cette absence d'attribution en calcul spéculatif.</p>
      Hugging Face via <code>ai-footprint resolve</code> (skill <code>/footprint-resolve</code>), sauf les
      routes tierces confirmées <code>openrouter</code> et <code>custom</code>, qui restent non estimées.</li>
 </ul>
-<p>La résolution d'un modèle déclenche un <strong>recalcul</strong> des impacts déjà en base
-(<code>resolve --recompute</code>), sans re-parser les transcripts.</p>
+<p>La confirmation d'une route déclenche son recalcul ciblé. <code>resolve --recompute</code>
+recalcule au contraire tous les events en erreur, sans sélectionner ni confirmer de
+route et sans re-parser les transcripts.</p>
 <h2 id="reproductibilite">Reproductibilité</h2>
 <p>Chaque impact stocke sa <code>methodology_version</code>
 (<code>engine=…;ecologits=…</code>). On peut ainsi recalculer après une mise à jour d'EcoLogits

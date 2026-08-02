@@ -998,6 +998,9 @@ ai-footprint nudge --json     # état des nudges (modèles non proposés, mise �
 <code>route_hint</code> est une valeur <strong>indicative</strong> : par exemple, la présence d'OpenRouter dans un
 transcript ne confirme pas le fournisseur qui a exécuté l'inférence. Une route ne
 devient confirmée qu'avec <code>ai-footprint resolve</code>.</p>
+<p>Il existe une seule exception pour les bases créées avant ce modèle : une
+<strong>migration historique ponctuelle</strong> attribue leurs anciennes lignes selon une règle
+déclarée au démarrage de la nouvelle version. Elle est marquée dans la base et ne se reproduit pas ; elle ne transforme pas les nouveaux <code>route_hint</code> en confirmations.</p>
 <p>Commence par <code>ai-footprint resolve --list</code>, puis sélectionne le lot concerné avec
 sa session ou une date de début. En ligne de commande non interactive, l'option
 <code>--session ou --since</code> est obligatoire, avec <code>--client</code>, <code>--raw-model</code>, <code>--route</code>
