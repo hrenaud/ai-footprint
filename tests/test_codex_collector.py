@@ -1,8 +1,10 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock
 
 from ai_footprint.collectors.codex import CodexCollector
+from ai_footprint.models import InferenceEvent
 
 FIXTURES = Path(__file__).parent / "fixtures" / "codex"
 
@@ -14,11 +16,21 @@ def test_parses_only_token_count_events_with_last_usage():
     assert len(events) == 2
 
 
-def test_event_fields_mapped_from_real_structure():
+def test_event_fields_mapped_from_real_structure(monkeypatch):
+    event_factory = Mock(side_effect=InferenceEvent)
+    monkeypatch.setattr("ai_footprint.collectors.codex.InferenceEvent", event_factory)
+
     events = list(CodexCollector(str(FIXTURES / "codex-sample.jsonl")).collect())
     e = events[0]
     assert e.provider == "openai"
     assert e.model == "gpt-5.5"
+    assert e.model_raw == "gpt-5.5"
+    assert e.route_hint == "openai"
+    assert e.route == "unknown"
+    assert event_factory.call_args_list[0].kwargs["model_raw"] == "gpt-5.5"
+    assert event_factory.call_args_list[0].kwargs["route_hint"] == "openai"
+    assert "provider" not in event_factory.call_args_list[0].kwargs
+    assert "model" not in event_factory.call_args_list[0].kwargs
     assert e.input_tokens == 17242 - 10496
     assert e.output_tokens == 117
     assert e.cache_read_tokens == 10496

@@ -15,7 +15,7 @@ from ai_footprint.models import InferenceEvent
 
 
 class PiCollector(Collector):
-    provider: str = ""  # chaque event porte son propre provider
+    route_hint: str = ""  # chaque event porte son propre provider
     client: str = "pi"
 
     def __init__(self, root: str):
@@ -64,8 +64,8 @@ class PiCollector(Collector):
                     usage = msg.get("usage")
                     if msg.get("role") == "assistant" and usage:
                         yield InferenceEvent(
-                            provider=msg.get("provider", ""),
-                            model=msg.get("model", ""),
+                            model_raw=msg.get("model", ""),
+                            route_hint=msg.get("provider", ""),
                             input_tokens=usage.get("input", 0),
                             output_tokens=usage.get("output", 0),
                             cache_creation_tokens=usage.get("cacheWrite", 0),

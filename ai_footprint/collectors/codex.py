@@ -15,7 +15,7 @@ from ai_footprint.models import InferenceEvent
 
 
 class CodexCollector(Collector):
-    provider: str = "openai"
+    route_hint: str = "openai"
     client: str = "codex"
 
     def __init__(self, root: str):
@@ -36,7 +36,7 @@ class CodexCollector(Collector):
         # l'autre). Les usages de tokens arrivent en "event_msg"/"token_count".
         session_id = ""
         project = "unknown"
-        provider = self.provider
+        source_provider = self.route_hint
         model = ""
         prev_ts = None
         idx = 0
@@ -60,7 +60,7 @@ class CodexCollector(Collector):
 
                 if entry_type == "session_meta":
                     session_id = payload.get("id", "")
-                    provider = payload.get("model_provider", self.provider)
+                    source_provider = payload.get("model_provider", self.route_hint)
                     cwd = payload.get("cwd")
                     if cwd:
                         project = _project_from_cwd(cwd)
@@ -72,8 +72,8 @@ class CodexCollector(Collector):
                         input_total = usage.get("input_tokens", 0)
                         cached = usage.get("cached_input_tokens", 0)
                         yield InferenceEvent(
-                            provider=provider,
-                            model=model,
+                            model_raw=model,
+                            route_hint=source_provider,
                             input_tokens=input_total - cached,
                             output_tokens=usage.get("output_tokens", 0),
                             cache_creation_tokens=0,

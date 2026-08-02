@@ -42,7 +42,7 @@ class CrushCollector(Collector):
     - Mode backfill SQLite : lit les sessions et messages depuis une base SQLite.
     """
 
-    provider: str = ""  # Chaque event porte son propre provider
+    route_hint: str = ""  # Chaque event porte son propre provider
     client: str = "opencode"
 
     def __init__(self, root: str | None = None, *, backfill_db_path: str | None = None):
@@ -100,7 +100,7 @@ class CrushCollector(Collector):
 
             # Modèle avec provider
             raw_model = info.get("model") or {}
-            provider = raw_model.get("providerID") or ""
+            source_provider = raw_model.get("providerID") or ""
             model = raw_model.get("modelID") or raw_model.get("id") or ""
 
             # Tokens
@@ -132,8 +132,8 @@ class CrushCollector(Collector):
             active_seconds = self._calc_active_seconds(created_ms, completed_ms)
 
             yield InferenceEvent(
-                provider=provider,
-                model=model,
+                model_raw=model,
+                route_hint=source_provider,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 cache_read_tokens=cache_read_tokens,
@@ -212,7 +212,7 @@ class CrushCollector(Collector):
             # Les metadonnees propres au message priment. Sans elles, le modele
             # est porte par le message parent, jamais par le modele final de session.
             msg_model = data.get("model") or {}
-            provider = msg_model.get("providerID") or data.get("providerID") or ""
+            source_provider = msg_model.get("providerID") or data.get("providerID") or ""
             model = msg_model.get("modelID") or msg_model.get("id") or data.get("modelID") or ""
             parent_id = data.get("parentID")
             seen_parents: set[str] = set()
@@ -222,7 +222,7 @@ class CrushCollector(Collector):
                 if not parent:
                     break
                 parent_model = parent.get("model") or {}
-                provider = parent_model.get("providerID") or parent.get("providerID") or ""
+                source_provider = parent_model.get("providerID") or parent.get("providerID") or ""
                 model = parent_model.get("modelID") or parent_model.get("id") or parent.get("modelID") or ""
                 parent_id = parent.get("parentID")
 
@@ -255,8 +255,8 @@ class CrushCollector(Collector):
             active_seconds = self._calc_active_seconds(created_ms, completed_ms)
 
             yield InferenceEvent(
-                provider=provider,
-                model=model,
+                model_raw=model,
+                route_hint=source_provider,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 cache_read_tokens=cache_read_tokens,

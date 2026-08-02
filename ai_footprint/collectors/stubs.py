@@ -7,7 +7,7 @@ from ai_footprint.models import InferenceEvent
 class LocalInferenceCollector(Collector):
     """Placeholder — inférence locale (Apple Silicon), hors MVP."""
 
-    provider = "local"
+    route_hint = "local"
 
     def collect(self) -> Iterator[InferenceEvent]:
         raise NotImplementedError("LocalInferenceCollector pas encore implémenté")

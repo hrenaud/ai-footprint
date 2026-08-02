@@ -28,7 +28,7 @@ def _active_seconds(prev: datetime | None, cur: datetime | None) -> float:
 
 
 class ClaudeCodeCollector(Collector):
-    provider = "anthropic"
+    route_hint = "anthropic"
     client = "claude-code"
 
     def __init__(self, root: str):
@@ -62,8 +62,8 @@ class ClaudeCodeCollector(Collector):
                     usage = msg.get("usage")
                     if usage:
                         yield InferenceEvent(
-                            provider=self.provider,
-                            model=msg.get("model", ""),
+                            model_raw=msg.get("model", ""),
+                            route_hint=self.route_hint,
                             input_tokens=usage.get("input_tokens", 0),
                             output_tokens=usage.get("output_tokens", 0),
                             cache_creation_tokens=usage.get("cache_creation_input_tokens", 0),

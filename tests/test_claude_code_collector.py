@@ -1,5 +1,8 @@
 from pathlib import Path
+from unittest.mock import Mock
+
 from ai_footprint.collectors.claude_code import ClaudeCodeCollector
+from ai_footprint.models import InferenceEvent
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -14,6 +17,9 @@ def test_event_fields_mapped_from_real_structure():
     e = events["u1"]
     assert e.provider == "anthropic"
     assert e.model == "claude-opus-4-8"
+    assert e.model_raw == "claude-opus-4-8"
+    assert e.route_hint == "anthropic"
+    assert e.route == "unknown"
     assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_read_tokens == 8020
@@ -47,6 +53,37 @@ def test_preserves_model_for_each_assistant_response(tmp_path):
     events = list(ClaudeCodeCollector(str(transcript)).collect())
 
     assert [event.model for event in events] == ["model-a", "model-b"]
+
+
+def test_claude_qwen_stays_unknown_route(tmp_path, monkeypatch):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        '{"type":"assistant","message":{"model":"Qwen/Qwen3",'
+        '"usage":{"input_tokens":1,"output_tokens":1}}}\n'
+    )
+
+    event_factory = Mock(side_effect=InferenceEvent)
+    monkeypatch.setattr("ai_footprint.collectors.claude_code.InferenceEvent", event_factory)
+
+    event = next(ClaudeCodeCollector(str(transcript)).collect())
+
+    assert (event.client, event.model_raw, event.route_hint, event.route) == (
+        "claude-code", "Qwen/Qwen3", "anthropic", "unknown"
+    )
+    assert event_factory.call_args.kwargs == {
+        "client": "claude-code",
+        "model_raw": "Qwen/Qwen3",
+        "route_hint": "anthropic",
+        "input_tokens": 1,
+        "output_tokens": 1,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "timestamp": "",
+        "project": "unknown",
+        "session_id": "",
+        "msg_id": "",
+        "active_seconds": 0.0,
+    }
 
 
 def test_malformed_json_line_is_logged(tmp_path, caplog):

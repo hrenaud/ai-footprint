@@ -1,8 +1,10 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock
 
 from ai_footprint.collectors.pi import PiCollector
+from ai_footprint.models import InferenceEvent
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pi"
 
@@ -18,6 +20,9 @@ def test_event_fields_mapped_from_real_structure():
     e = events["u1"]
     assert e.provider == "anthropic"
     assert e.model == "claude-opus-4-8"
+    assert e.model_raw == "claude-opus-4-8"
+    assert e.route_hint == "anthropic"
+    assert e.route == "unknown"
     assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_read_tokens == 8020
@@ -27,12 +32,22 @@ def test_event_fields_mapped_from_real_structure():
     assert e.client == "pi"
 
 
-def test_provider_and_model_vary_per_message():
+def test_provider_and_model_vary_per_message(monkeypatch):
     # chaque event porte son propre provider/model (session multi-modèle)
+    event_factory = Mock(side_effect=InferenceEvent)
+    monkeypatch.setattr("ai_footprint.collectors.pi.InferenceEvent", event_factory)
+
     events = {e.msg_id: e for e in PiCollector(str(FIXTURES / "pi-sample.jsonl")).collect()}
     e = events["u2"]
     assert e.provider == "lm-studios"
     assert e.model == "qwen/qwen3.6-35b-a3b"
+    assert e.model_raw == "qwen/qwen3.6-35b-a3b"
+    assert e.route_hint == "lm-studios"
+    assert e.route == "unknown"
+    assert event_factory.call_args_list[1].kwargs["model_raw"] == "qwen/qwen3.6-35b-a3b"
+    assert event_factory.call_args_list[1].kwargs["route_hint"] == "lm-studios"
+    assert "provider" not in event_factory.call_args_list[1].kwargs
+    assert "model" not in event_factory.call_args_list[1].kwargs
 
 
 def test_active_seconds_from_timestamp_delta():

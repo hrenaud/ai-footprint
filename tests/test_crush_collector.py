@@ -2,6 +2,7 @@ import json
 import os
 import sqlite3
 import tempfile
+from unittest.mock import Mock
 from pathlib import Path
 
 import pytest
@@ -21,13 +22,23 @@ def test_parses_only_assistant_messages():
     assert len(events) == 2  # 2 messages assistant dans le fixture
 
 
-def test_event_fields_mapped_from_crush_structure():
+def test_event_fields_mapped_from_crush_structure(monkeypatch):
     """Les champs InferenceEvent sont correctement mappés depuis la structure JSON."""
+    event_factory = Mock(side_effect=InferenceEvent)
+    monkeypatch.setattr("ai_footprint.collectors.crush.InferenceEvent", event_factory)
+
     events = {e.msg_id: e for e in CrushCollector(str(CRUSH_EXPORT)).collect()}
     e = events["msg-1"]
     assert isinstance(e, InferenceEvent)
     assert e.provider == "anthropic"
     assert e.model == "claude-sonnet"
+    assert e.model_raw == "claude-sonnet"
+    assert e.route_hint == "anthropic"
+    assert e.route == "unknown"
+    assert event_factory.call_args_list[0].kwargs["model_raw"] == "claude-sonnet"
+    assert event_factory.call_args_list[0].kwargs["route_hint"] == "anthropic"
+    assert "provider" not in event_factory.call_args_list[0].kwargs
+    assert "model" not in event_factory.call_args_list[0].kwargs
     assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_creation_tokens == 7052
@@ -266,6 +277,9 @@ def test_backfill_from_sqlite():
     assert isinstance(e, InferenceEvent)
     assert e.provider == "anthropic"
     assert e.model == "claude-sonnet"
+    assert e.model_raw == "claude-sonnet"
+    assert e.route_hint == "anthropic"
+    assert e.route == "unknown"
     assert e.input_tokens == 8427
     assert e.output_tokens == 287
     assert e.cache_creation_tokens == 7052
