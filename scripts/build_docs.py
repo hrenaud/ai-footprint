@@ -16,6 +16,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 
 
+def _strip_trailing_whitespace(directory: Path) -> None:
+    for html_path in directory.rglob("*.html"):
+        lines = html_path.read_text(encoding="utf-8").splitlines()
+        html_path.write_text(
+            "\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8"
+        )
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(
@@ -33,6 +41,7 @@ def main() -> None:
             cwd=REPO_ROOT,
             check=True,
         )
+        _strip_trailing_whitespace(Path(tmp))
         shutil.rmtree(GUIDE_DIR, ignore_errors=True)
         shutil.copytree(tmp, GUIDE_DIR)
     print(f"Site généré dans {GUIDE_DIR}")

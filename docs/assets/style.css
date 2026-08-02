@@ -235,6 +235,39 @@ section h2 {
   border: 1px solid var(--color-border);
 }
 
+.statusline-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.statusline-tab {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 12px;
+}
+
+.statusline-tab[aria-selected="true"] {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  color: #f6f9f7;
+  font-weight: 700;
+}
+
+.statusline-tab:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.opencode-statusline-preview {
+  max-width: 310px;
+}
+
 .install-cmd-wrap {
   position: relative;
   max-width: 640px;

@@ -137,9 +137,11 @@ duplique rien. Chaque outil déclenche l'ingestion à sa façon :
   moment de l'installation puis à chaque relance manuelle de
   `ai-footprint ingest --source-codex`.
 
-### Statusline
+### Statusline Claude Code
 
-La statusline affiche l'impact de la **session en cours**. L'outil transmet
+Claude Code affiche l'impact dans sa statusline. La statusline affiche l'impact de la **session en cours**.
+
+L'outil transmet
 l'identifiant de session à ai-footprint, qui ingère le transcript courant et
 filtre les totaux dessus. Lancée manuellement hors session, elle retombe sur
 le **total global** de l'historique :

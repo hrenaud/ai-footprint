@@ -96,6 +96,23 @@ def test_mkdocs_config_declares_nav_translations_for_en_locale():
     assert en_locale.get("nav_translations") == NAV_TRANSLATIONS_EN
 
 
+def test_advanced_guides_name_the_claude_code_statusline():
+    fr_guide = (DOCS_DIR / "GUIDE-AVANCE.md").read_text(encoding="utf-8")
+    en_guide = (DOCS_DIR / "GUIDE-AVANCE.en.md").read_text(encoding="utf-8")
+
+    assert "### Statusline Claude Code" in fr_guide
+    assert "Claude Code affiche l'impact dans sa statusline" in fr_guide
+    assert "### Claude Code statusline" in en_guide
+    assert "Claude Code displays the impact in its statusline" in en_guide
+
+
+def test_readme_distinguishes_the_claude_code_and_opencode_displays():
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "Dans Claude Code, l'impact s'affiche dans la statusline." in readme
+    assert "Dans OpenCode, une carte dédiée s'affiche dans le panneau latéral." in readme
+
+
 def test_build_produces_translated_titles_and_homepage_for_en_locale(tmp_path):
     site_dir = tmp_path / "site"
     subprocess.run(
@@ -197,6 +214,12 @@ def test_build_script_syncs_output_into_docs_guide(tmp_path, monkeypatch):
             html_name = name.removesuffix(".md") + ".html"
             assert (guide_dir / html_name).exists()
             assert (guide_dir / "en" / html_name).exists()
+
+        for html_path in guide_dir.rglob("*.html"):
+            assert all(
+                not line.endswith((" ", "\t"))
+                for line in html_path.read_text(encoding="utf-8").splitlines()
+            ), f"trailing whitespace in {html_path}"
     finally:
         shutil.rmtree(guide_dir, ignore_errors=True)
         if guide_existed_before:

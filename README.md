@@ -120,6 +120,8 @@ light|dark|both` (défaut `light`), `--lang fr|en|both` (défaut `both`), `--out
 
 ## Suivi en temps réel
 
+Dans Claude Code, l'impact s'affiche dans la statusline. Dans OpenCode, une carte dédiée s'affiche dans le panneau latéral.
+
 Une fois l'installation terminée, ton outil affiche en continu l'impact de la
 **session en cours** (l'outil transmet la session ; ai-footprint ingère le
 transcript courant et filtre dessus). En lancement manuel, hors session, ça
