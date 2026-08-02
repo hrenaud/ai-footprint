@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.9.1] — 2026-08-02
+
+### Bug Fixes
+
+- (opencode) — silence successful export logs
 ## [1.9.0] — 2026-08-01
 
 ### Features
