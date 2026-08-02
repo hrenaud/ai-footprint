@@ -72,18 +72,32 @@ class EcoLogitsEngine:
         self.methodology_version = f"engine={ENGINE_VERSION};ecologits={ecologits.__version__}"
 
     def compute(self, event: InferenceEvent, config: Config) -> ImpactRecord:
-        name, aliased = self.resolver.resolve(event.model)
+        if event.route in {"openrouter", "custom", "unknown"}:
+            return self._unestimated(event, config)
+        if event.route == "local":
+            name, aliased = self.resolver.resolve(event.model_canonical)
+            return self._compute_selfhosted(event, name, aliased, config)
+        return self._compute_registry(event, config)
+
+    def _unestimated(self, event: InferenceEvent, config: Config) -> ImpactRecord:
+        return ImpactRecord(
+            model_resolved=event.model_canonical or event.model_raw,
+            zone=config.electricity_mix_zone or "WOR",
+            methodology_version=self.methodology_version,
+            totals={}, usage={}, embodied={}, warnings=[], error="route-not-estimated",
+        )
+
+    def _compute_registry(self, event: InferenceEvent, config: Config) -> ImpactRecord:
+        name, aliased = self.resolver.resolve(event.model_canonical)
         latency = _latency(event, config)
         out = llm_impacts(
-            provider=event.provider,
+            provider=event.route,
             model_name=name,
             output_token_count=event.output_tokens,
             request_latency=latency,
             electricity_mix_zone=config.electricity_mix_zone,
         )
         if out.errors:
-            if out.errors[0].code == "model-not-registered":
-                return self._compute_selfhosted(event, name, aliased, config)
             return ImpactRecord(
                 model_resolved=name, zone=config.electricity_mix_zone,
                 methodology_version=self.methodology_version,
@@ -93,7 +107,7 @@ class EcoLogitsEngine:
         totals, usage, embodied = _extract_impacts(out)
         warnings = [w.code for w in (out.warnings or [])]
         if aliased:
-            warnings.append(f"alias:{event.model}->{name}")
+            warnings.append(f"alias:{event.model_canonical}->{name}")
         return ImpactRecord(
             model_resolved=name, zone=config.electricity_mix_zone,
             methodology_version=self.methodology_version,
@@ -106,7 +120,7 @@ class EcoLogitsEngine:
         """Fallback pour modèles auto-hébergés : résout params et appelle compute_llm_impacts directement."""
         if self.params_resolver is None:
             self.params_resolver = ModelParamsResolver(config)
-        params = self.params_resolver.resolve(event.provider, name)
+        params = self.params_resolver.resolve_local(name)
         zone = config.electricity_mix_zone or "WOR"
         if params is None:
             return ImpactRecord(
@@ -131,7 +145,7 @@ class EcoLogitsEngine:
         totals, usage, embodied = _extract_impacts(out)
         warnings = list(params.warnings)
         if aliased:
-            warnings.append(f"alias:{event.model}->{name}")
+            warnings.append(f"alias:{event.model_canonical}->{name}")
         return ImpactRecord(
             model_resolved=name, zone=zone,
             methodology_version=self.methodology_version,

@@ -329,6 +329,10 @@ class ModelParamsResolver:
             or self._from_sibling_extrapolation(provider, model)
         )
 
+    def resolve_local(self, model: str) -> ParamsResult | None:
+        """Lit uniquement les paramètres explicitement confirmés pour le modèle local."""
+        return self._from_cache("local", model)
+
     def _from_registry(self, provider: str, model: str) -> ParamsResult | None:
         for prov in (provider, *_REGISTRY_FALLBACK_PROVIDERS):
             m = models.find_model(provider=prov, model_name=model)

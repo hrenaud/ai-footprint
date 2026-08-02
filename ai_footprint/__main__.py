@@ -195,6 +195,13 @@ def main(argv: list[str] | None = None) -> int:
                        help="date de début (ex. 2026-06-27, 27/06/2026, 27/06/26)")
     p_res.add_argument("--list", action="store_true")
     p_res.add_argument("--json", action="store_true")
+    p_res.add_argument("--route", choices=("anthropic", "openai", "openrouter", "custom", "local"),
+                       help="route confirmée pour le lot sélectionné")
+    p_res.add_argument("--model", help="modèle canonique pour le lot sélectionné")
+    p_res.add_argument("--session", help="session à résoudre")
+    p_res.add_argument("--repo", help="dépôt Hugging Face du modèle local")
+    p_res.add_argument("--active-params", type=float, help="paramètres actifs locaux (milliards)")
+    p_res.add_argument("--total-params", type=float, help="paramètres totaux locaux (milliards)")
     p_res.add_argument("--set", action="append", default=[], metavar="P/M=REPO")
     p_res.add_argument("--forget", action="append", default=[], metavar="P/M")
     p_res.add_argument("--recompute", action="store_true",

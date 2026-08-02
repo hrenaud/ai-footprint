@@ -8,9 +8,9 @@ from ai_footprint.store.db import SQLiteStore
 def _events():
     return [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 287, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1"),
+                        "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:10:00.000Z", "projA", "sess-A", "u2"),
+                        "2026-06-27T10:10:00.000Z", "projA", "sess-A", "u2", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
 
 
@@ -55,7 +55,7 @@ def test_intensity_by_model(tmp_path):
     # 1 h de temps actif (3600 s), 600 tokens de sortie
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1", active_seconds=3600.0),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", active_seconds=3600.0, route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     data = store.intensity_by_model()
@@ -72,9 +72,9 @@ def test_intensity_by_model_filters_by_since(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1", active_seconds=3600.0),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", active_seconds=3600.0, route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
-                       "2026-06-28T10:00:00.000Z", "p", "s", "u2", active_seconds=3600.0),
+                        "2026-06-28T10:00:00.000Z", "p", "s", "u2", active_seconds=3600.0, route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     # sans filtre : les 2 events agrégés (2 h, 1200 tokens)
@@ -101,10 +101,10 @@ def test_intensity_by_client(tmp_path):
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
                        "2026-06-27T10:00:00.000Z", "p", "s1", "u1",
-                       active_seconds=3600.0, client="claude-code"),
+                        active_seconds=3600.0, client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 300, 0, 0,
                        "2026-06-27T10:00:00.000Z", "p", "s2", "u2",
-                       active_seconds=1800.0, client="opencode"),
+                        active_seconds=1800.0, client="opencode", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     data = store.intensity_by_client()
@@ -123,10 +123,10 @@ def test_intensity_by_client_filters_by_since(tmp_path):
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 600, 0, 0,
                        "2026-06-27T10:00:00.000Z", "p", "s1", "u1",
-                       active_seconds=3600.0, client="claude-code"),
+                        active_seconds=3600.0, client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 400, 0, 0,
                        "2026-06-28T10:00:00.000Z", "p", "s2", "u2",
-                       active_seconds=3600.0, client="claude-code"),
+                        active_seconds=3600.0, client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     assert store.intensity_by_client()[0]["tokens"] == 1000
@@ -150,9 +150,9 @@ def test_tokens_by_model_sums_all_token_types(tmp_path):
     # input 100 + output 200 + cache_creation 50 + cache_read 30 = 380 par event
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 50, 30,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 50, 30,
-                       "2026-06-27T11:00:00.000Z", "p", "s", "u2"),
+                        "2026-06-27T11:00:00.000Z", "p", "s", "u2", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     data = store.tokens_by_model()
@@ -170,9 +170,9 @@ def test_tokens_by_model_filters_by_since(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-28T10:00:00.000Z", "p", "s", "u2"),
+                        "2026-06-28T10:00:00.000Z", "p", "s", "u2", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     data = store.tokens_by_model(since="2026-06-28T00:00:00.000Z")
@@ -185,9 +185,9 @@ def test_tokens_by_model_since_accepts_date_only(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T23:59:00.000Z", "p", "s", "u1"),
+                        "2026-06-27T23:59:00.000Z", "p", "s", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-28T00:00:01.000Z", "p", "s", "u2"),
+                        "2026-06-28T00:00:01.000Z", "p", "s", "u2", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     data = store.tokens_by_model(since="2026-06-28")
@@ -200,7 +200,7 @@ def test_uncovered_by_model_excludes_synthetic_sums_output(tmp_path):
     events = [
         # placeholder interne Claude Code : à ignorer (0 token, aucune inférence)
         InferenceEvent("anthropic", "<synthetic>", 0, 0, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         # vrai modèle tiers non modélisé (le « : » fait échouer HF sans réseau)
         InferenceEvent("openrouter", "z-ai/glm-4.5-air:free", 100, 200, 0, 0,
                        "2026-06-27T10:05:00.000Z", "p", "s", "u2"),
@@ -218,7 +218,7 @@ def test_coverage_excludes_synthetic(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
+                        "2026-06-27T10:00:00.000Z", "p", "s", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("openrouter", "z-ai/glm-4.5-air:free", 100, 200, 0, 0,
                        "2026-06-27T10:05:00.000Z", "p", "s", "u2"),
         InferenceEvent("anthropic", "<synthetic>", 0, 0, 0, 0,
@@ -235,9 +235,9 @@ def test_rows_for_report_filters_by_session(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1"),
+                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T11:00:00.000Z", "projB", "sess-B", "u2"),
+                        "2026-06-27T11:00:00.000Z", "projB", "sess-B", "u2", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     assert len(store.rows_for_report()) == 2
@@ -251,7 +251,7 @@ def test_client_persisted_and_in_report(tmp_path):
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
                        "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1",
-                       client="claude-code"),
+                        client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     assert store.rows_for_report()[0]["client"] == "claude-code"
@@ -261,7 +261,7 @@ def test_client_backfilled_on_reingest(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     # 1re ingestion sans client (event historique)
     e = InferenceEvent("anthropic", "claude-opus-4-8", 100, 200, 0, 0,
-                       "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1")
+                        "2026-06-27T10:00:00.000Z", "projA", "sess-A", "u1", route="anthropic", model_canonical="claude-opus-4-8")
     store.ingest([e], _engine(), Config())
     assert store.rows_for_report()[0]["client"] == ""
     # ré-ingestion du même event avec client → backfill
@@ -280,22 +280,24 @@ def test_impact_columns_persisted(tmp_path):
 
 def test_recompute_errors_resolves_after_params_added(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
-    # « x:y » : le « : » fait échouer HF sans réseau → event en erreur
+    # An unresolved event becomes local only through a selected resolution.
     events = [
         InferenceEvent("ollama", "x:y", 100, 200, 0, 0,
                        "2026-06-27T10:00:00.000Z", "p", "s", "u1"),
         InferenceEvent("anthropic", "<synthetic>", 0, 0, 0, 0,
-                       "2026-06-27T10:01:00.000Z", "p", "s", "u2"),
+                       "2026-06-27T10:01:00.000Z", "p", "synthetic", "u2"),
     ]
     store.ingest(events, _engine(), Config())
     assert store.coverage()["uncovered"] == 1  # <synthetic> non compté
     cfg = Config(electricity_mix_zone="FRA",
-                 model_params={"ollama/x:y": {
+                 model_params={"local/x:y": {
                      "active": 7.0, "total": 7.0, "arch": "dense",
                      "source": "resolve", "hf_repo": "Org/Repo"}})
-    delta = store.recompute_errors(_engine(), cfg)
-    assert delta["before"] == 1 and delta["after"] == 0   # x:y résolu, <synthetic> jamais compté
-    assert delta.get("recomputed") == 1  # 1 event recalculé (x:y)
+    store.resolve_events(route="local", model_canonical="x:y", session_id="s")
+    assert store.recompute_selected_events(
+        _engine(), cfg, route="local", model_canonical="x:y", session_id="s",
+    ) == 1
+    assert store.coverage()["uncovered"] == 0
     covered = [r for r in store.rows_for_report() if r["model"] == "x:y"]
     assert covered and covered[0]["gwp_min"] > 0
 
@@ -305,13 +307,13 @@ def test_mark_model_events_error_targets_only_that_model(tmp_path):
     (provider, model), même si d'autres modèles partagent session_id ou msg_id."""
     store = SQLiteStore(str(tmp_path / "c.db"))
     cfg = Config(electricity_mix_zone="FRA", model_params={
-        "ollama/A": {"active": 7.0, "total": 7.0, "arch": "dense", "source": "user"},
-        "ollama/B": {"active": 7.0, "total": 7.0, "arch": "dense", "source": "user"}})
+        "local/A": {"active": 7.0, "total": 7.0, "arch": "dense", "source": "user"},
+        "local/B": {"active": 7.0, "total": 7.0, "arch": "dense", "source": "user"}})
     # A a deux events ; B partage une session ET un msg_id avec A, mais pas la PAIRE.
     events = [
-        InferenceEvent("ollama", "A", 100, 200, 0, 0, "2026-06-27T10:00:00Z", "p", "s1", "mA1"),
-        InferenceEvent("ollama", "A", 100, 200, 0, 0, "2026-06-27T10:01:00Z", "p", "s2", "mA2"),
-        InferenceEvent("ollama", "B", 100, 200, 0, 0, "2026-06-27T10:02:00Z", "p", "s1", "mA2"),
+        InferenceEvent("ollama", "A", 100, 200, 0, 0, "2026-06-27T10:00:00Z", "p", "s1", "mA1", route="local", model_canonical="A"),
+        InferenceEvent("ollama", "A", 100, 200, 0, 0, "2026-06-27T10:01:00Z", "p", "s2", "mA2", route="local", model_canonical="A"),
+        InferenceEvent("ollama", "B", 100, 200, 0, 0, "2026-06-27T10:02:00Z", "p", "s1", "mA2", route="local", model_canonical="B"),
     ]
     store.ingest(events, _engine(), cfg)
     assert store.coverage()["uncovered"] == 0          # les 3 couverts

@@ -72,13 +72,13 @@ def _seed_store(tmp_path):
     events = [
         InferenceEvent("anthropic", "claude-opus-4-8", 1000, 5000, 0, 0,
                        "2026-05-10T10:00:00.000Z", "agent-carbon", "sess-A", "u1",
-                       client="claude-code"),
+                        client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 1000, 5000, 0, 0,
                        "2026-06-15T10:00:00.000Z", "mcp-nr", "sess-B", "u2",
-                       client="opencode"),
+                        client="opencode", route="anthropic", model_canonical="claude-opus-4-8"),
         InferenceEvent("anthropic", "claude-opus-4-8", 1000, 5000, 0, 0,
                        "2026-06-20T10:00:00.000Z", "immobilier", "sess-C", "u3",
-                       client="claude-code"),
+                        client="claude-code", route="anthropic", model_canonical="claude-opus-4-8"),
     ]
     store.ingest(events, _engine(), Config())
     return store

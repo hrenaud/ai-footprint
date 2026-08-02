@@ -3,6 +3,7 @@ import json
 import sys
 import types
 from contextlib import redirect_stdout
+from types import SimpleNamespace
 from ai_footprint import __main__ as cli
 from ai_footprint.config import Config
 from ai_footprint.impact.engine import EcoLogitsEngine
@@ -37,7 +38,8 @@ def _patch_config(monkeypatch, path):
 def _ingest_error_event(db):
     s = SQLiteStore(db)
     s.ingest([InferenceEvent("ollama", "x:y", 100, 200, 0, 0,
-              "2026-06-27T10:00:00.000Z", "p", "s", "u1")],
+               "2026-06-27T10:00:00.000Z", "p", "s", "u1",
+               route="unknown")],
              _engine(), Config(electricity_mix_zone="FRA"))
     return s
 
@@ -51,29 +53,64 @@ def test_resolve_list_json(tmp_path, monkeypatch):
         rc = cli.main(["resolve", "--db", db, "--list", "--json"])
     assert rc == 0
     data = json.loads(buf.getvalue())
-    assert data[0]["model"] == "x:y"
-    assert data[0]["tokens"] == 200
+    assert data[0]["model_raw"] == "x:y"
+    assert data[0]["session_id"] == "s"
+    assert data[0]["tokens"] == 300
 
 
-def test_resolve_set_recompute_covers_model(tmp_path, monkeypatch):
+def test_resolve_local_session_recomputes_only_selected_events(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     Config(electricity_mix_zone="FRA").save(config_path)
     _patch_config(monkeypatch, config_path)
-    _ingest_error_event(db)                      # HF réel : x:y invalide → erreur
+    _ingest_error_event(db)
     assert SQLiteStore(db).coverage()["uncovered"] == 1
-    _fake_hf(7_000_000_000, monkeypatch)         # mock pour le --set
+    _fake_hf(7_000_000_000, monkeypatch)
     with redirect_stdout(io.StringIO()):
-        rc = cli.main(["resolve", "--db", db, "--set", "ollama/x:y=Org/Repo"])
+        rc = cli.main([
+            "resolve", "--db", db, "--session", "s", "--route", "local",
+            "--model", "Org/Repo", "--repo", "Org/Repo",
+            "--active-params", "3", "--total-params", "7",
+        ])
     assert rc == 0
     assert SQLiteStore(db).coverage()["uncovered"] == 0
     reloaded = Config.load(config_path)
-    assert reloaded.model_params["ollama/x:y"]["source"] == "resolve"
-    assert reloaded.model_params["ollama/x:y"]["hf_repo"] == "Org/Repo"
+    assert reloaded.model_params["local/Org/Repo"]["source"] == "resolve"
+    assert reloaded.model_params["local/Org/Repo"]["active"] == 3.0
 
 
-def test_resolve_forget_reverts(tmp_path, monkeypatch):
-    import ai_footprint.impact.params as params_mod
+def test_resolve_rejects_invalid_local_params_without_changing_rows(tmp_path, monkeypatch, capsys):
+    db = str(tmp_path / "c.db")
+    _patch_config(monkeypatch, str(tmp_path / "config.json"))
+    _ingest_error_event(db)
+    rc = cli.main([
+        "resolve", "--db", db, "--session", "s", "--route", "local",
+        "--model", "Org/Repo", "--active-params", "8", "--total-params", "7",
+    ])
+    assert rc == 2
+    assert "active-params: must not exceed total-params" in capsys.readouterr().err
+    row = SQLiteStore(db).conn.execute("SELECT route FROM events").fetchone()
+    assert row["route"] == "unknown"
+
+
+def test_resolve_rejects_invalid_route_without_changing_rows(tmp_path, monkeypatch, capsys):
+    from ai_footprint.resolve.cli import cmd_resolve
+
+    db = str(tmp_path / "c.db")
+    _patch_config(monkeypatch, str(tmp_path / "config.json"))
+    _ingest_error_event(db)
+    args = SimpleNamespace(
+        db=db, since=None, list=False, json=False, set=[], forget=[], recompute=False,
+        retry_hf=False, route="invalid", model="Org/Repo", session="s", repo=None,
+        active_params=None, total_params=None,
+    )
+    assert cmd_resolve(args) == 2
+    assert "route: must be" in capsys.readouterr().err
+    row = SQLiteStore(db).conn.execute("SELECT route FROM events").fetchone()
+    assert row["route"] == "unknown"
+
+
+def test_legacy_mapping_does_not_confirm_an_unknown_route(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     Config(electricity_mix_zone="FRA").save(config_path)
@@ -82,20 +119,12 @@ def test_resolve_forget_reverts(tmp_path, monkeypatch):
     _fake_hf(7_000_000_000, monkeypatch)
     with redirect_stdout(io.StringIO()):
         cli.main(["resolve", "--db", db, "--set", "ollama/x:y=Org/Repo"])
-    assert SQLiteStore(db).coverage()["uncovered"] == 0
-    # HF indisponible → le recompute du forget ne peut pas re-résoudre x:y
-    monkeypatch.setattr(params_mod, "huggingface_hub", None)
-    with redirect_stdout(io.StringIO()):
-        rc = cli.main(["resolve", "--db", db, "--forget", "ollama/x:y"])
-    assert rc == 0
     assert SQLiteStore(db).coverage()["uncovered"] == 1
-    assert "ollama/x:y" not in Config.load(config_path).model_params
+    row = SQLiteStore(db).conn.execute("SELECT route FROM events").fetchone()
+    assert row["route"] == "unknown"
 
 
-def test_resolve_forget_only_affects_target_model(tmp_path, monkeypatch):
-    """Teste que --forget n'affecte que le modèle oublié, même quand deux
-    modèles coexistent et partagent des (session_id, msg_id) de manière croisée."""
-    import ai_footprint.impact.params as params_mod
+def test_legacy_mapping_never_confirms_unrelated_unknown_rows(tmp_path, monkeypatch):
     db = str(tmp_path / "c.db")
     config_path = str(tmp_path / "config.json")
     Config(electricity_mix_zone="FRA").save(config_path)
@@ -116,27 +145,17 @@ def test_resolve_forget_only_affects_target_model(tmp_path, monkeypatch):
     # Mock HF pour le --set
     _fake_hf(7_000_000_000, monkeypatch)
 
-    # Set params pour A et B → tous couverts
+    # Legacy mappings do not turn route hints into confirmed routes.
     with redirect_stdout(io.StringIO()):
         cli.main(["resolve", "--db", db, "--set", "ollama/ModelA=Org/RepoA"])
     with redirect_stdout(io.StringIO()):
         cli.main(["resolve", "--db", db, "--set", "ollama/ModelB=Org/RepoB"])
-    assert SQLiteStore(db).coverage()["uncovered"] == 0
-
-    # Forget ModelA, mais HF est now unavailable pour recompute
-    monkeypatch.setattr(params_mod, "huggingface_hub", None)
-    with redirect_stdout(io.StringIO()):
-        cli.main(["resolve", "--db", db, "--forget", "ollama/ModelA"])
-
-    # Vérification : ModelA uncovered, ModelB covered
-    store = SQLiteStore(db)
-    uncovered_models = {r["model"] for r in store.uncovered_by_model()}
-    assert uncovered_models == {"ModelA"}, f"Expected only ModelA uncovered, got {uncovered_models}"
+    assert SQLiteStore(db).coverage()["uncovered"] == 3
+    assert {row["route"] for row in SQLiteStore(db).conn.execute("SELECT route FROM events")} == {"unknown"}
 
 
-def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
-    """N3 : --retry-hf purge le cache négatif et retente la cascade HF sur les
-    non couverts (sans mapping manuel)."""
+def test_retry_hf_does_not_estimate_unknown_routes(tmp_path, monkeypatch):
+    """No automatic fallback may confirm an unknown route."""
     import json as _json
     from types import SimpleNamespace
     import ai_footprint.impact.params as params_mod
@@ -173,4 +192,4 @@ def test_retry_hf_resolves_uncovered_via_cascade(tmp_path, monkeypatch):
     assert cmd_resolve(args) == 0
     assert "ollama/org/nouveau" not in cfg.hf_unresolved  # purgé avant retente
     check = SQLiteStore(db)
-    assert check.coverage()["uncovered"] == 0             # résolu par la cascade
+    assert check.coverage()["uncovered"] == 1

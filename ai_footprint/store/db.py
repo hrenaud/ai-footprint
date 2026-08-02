@@ -290,6 +290,37 @@ class SQLiteStore:
             "ORDER BY first_seen"
         )]
 
+    def recompute_selected_events(self, engine: EcoLogitsEngine, config: Config, *,
+                                  route: str, model_canonical: str,
+                                  session_id: str | None = None,
+                                  since: str | None = None) -> int:
+        """Recalcule uniquement le lot que la résolution vient de confirmer."""
+        clauses = ["route=?", "model_canonical=?"]
+        params: list[str] = [route, model_canonical]
+        if session_id:
+            clauses.append("session_id=?")
+            params.append(session_id)
+        if since:
+            clauses.append("timestamp>=?")
+            params.append(since)
+        rows = self.conn.execute(
+            "SELECT * FROM events WHERE " + " AND ".join(clauses), params
+        ).fetchall()
+        for row in rows:
+            event = InferenceEvent(
+                provider=row["provider"], model=row["model"],
+                input_tokens=row["input_tokens"], output_tokens=row["output_tokens"],
+                cache_creation_tokens=row["cache_creation_tokens"],
+                cache_read_tokens=row["cache_read_tokens"], timestamp=row["timestamp"],
+                project=row["project"], session_id=row["session_id"], msg_id=row["msg_id"],
+                active_seconds=row["active_seconds"], client=row["client"],
+                model_raw=row["model_raw"], route_hint=row["route_hint"],
+                route=row["route"], model_canonical=row["model_canonical"],
+            )
+            self._store_impact(event, engine.compute(event, config))
+        self.conn.commit()
+        return len(rows)
+
     def tokens_by_model_route(self, since: str | None = None) -> list[dict]:
         return self._tokens_by("model_canonical AS model, route", "model_canonical, route", since)
 

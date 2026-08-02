@@ -1,4 +1,5 @@
 import json
+import sys
 
 from ecologits.utils.range_value import RangeValue
 
@@ -111,10 +112,115 @@ def _print_list(rows: list[dict], as_json: bool) -> None:
         print(json.dumps(rows, ensure_ascii=False))
         return
     if not rows:
-        print("Aucun modèle non couvert.")
+        print("Aucun lot non résolu.")
         return
     for r in rows:
-        print(f"· {r['model']} ({r['tokens']} tokens générés, {r['events']} events)")
+        print(
+            f"· client={r['client'] or 'inconnu'} modèle={r['model_raw']} "
+            f"session={r['session_id']} période={r['first_seen']}..{r['last_seen']} "
+            f"tokens={r['tokens']} événements={r['events']}"
+        )
+
+
+def _field_error(field: str, reason: str) -> int:
+    print(f"{field}: {reason}", file=sys.stderr)
+    return 2
+
+
+def _interactive_resolution(store: SQLiteStore) -> dict | None:
+    batches = store.unresolved_batches()
+    if not batches:
+        print("Aucun lot non résolu.")
+        return None
+    _print_list(batches, False)
+    while True:
+        value = input("Lot à résoudre (numéro) : ").strip()
+        try:
+            batch = batches[int(value) - 1]
+        except (ValueError, IndexError):
+            print("lot: choisissez un numéro affiché.", file=sys.stderr)
+            continue
+        break
+    routes = ("anthropic", "openai", "openrouter", "custom", "local")
+    print("Routes : " + ", ".join(f"{i + 1}={route}" for i, route in enumerate(routes)))
+    while True:
+        value = input("Route (numéro ou nom) : ").strip().lower()
+        route = routes[int(value) - 1] if value.isdigit() and 0 < int(value) <= len(routes) else value
+        if route in routes:
+            break
+        print("route: choisissez une route affichée.", file=sys.stderr)
+    while True:
+        model = input("Modèle canonique : ").strip()
+        if model:
+            break
+        print("model: obligatoire.", file=sys.stderr)
+    result = {"session": batch["session_id"], "route": route, "model": model,
+              "repo": None, "active_params": None, "total_params": None}
+    if route == "local":
+        result["repo"] = input("Dépôt Hugging Face (optionnel) : ").strip() or None
+        while True:
+            try:
+                result["active_params"] = float(input("Paramètres actifs (Md) : "))
+                result["total_params"] = float(input("Paramètres totaux (Md) : "))
+            except ValueError:
+                print("params: saisissez des nombres en milliards.", file=sys.stderr)
+                continue
+            if result["active_params"] <= 0:
+                print("active-params: doit être positif.", file=sys.stderr)
+            elif result["total_params"] <= 0:
+                print("total-params: doit être positif.", file=sys.stderr)
+            elif result["active_params"] > result["total_params"]:
+                print("active-params: must not exceed total-params.", file=sys.stderr)
+            else:
+                break
+    return result
+
+
+def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
+    route = getattr(args, "route", None)
+    model = getattr(args, "model", None)
+    session = getattr(args, "session", None)
+    since = getattr(args, "since", None)
+    repo = getattr(args, "repo", None)
+    active = getattr(args, "active_params", None)
+    total = getattr(args, "total_params", None)
+    if not route and sys.stdin.isatty():
+        selected = _interactive_resolution(store)
+        if selected is None:
+            return 0
+        route, model, session = selected["route"], selected["model"], selected["session"]
+        repo, active, total = selected["repo"], selected["active_params"], selected["total_params"]
+    if not route:
+        return 0
+    if route not in {"anthropic", "openai", "openrouter", "custom", "local"}:
+        return _field_error("route", "must be anthropic, openai, openrouter, custom, or local")
+    if not session and not since:
+        return _field_error("scope", "provide --session or --since")
+    if not model:
+        return _field_error("model", "required with --route")
+    if route == "local":
+        if active is None or total is None:
+            return _field_error("params", "--active-params and --total-params are required for local")
+        if active <= 0:
+            return _field_error("active-params", "must be positive")
+        if total <= 0:
+            return _field_error("total-params", "must be positive")
+        if active > total:
+            return _field_error("active-params", "must not exceed total-params")
+        config.model_params[f"local/{model}"] = {
+            "active": active, "total": total, "arch": "moe" if active != total else "dense",
+            "source": "resolve", "hf_repo": repo,
+        }
+        config.save()
+    changed = store.resolve_events(
+        route=route, model_canonical=model, session_id=session, since=since,
+    )
+    engine = EcoLogitsEngine(ModelResolver(config.model_aliases))
+    recomputed = store.recompute_selected_events(
+        engine, config, route=route, model_canonical=model, session_id=session, since=since,
+    )
+    print(f"Résolution : {changed} événement(s), {recomputed} recalculé(s).")
+    return 0
 
 
 def cmd_resolve(args) -> int:
@@ -153,5 +259,5 @@ def cmd_resolve(args) -> int:
         if retry_hf:
             config.save()  # persiste les succès (cache positif) et les nouveaux échecs
     if args.list:
-        _print_list(store.uncovered_by_model(args.since), args.json)
-    return 0
+        _print_list(store.unresolved_batches(), args.json)
+    return _resolve_selected(store, config, args)
