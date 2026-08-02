@@ -29,7 +29,8 @@ from ai_footprint.report.cli import (
     render_intensity_by_client,
     render_projects,
     render_report,
-    render_tokens_by_model,
+    render_tokens_by_canonical_model,
+    render_tokens_by_model_route,
     render_uncovered,
 )
 from ai_footprint.release import ReleaseError, run as run_release
@@ -270,9 +271,14 @@ def main(argv: list[str] | None = None) -> int:
         projects = render_projects(rows, show_all=args.all_projects, detailed=args.detail)
         if projects:
             out += "\n\n" + projects
-        tokens = render_tokens_by_model(store.tokens_by_model(args.since), detailed=args.detail)
-        if tokens:
-            out += "\n\n" + tokens
+        by_route = render_tokens_by_model_route(
+            store.tokens_by_model_route(args.since), detailed=args.detail)
+        if by_route:
+            out += "\n\n" + by_route
+        by_canonical_model = render_tokens_by_canonical_model(
+            store.tokens_by_canonical_model(args.since), detailed=args.detail)
+        if by_canonical_model:
+            out += "\n\n" + by_canonical_model
         estimated = render_estimated_note(store.estimated_param_models(args.since))
         if estimated:
             out += "\n\n" + estimated

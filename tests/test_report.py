@@ -3,7 +3,9 @@ from ai_footprint.report.cli import (
     render_intensity_by_client,
     render_projects,
     render_report,
+    render_tokens_by_canonical_model,
     render_tokens_by_model,
+    render_tokens_by_model_route,
     render_uncovered,
 )
 
@@ -137,6 +139,43 @@ def test_render_tokens_by_model_notes_tokens_vs_impact_basis():
 
 def test_render_tokens_by_model_empty():
     assert render_tokens_by_model([]) == ""
+
+
+def test_render_tokens_by_model_route_labels_unestimated_tokens():
+    rows = [
+        {"model": "Qwen/Qwen3-8B", "route": "local", "tokens": 300,
+         "measured_tokens": 300, "unestimated_tokens": 0},
+        {"model": "Qwen/Qwen3-8B", "route": "openrouter", "tokens": 700,
+         "measured_tokens": 0, "unestimated_tokens": 700},
+    ]
+
+    out = render_tokens_by_model_route(rows)
+
+    assert "Qwen/Qwen3-8B" in out
+    assert "local" in out and "mesuré" in out
+    assert "openrouter" in out and "non estimé" in out
+    assert "~300" in out and "~700" in out
+
+
+def test_render_tokens_by_canonical_model_shows_each_route_contribution():
+    rows = [{
+        "model": "Qwen/Qwen3-8B", "tokens": 1000,
+        "routes": [
+            {"route": "local", "tokens": 300, "measured_tokens": 300, "unestimated_tokens": 0},
+            {"route": "openrouter", "tokens": 700, "measured_tokens": 0, "unestimated_tokens": 700},
+        ],
+    }]
+
+    out = render_tokens_by_canonical_model(rows)
+
+    assert "Qwen/Qwen3-8B" in out and "~1k" in out
+    assert "local : ~300 mesuré" in out
+    assert "openrouter : ~700 non estimé" in out
+
+
+def test_route_token_renderers_empty():
+    assert render_tokens_by_model_route([]) == ""
+    assert render_tokens_by_canonical_model([]) == ""
 
 
 _MINMAX_ROW = {

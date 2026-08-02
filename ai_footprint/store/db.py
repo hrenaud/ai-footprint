@@ -323,23 +323,42 @@ class SQLiteStore:
         return len(rows)
 
     def tokens_by_model_route(self, since: str | None = None) -> list[dict]:
-        return self._tokens_by("model_canonical AS model, route", "model_canonical, route", since)
+        """Tokens par identité canonique et route, y compris les events non estimés."""
+        token_count = (
+            "e.input_tokens + e.output_tokens + e.cache_creation_tokens + e.cache_read_tokens"
+        )
+        sql = (
+            "SELECT e.model_canonical AS model, e.route, "
+            f"SUM({token_count}) AS tokens, "
+            f"SUM(CASE WHEN i.session_id IS NOT NULL AND i.error IS NULL THEN {token_count} ELSE 0 END) "
+            "AS measured_tokens, "
+            f"SUM(CASE WHEN i.session_id IS NULL OR i.error IS NOT NULL THEN {token_count} ELSE 0 END) "
+            "AS unestimated_tokens "
+            "FROM events e LEFT JOIN impacts i "
+            "ON e.session_id=i.session_id AND e.msg_id=i.msg_id"
+        )
+        params: list[str] = []
+        if since:
+            sql += " WHERE e.timestamp>=?"
+            params.append(since)
+        sql += " GROUP BY e.model_canonical, e.route ORDER BY e.model_canonical, e.route"
+        return [dict(row) for row in self.conn.execute(sql, params)]
 
     def tokens_by_canonical_model(self, since: str | None = None) -> list[dict]:
-        return self._tokens_by("model_canonical AS model", "model_canonical", since)
-
-    def _tokens_by(self, select: str, group_by: str, since: str | None) -> list[dict]:
-        sql = (
-            "SELECT " + select + ", "
-            "SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens) "
-            "AS tokens FROM events"
-        )
-        params: tuple[str, ...] = ()
-        if since:
-            sql += " WHERE timestamp>=?"
-            params = (since,)
-        sql += " GROUP BY " + group_by
-        return [dict(row) for row in self.conn.execute(sql, params)]
+        """Tokens par modèle canonique, avec le détail mesuré/non estimé de chaque route."""
+        models: dict[str, dict] = {}
+        for row in self.tokens_by_model_route(since):
+            model = models.setdefault(row["model"], {
+                "model": row["model"], "tokens": 0, "routes": [],
+            })
+            model["tokens"] += row["tokens"]
+            model["routes"].append({
+                "route": row["route"],
+                "tokens": row["tokens"],
+                "measured_tokens": row["measured_tokens"],
+                "unestimated_tokens": row["unestimated_tokens"],
+            })
+        return list(models.values())
 
     def tokens_for_session(self, session_id: str) -> int:
         """Total de tokens (entrée+sortie) d'une session, sans jointure sur

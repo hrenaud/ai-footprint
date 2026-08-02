@@ -166,6 +166,45 @@ def test_tokens_by_model_sums_all_token_types(tmp_path):
     assert d["gwp_min"] <= d["gwp"] <= d["gwp_max"]
 
 
+def test_tokens_by_route_and_canonical_model_keep_unestimated_contributions(tmp_path):
+    store = SQLiteStore(str(tmp_path / "c.db"))
+    model = "Qwen/Qwen3-8B"
+    config = Config(model_params={
+        f"local/{model}": {"active": 8.0, "total": 8.0, "arch": "dense", "source": "user"},
+    })
+    events = [
+        InferenceEvent("ollama", model, 100, 200, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "local", "u1",
+                       route="local", model_canonical=model),
+        InferenceEvent("openrouter", model, 300, 400, 0, 0,
+                       "2026-06-27T10:01:00.000Z", "p", "openrouter", "u2",
+                       route="openrouter", model_canonical=model),
+    ]
+    store.ingest(events, _engine(), config)
+
+    by_route = {(row["model"], row["route"]): row for row in store.tokens_by_model_route()}
+    assert by_route[(model, "local")] == {
+        "model": model, "route": "local", "tokens": 300,
+        "measured_tokens": 300, "unestimated_tokens": 0,
+    }
+    assert by_route[(model, "openrouter")] == {
+        "model": model, "route": "openrouter", "tokens": 700,
+        "measured_tokens": 0, "unestimated_tokens": 700,
+    }
+
+    canonical = store.tokens_by_canonical_model()
+    assert canonical == [{
+        "model": model, "tokens": 1000,
+        "routes": [
+            {"route": "local", "tokens": 300, "measured_tokens": 300, "unestimated_tokens": 0},
+            {"route": "openrouter", "tokens": 700, "measured_tokens": 0, "unestimated_tokens": 700},
+        ],
+    }]
+    estimated_rows = store.rows_for_report()
+    assert len(estimated_rows) == 1
+    assert estimated_rows[0]["route"] == "local"
+
+
 def test_tokens_by_model_filters_by_since(tmp_path):
     store = SQLiteStore(str(tmp_path / "c.db"))
     events = [
