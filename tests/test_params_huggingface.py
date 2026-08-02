@@ -119,6 +119,12 @@ def test_fetch_hf_params_returns_billions(monkeypatch):
     assert res.source == "huggingface"
 
 
+def test_huggingface_model_info_uses_safetensors_total(monkeypatch):
+    _fake_hf(7_000_000_000, monkeypatch)
+
+    assert fetch_hf_params("Qwen/Qwen3-8B").total == 7.0
+
+
 def test_fetch_hf_params_missing_lib_returns_none(monkeypatch):
     import ai_footprint.impact.params as params_mod
     monkeypatch.setattr(params_mod, "huggingface_hub", None)
