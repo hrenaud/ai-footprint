@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.11.0] — 2026-08-02
+
+### Features
+
+- (resolve) — persist model resolution cascade
 ## [1.10.0] — 2026-08-02
 
 ### Features
