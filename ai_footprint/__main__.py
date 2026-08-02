@@ -198,6 +198,8 @@ def main(argv: list[str] | None = None) -> int:
     p_res.add_argument("--route", choices=("anthropic", "openai", "openrouter", "custom", "local"),
                        help="route confirmée pour le lot sélectionné")
     p_res.add_argument("--model", help="modèle canonique pour le lot sélectionné")
+    p_res.add_argument("--client", help="client du lot sélectionné")
+    p_res.add_argument("--raw-model", dest="raw_model", help="modèle brut du lot sélectionné")
     p_res.add_argument("--session", help="session à résoudre")
     p_res.add_argument("--repo", help="dépôt Hugging Face du modèle local")
     p_res.add_argument("--active-params", type=float, help="paramètres actifs locaux (milliards)")

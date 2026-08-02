@@ -107,16 +107,17 @@ def _print_recompute(delta: dict) -> None:
     print(f"Recompute : {delta['before']} → {delta['after']} non couverts")
 
 
-def _print_list(rows: list[dict], as_json: bool) -> None:
+def _print_list(rows: list[dict], as_json: bool, *, numbered: bool = False) -> None:
     if as_json:
         print(json.dumps(rows, ensure_ascii=False))
         return
     if not rows:
         print("Aucun lot non résolu.")
         return
-    for r in rows:
+    for index, r in enumerate(rows, start=1):
+        prefix = f"{index}. " if numbered else "· "
         print(
-            f"· client={r['client'] or 'inconnu'} modèle={r['model_raw']} "
+            f"{prefix}client={r['client'] or 'inconnu'} modèle={r['model_raw']} "
             f"session={r['session_id']} période={r['first_seen']}..{r['last_seen']} "
             f"tokens={r['tokens']} événements={r['events']}"
         )
@@ -132,7 +133,7 @@ def _interactive_resolution(store: SQLiteStore) -> dict | None:
     if not batches:
         print("Aucun lot non résolu.")
         return None
-    _print_list(batches, False)
+    _print_list(batches, False, numbered=True)
     while True:
         value = input("Lot à résoudre (numéro) : ").strip()
         try:
@@ -154,25 +155,34 @@ def _interactive_resolution(store: SQLiteStore) -> dict | None:
         if model:
             break
         print("model: obligatoire.", file=sys.stderr)
-    result = {"session": batch["session_id"], "route": route, "model": model,
+    result = {"session": batch["session_id"], "client": batch["client"],
+              "raw_model": batch["model_raw"], "route": route, "model": model,
               "repo": None, "active_params": None, "total_params": None}
     if route == "local":
         result["repo"] = input("Dépôt Hugging Face (optionnel) : ").strip() or None
         while True:
             try:
                 result["active_params"] = float(input("Paramètres actifs (Md) : "))
-                result["total_params"] = float(input("Paramètres totaux (Md) : "))
             except ValueError:
-                print("params: saisissez des nombres en milliards.", file=sys.stderr)
+                print("active-params: saisissez un nombre en milliards.", file=sys.stderr)
                 continue
             if result["active_params"] <= 0:
                 print("active-params: doit être positif.", file=sys.stderr)
-            elif result["total_params"] <= 0:
+                continue
+            break
+        while True:
+            try:
+                result["total_params"] = float(input("Paramètres totaux (Md) : "))
+            except ValueError:
+                print("total-params: saisissez un nombre en milliards.", file=sys.stderr)
+                continue
+            if result["total_params"] <= 0:
                 print("total-params: doit être positif.", file=sys.stderr)
-            elif result["active_params"] > result["total_params"]:
-                print("active-params: must not exceed total-params.", file=sys.stderr)
-            else:
-                break
+                continue
+            if result["total_params"] < result["active_params"]:
+                print("total-params: must be at least active-params.", file=sys.stderr)
+                continue
+            break
     return result
 
 
@@ -180,6 +190,8 @@ def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
     route = getattr(args, "route", None)
     model = getattr(args, "model", None)
     session = getattr(args, "session", None)
+    client = getattr(args, "client", None)
+    raw_model = getattr(args, "raw_model", None)
     since = getattr(args, "since", None)
     repo = getattr(args, "repo", None)
     active = getattr(args, "active_params", None)
@@ -189,6 +201,7 @@ def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
         if selected is None:
             return 0
         route, model, session = selected["route"], selected["model"], selected["session"]
+        client, raw_model = selected["client"], selected["raw_model"]
         repo, active, total = selected["repo"], selected["active_params"], selected["total_params"]
     if not route:
         return 0
@@ -198,6 +211,10 @@ def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
         return _field_error("scope", "provide --session or --since")
     if not model:
         return _field_error("model", "required with --route")
+    if client is None:
+        return _field_error("client", "required with --route")
+    if not raw_model:
+        return _field_error("raw-model", "required with --route")
     if route == "local":
         if active is None or total is None:
             return _field_error("params", "--active-params and --total-params are required for local")
@@ -213,11 +230,13 @@ def _resolve_selected(store: SQLiteStore, config: Config, args) -> int:
         }
         config.save()
     changed = store.resolve_events(
-        route=route, model_canonical=model, session_id=session, since=since,
+        route=route, model_canonical=model, client=client, model_raw=raw_model,
+        session_id=session, since=since,
     )
     engine = EcoLogitsEngine(ModelResolver(config.model_aliases))
     recomputed = store.recompute_selected_events(
-        engine, config, route=route, model_canonical=model, session_id=session, since=since,
+        engine, config, route=route, model_canonical=model, client=client,
+        model_raw=raw_model, session_id=session, since=since,
     )
     print(f"Résolution : {changed} événement(s), {recomputed} recalculé(s).")
     return 0

@@ -256,14 +256,14 @@ class SQLiteStore:
             params.append(session_id)
         return [dict(r) for r in self.conn.execute(sql, tuple(params)).fetchall()]
 
-    def resolve_events(self, *, route: str, model_canonical: str,
-                       session_id: str | None = None, since: str | None = None,
+    def resolve_events(self, *, route: str, model_canonical: str, client: str,
+                       model_raw: str, session_id: str | None = None, since: str | None = None,
                        until: str | None = None) -> int:
         """Confirme une route uniquement pour le lot explicitement sélectionné."""
         if not session_id and not since and not until:
             raise ValueError("A session or date range is required")
-        clauses = ["route='unknown'"]
-        params: list[str] = []
+        clauses = ["route='unknown'", "client=?", "model_raw=?"]
+        params: list[str] = [client, model_raw]
         if session_id:
             clauses.append("session_id=?")
             params.append(session_id)
@@ -292,11 +292,12 @@ class SQLiteStore:
 
     def recompute_selected_events(self, engine: EcoLogitsEngine, config: Config, *,
                                   route: str, model_canonical: str,
+                                  client: str, model_raw: str,
                                   session_id: str | None = None,
                                   since: str | None = None) -> int:
         """Recalcule uniquement le lot que la résolution vient de confirmer."""
-        clauses = ["route=?", "model_canonical=?"]
-        params: list[str] = [route, model_canonical]
+        clauses = ["route=?", "model_canonical=?", "client=?", "model_raw=?"]
+        params: list[str] = [route, model_canonical, client, model_raw]
         if session_id:
             clauses.append("session_id=?")
             params.append(session_id)

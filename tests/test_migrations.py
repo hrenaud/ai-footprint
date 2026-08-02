@@ -81,7 +81,8 @@ def test_resolution_changes_only_selected_session(tmp_path):
     store.conn.commit()
 
     store.resolve_events(
-        session_id="local-session", route="local", model_canonical="Qwen/Qwen3-8B"
+        session_id="local-session", client="", model_raw="Qwen/Qwen3",
+        route="local", model_canonical="Qwen/Qwen3-8B"
     )
 
     routes = dict(store.conn.execute("SELECT session_id, route FROM events"))
@@ -102,6 +103,8 @@ def test_resolution_changes_only_selected_date_range(tmp_path):
     store.resolve_events(
         since="2026-02-01T00:00:00+00:00",
         until="2026-02-01T23:59:59+00:00",
+        client="",
+        model_raw="Qwen/Qwen3",
         route="openrouter",
         model_canonical="Qwen/Qwen3-8B",
     )

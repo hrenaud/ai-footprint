@@ -68,7 +68,7 @@ def test_resolve_local_session_recomputes_only_selected_events(tmp_path, monkeyp
     _fake_hf(7_000_000_000, monkeypatch)
     with redirect_stdout(io.StringIO()):
         rc = cli.main([
-            "resolve", "--db", db, "--session", "s", "--route", "local",
+            "resolve", "--db", db, "--session", "s", "--client", "", "--raw-model", "x:y", "--route", "local",
             "--model", "Org/Repo", "--repo", "Org/Repo",
             "--active-params", "3", "--total-params", "7",
         ])
@@ -79,13 +79,73 @@ def test_resolve_local_session_recomputes_only_selected_events(tmp_path, monkeyp
     assert reloaded.model_params["local/Org/Repo"]["active"] == 3.0
 
 
+def test_resolve_scopes_a_session_to_the_selected_client_and_raw_model(tmp_path, monkeypatch):
+    db = str(tmp_path / "c.db")
+    config_path = str(tmp_path / "config.json")
+    Config(electricity_mix_zone="FRA").save(config_path)
+    _patch_config(monkeypatch, config_path)
+    store = SQLiteStore(db)
+    store.ingest([
+        InferenceEvent("ollama", "qwen-raw", 10, 20, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "shared", "qwen",
+                       client="opencode", route="unknown"),
+        InferenceEvent("ollama", "llama-raw", 10, 20, 0, 0,
+                       "2026-06-27T10:01:00.000Z", "p", "shared", "llama",
+                       client="pi", route="unknown"),
+    ], _engine(), Config(electricity_mix_zone="FRA"))
+
+    assert cli.main([
+        "resolve", "--db", db, "--session", "shared", "--client", "opencode",
+        "--raw-model", "qwen-raw", "--route", "local", "--model", "Qwen/Qwen3",
+        "--active-params", "3", "--total-params", "7",
+    ]) == 0
+
+    rows = SQLiteStore(db).conn.execute(
+        "SELECT client, model_raw, route FROM events ORDER BY msg_id"
+    ).fetchall()
+    assert [tuple(row) for row in rows] == [
+        ("pi", "llama-raw", "unknown"),
+        ("opencode", "qwen-raw", "local"),
+    ]
+
+
+def test_interactive_resolution_numbers_listed_batches_and_reprompts_only_invalid_local_field(
+        tmp_path, monkeypatch, capsys):
+    from ai_footprint.resolve.cli import _interactive_resolution
+
+    db = str(tmp_path / "c.db")
+    store = SQLiteStore(db)
+    store.ingest([
+        InferenceEvent("ollama", "qwen-raw", 10, 20, 0, 0,
+                       "2026-06-27T10:00:00.000Z", "p", "s", "qwen",
+                       client="opencode", route="unknown"),
+        InferenceEvent("ollama", "llama-raw", 10, 20, 0, 0,
+                       "2026-06-27T10:01:00.000Z", "p", "s", "llama",
+                       client="pi", route="unknown"),
+    ], _engine(), Config(electricity_mix_zone="FRA"))
+    answers = iter(["2", "5", "Meta/Llama", "", "3", "2", "7"])
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+
+    selected = _interactive_resolution(store)
+
+    captured = capsys.readouterr()
+    assert "1. client=opencode modèle=qwen-raw" in captured.out
+    assert "2. client=pi modèle=llama-raw" in captured.out
+    assert "total-params: must be at least active-params" in captured.err
+    assert selected == {
+        "session": "s", "client": "pi", "raw_model": "llama-raw",
+        "route": "local", "model": "Meta/Llama", "repo": None,
+        "active_params": 3.0, "total_params": 7.0,
+    }
+
+
 def test_resolve_rejects_invalid_local_params_without_changing_rows(tmp_path, monkeypatch, capsys):
     db = str(tmp_path / "c.db")
     _patch_config(monkeypatch, str(tmp_path / "config.json"))
     _ingest_error_event(db)
     rc = cli.main([
         "resolve", "--db", db, "--session", "s", "--route", "local",
-        "--model", "Org/Repo", "--active-params", "8", "--total-params", "7",
+        "--client", "", "--raw-model", "x:y", "--model", "Org/Repo", "--active-params", "8", "--total-params", "7",
     ])
     assert rc == 2
     assert "active-params: must not exceed total-params" in capsys.readouterr().err

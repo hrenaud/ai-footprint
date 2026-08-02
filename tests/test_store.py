@@ -293,9 +293,9 @@ def test_recompute_errors_resolves_after_params_added(tmp_path):
                  model_params={"local/x:y": {
                      "active": 7.0, "total": 7.0, "arch": "dense",
                      "source": "resolve", "hf_repo": "Org/Repo"}})
-    store.resolve_events(route="local", model_canonical="x:y", session_id="s")
+    store.resolve_events(route="local", model_canonical="x:y", client="", model_raw="x:y", session_id="s")
     assert store.recompute_selected_events(
-        _engine(), cfg, route="local", model_canonical="x:y", session_id="s",
+        _engine(), cfg, route="local", model_canonical="x:y", client="", model_raw="x:y", session_id="s",
     ) == 1
     assert store.coverage()["uncovered"] == 0
     covered = [r for r in store.rows_for_report() if r["model"] == "x:y"]
