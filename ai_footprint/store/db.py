@@ -65,11 +65,13 @@ def _canonical_ts(ts: str) -> str:
 
 
 class SQLiteStore:
-    def __init__(self, path: str):
+    def __init__(self, path: str, *, apply_historical_correction: bool = True):
         self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(_SCHEMA)
         self._migrate_events()
+        if apply_historical_correction:
+            self.apply_historical_route_correction()
         # Migration N2 : timestamps hérités « …Z » → format canonique « +00:00 »
         # (idempotent : ne touche que les lignes au vieux format).
         self.conn.execute(
@@ -102,19 +104,33 @@ class SQLiteStore:
             self.conn.execute(
                 "UPDATE events SET route_hint=provider WHERE route_hint=''"
             )
-            if legacy_route_data and self.conn.execute(
+            if legacy_route_data:
+                self.conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (name) "
+                    "VALUES ('legacy-route-backfill-v1')"
+                )
+
+    def apply_historical_route_correction(self) -> None:
+        """Applique une declaration historique, jamais une heuristique collector."""
+        if self.conn.execute(
+            "SELECT 1 FROM schema_migrations WHERE name='legacy-route-backfill-v1'"
+        ).fetchone() is None:
+            return
+        with self.conn:
+            if self.conn.execute(
                 "SELECT 1 FROM schema_migrations WHERE name='historical-routes-v1'"
-            ).fetchone() is None:
-                self.conn.execute(
-                    "UPDATE events SET route = CASE "
-                    "WHEN lower(model_raw) LIKE 'claude%' THEN 'anthropic' "
-                    "WHEN lower(model_raw) LIKE 'chatgpt%' THEN 'openai' "
-                    "WHEN lower(model_raw) = 'openrouter/free' THEN 'openrouter' "
-                    "ELSE 'local' END"
-                )
-                self.conn.execute(
-                    "INSERT INTO schema_migrations (name) VALUES ('historical-routes-v1')"
-                )
+            ).fetchone() is not None:
+                return
+            self.conn.execute(
+                "UPDATE events SET route = CASE "
+                "WHEN lower(model_raw) LIKE 'claude%' THEN 'anthropic' "
+                "WHEN lower(model_raw) LIKE 'chatgpt%' THEN 'openai' "
+                "WHEN lower(model_raw) = 'openrouter/free' THEN 'openrouter' "
+                "ELSE 'local' END"
+            )
+            self.conn.execute(
+                "INSERT INTO schema_migrations (name) VALUES ('historical-routes-v1')"
+            )
 
     def import_legacy(self, carbon_db_path: str):
         raise NotImplementedError("backfill carbon.db pas encore implémenté")

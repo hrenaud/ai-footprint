@@ -34,11 +34,11 @@ def legacy_store_with_events(tmp_path, events):
 def test_legacy_provider_moves_to_route_hint_without_confirming_route(tmp_path):
     path = legacy_store_with_events(tmp_path, [("s", "m", "anthropic", "Qwen/Qwen3")])
 
-    migrated = SQLiteStore(str(path)).conn.execute(
+    migrated = SQLiteStore(str(path), apply_historical_correction=False).conn.execute(
         "SELECT model_raw, route_hint, route, model_canonical FROM events"
     ).fetchone()
 
-    assert tuple(migrated) == ("Qwen/Qwen3", "anthropic", "local", "")
+    assert tuple(migrated) == ("Qwen/Qwen3", "anthropic", "unknown", "")
 
 
 def test_historical_correction_is_applied_once(tmp_path):
@@ -49,26 +49,24 @@ def test_historical_correction_is_applied_once(tmp_path):
         ("s", "qwen", "legacy", "Qwen/Qwen3"),
     ])
 
-    first = SQLiteStore(str(path))
-    assert [tuple(row) for row in first.conn.execute(
-        "SELECT model_raw, route_hint, route FROM events ORDER BY msg_id"
-    )] == [
-        ("ChatGPT-4o", "legacy", "openai"),
-        ("claude-opus", "legacy", "anthropic"),
-        ("Qwen/Qwen3", "legacy", "local"),
-        ("openrouter/free", "legacy", "openrouter"),
-    ]
-    first.conn.close()
+    store = SQLiteStore(str(path), apply_historical_correction=False)
+    assert {row["route"] for row in store.conn.execute("SELECT route FROM events")} == {"unknown"}
 
-    second = SQLiteStore(str(path))
-    assert [tuple(row) for row in second.conn.execute(
-        "SELECT model_raw, route_hint, route FROM events ORDER BY msg_id"
-    )] == [
+    store.apply_historical_route_correction()
+    expected = [
         ("ChatGPT-4o", "legacy", "openai"),
         ("claude-opus", "legacy", "anthropic"),
         ("Qwen/Qwen3", "legacy", "local"),
         ("openrouter/free", "legacy", "openrouter"),
     ]
+    assert [tuple(row) for row in store.conn.execute(
+        "SELECT model_raw, route_hint, route FROM events ORDER BY msg_id"
+    )] == expected
+
+    store.apply_historical_route_correction()
+    assert [tuple(row) for row in store.conn.execute(
+        "SELECT model_raw, route_hint, route FROM events ORDER BY msg_id"
+    )] == expected
 
 
 def test_resolution_changes_only_selected_session(tmp_path):
